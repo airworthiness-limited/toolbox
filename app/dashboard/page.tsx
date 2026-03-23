@@ -39,6 +39,15 @@ export default async function DashboardPage() {
   const passedCount = attempts?.filter(a => a.passed).length ?? 0
   const totalAttempts = attempts?.length ?? 0
 
+  // Logbook stats
+  const { data: logbookEntries } = await supabase
+    .from('logbook_entries')
+    .select('duration_hours, status')
+    .eq('user_id', user.id)
+
+  const logbookCount = logbookEntries?.length ?? 0
+  const logbookHours = logbookEntries?.reduce((sum, e) => sum + Number(e.duration_hours), 0) ?? 0
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -63,7 +72,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-10">
           <div className="bg-white rounded-xl border p-6">
             <p className="text-sm text-gray-500">Certificates earned</p>
             <p className="text-3xl font-bold mt-1">{certificates?.length ?? 0}</p>
@@ -75,6 +84,14 @@ export default async function DashboardPage() {
           <div className="bg-white rounded-xl border p-6">
             <p className="text-sm text-gray-500">Total attempts</p>
             <p className="text-3xl font-bold mt-1">{totalAttempts}</p>
+          </div>
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Logbook entries</p>
+            <p className="text-3xl font-bold mt-1">{logbookCount}</p>
+          </div>
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Logged hours</p>
+            <p className="text-3xl font-bold mt-1">{logbookHours.toFixed(0)}</p>
           </div>
         </div>
 
@@ -109,6 +126,24 @@ export default async function DashboardPage() {
               <p className="text-sm mt-1">Complete a course and pass the exam to earn one.</p>
             </div>
           )}
+        </div>
+
+        {/* Logbook */}
+        <div className="mb-10">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Task Logbook</h2>
+          <div className="bg-white rounded-xl border p-6 flex items-center justify-between">
+            <div>
+              <p className="font-medium text-gray-800">CAP 741 Digital Logbook</p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {logbookCount > 0
+                  ? `${logbookCount} entries · ${logbookHours.toFixed(1)} hours logged`
+                  : 'Record and verify your maintenance tasks'}
+              </p>
+            </div>
+            <Link href="/logbook">
+              <Button variant="outline" size="sm">Open Logbook →</Button>
+            </Link>
+          </div>
         </div>
 
         {/* CTA */}
