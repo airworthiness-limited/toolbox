@@ -26,6 +26,10 @@ export async function Navbar() {
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Dashboard
               </Link>
+              <Link href="/profile"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Profile
+              </Link>
               <LogoutButton />
             </>
           ) : (
