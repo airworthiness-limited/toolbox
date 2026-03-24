@@ -5,13 +5,6 @@ import { createClient as createSupabaseServerClient } from '@/lib/supabase/serve
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const supabaseAdmin = createSupabaseAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface Props {
   searchParams: Promise<{ session_id?: string }>
 }
@@ -22,6 +15,12 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   if (!session_id) {
     redirect('/courses')
   }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+  const supabaseAdmin = createSupabaseAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const supabase = await createSupabaseServerClient()
   const {
