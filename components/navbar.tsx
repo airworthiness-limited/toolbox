@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { LogoutButton } from '@/app/dashboard/logout-button'
 import { Button } from '@/components/ui/button'
 
 export async function Navbar() {
@@ -30,15 +29,10 @@ export async function Navbar() {
                 className="text-sm text-neutral-400 hover:text-white transition-colors tracking-wide uppercase">
                 Progress
               </Link>
-              <Link href="/dashboard"
-                className="text-sm text-neutral-400 hover:text-white transition-colors tracking-wide uppercase">
-                Dashboard
-              </Link>
               <Link href="/profile"
                 className="text-sm text-neutral-400 hover:text-white transition-colors tracking-wide uppercase">
                 Profile
               </Link>
-              <LogoutButton />
             </>
           ) : (
             <>

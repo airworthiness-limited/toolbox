@@ -19,26 +19,6 @@ export default async function CoursesPage() {
     'Fuel Tank Safety (SFAR 88)',
   ]
 
-  const subjectModules = [
-    { id: '1', title: 'Mathematics' },
-    { id: '2', title: 'Physics' },
-    { id: '3', title: 'Electrical Fundamentals' },
-    { id: '4', title: 'Electronic Fundamentals' },
-    { id: '5', title: 'Digital Techniques / Electronic Instrument Systems' },
-    { id: '6', title: 'Materials and Hardware' },
-    { id: '7', title: 'Maintenance Practices' },
-    { id: '8', title: 'Basic Aerodynamics' },
-    { id: '9', title: 'Human Factors' },
-    { id: '10', title: 'Aviation Legislation' },
-    { id: '11', title: 'Aeroplane Aerodynamics, Structures and Systems' },
-    { id: '12', title: 'Helicopter Aerodynamics, Structures and Systems' },
-    { id: '13', title: 'Aircraft Aerodynamics, Structures and Systems' },
-    { id: '14', title: 'Propulsion' },
-    { id: '15', title: 'Gas Turbine Engine' },
-    { id: '16', title: 'Piston Engine' },
-    { id: '17', title: 'Propeller' },
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -89,22 +69,6 @@ export default async function CoursesPage() {
           </div>
         </div>
 
-        {/* Subject Modules */}
-        <div className="mb-10">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Subject Modules</h3>
-          <div className="grid gap-3">
-            {subjectModules.map(mod => (
-              <Card key={mod.id} className="opacity-60">
-                <CardHeader className="py-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Module {mod.id}: {mod.title}</CardTitle>
-                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )

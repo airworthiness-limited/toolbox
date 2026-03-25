@@ -180,8 +180,8 @@ export default async function ProgressPage({
               Track your Aircraft Maintenance Licence Module Examination progress.
             </p>
           </div>
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm">← Dashboard</Button>
+          <Link href="/profile">
+            <Button variant="outline" size="sm">← Profile</Button>
           </Link>
         </div>
 
