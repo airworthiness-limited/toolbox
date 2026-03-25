@@ -8,6 +8,7 @@ import { REQUIRED_TRAINING, RECENCY_REQUIRED_HOURS, RECENCY_PERIOD_YEARS } from 
 import type { Profile, TrainingStatus, RecencyStatus } from '@/lib/profile/types'
 import { ProfileEditor } from './profile-editor'
 import { PublicToggle } from './public-toggle'
+import { LogoutButton } from '../dashboard/logout-button'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -24,12 +25,28 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/login')
 
+  // Premium check
+  const { data: purchase } = await supabase
+    .from('purchases')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
   // Fetch certificates with course slugs for training currency check
   const { data: certificates } = await supabase
     .from('certificates')
-    .select('issued_at, courses(slug, title)')
+    .select('token, issued_at, courses(slug, title)')
     .eq('user_id', user.id)
     .order('issued_at', { ascending: false })
+
+  // Exam attempts
+  const { data: attempts } = await supabase
+    .from('exam_attempts')
+    .select('id, passed')
+    .eq('user_id', user.id)
+
+  const passedCount = attempts?.filter(a => a.passed).length ?? 0
+  const totalAttempts = attempts?.length ?? 0
 
   // Calculate training status
   const now = new Date()
@@ -46,16 +63,23 @@ export default async function ProfilePage() {
     }
   })
 
-  // Calculate recency from logbook entries
-  const periodStart = new Date(now.getFullYear() - RECENCY_PERIOD_YEARS, now.getMonth(), now.getDate())
-  const { data: logbookEntries } = await supabase
+  // Logbook stats (all entries)
+  const { data: allLogbookEntries } = await supabase
     .from('logbook_entries')
-    .select('duration_hours')
+    .select('duration_hours, task_date, status')
     .eq('user_id', user.id)
-    .gte('task_date', periodStart.toISOString().split('T')[0])
-    .in('status', ['verified', 'draft', 'pending_verification'])
 
-  const totalHours = logbookEntries?.reduce((sum, e) => sum + Number(e.duration_hours), 0) ?? 0
+  const logbookCount = allLogbookEntries?.length ?? 0
+  const logbookHours = allLogbookEntries?.reduce((sum, e) => sum + Number(e.duration_hours), 0) ?? 0
+
+  // Calculate recency from logbook entries (within recency period)
+  const periodStart = new Date(now.getFullYear() - RECENCY_PERIOD_YEARS, now.getMonth(), now.getDate())
+  const recencyEntries = allLogbookEntries?.filter(e =>
+    e.task_date >= periodStart.toISOString().split('T')[0] &&
+    ['verified', 'draft', 'pending_verification'].includes(e.status)
+  ) ?? []
+
+  const totalHours = recencyEntries.reduce((sum, e) => sum + Number(e.duration_hours), 0)
 
   const recencyStatus: RecencyStatus = {
     totalHours,
@@ -80,12 +104,37 @@ export default async function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Engineer Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {profile.full_name ? `${profile.full_name}` : 'Engineer Profile'}
+            </h1>
             <p className="text-gray-500 mt-1">Your qualifications, training currency, and recency at a glance.</p>
+            {purchase && (
+              <span className="inline-block mt-2 text-xs font-medium bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                Premium member
+              </span>
+            )}
           </div>
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm">← Dashboard</Button>
-          </Link>
+          <LogoutButton />
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Certificates</p>
+            <p className="text-3xl font-bold mt-1">{certificates?.length ?? 0}</p>
+          </div>
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Exams passed</p>
+            <p className="text-3xl font-bold mt-1">{passedCount}</p>
+          </div>
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Logbook entries</p>
+            <p className="text-3xl font-bold mt-1">{logbookCount}</p>
+          </div>
+          <div className="bg-white rounded-xl border p-6">
+            <p className="text-sm text-gray-500">Logged hours</p>
+            <p className="text-3xl font-bold mt-1">{logbookHours.toFixed(0)}</p>
+          </div>
         </div>
 
         {/* Overall Status Banner */}
@@ -240,6 +289,60 @@ export default async function ProfilePage() {
                 </Link>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Certificates */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Your Certificates</CardTitle>
+            <CardDescription>Certificates earned from completing courses and passing exams.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {certificates && certificates.length > 0 ? (
+              <div className="space-y-3">
+                {certificates.map((cert: any) => (
+                  <div key={cert.token}
+                    className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {cert.courses?.title}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        Issued {new Date(cert.issued_at).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'long', year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    <Link href={`/certificates/${cert.token}`}>
+                      <Button variant="outline" size="sm">View</Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No certificates yet. Complete a course and pass the exam to earn one.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Logbook */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Task Logbook</CardTitle>
+            <CardDescription>CAP 741 Digital Logbook for recording maintenance tasks.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                {logbookCount > 0
+                  ? `${logbookCount} entries, ${logbookHours.toFixed(1)} hours logged`
+                  : 'Record and verify your maintenance tasks'}
+              </p>
+              <Link href="/logbook">
+                <Button variant="outline" size="sm">Open Logbook</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
