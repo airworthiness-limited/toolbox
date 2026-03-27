@@ -6,10 +6,21 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { REQUIRED_TRAINING, RECENCY_REQUIRED_DAYS, RECENCY_PERIOD_YEARS } from '@/lib/profile/constants'
 import { MODULE_REQUIREMENTS, PART_66_MODULES, ESSAY_MODULES, PASS_MARK, PASS_VALIDITY_YEARS, isSameModuleEquivalent, getCrossModuleEquivalency } from '@/lib/progress/constants'
-import type { TrainingStatus, RecencyStatus } from '@/lib/profile/types'
+import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
 import { ProfileEditor } from './profile-editor'
 import { LogoutButton } from '../dashboard/logout-button'
+
+// Handle backward compatibility: convert old string[] type_ratings to TypeEndorsement[]
+function normaliseTypeRatings(raw: any): TypeEndorsement[] {
+  if (!raw || !Array.isArray(raw)) return []
+  return raw.map((item: any) => {
+    if (typeof item === 'string') {
+      return { rating: item, b1Date: null, b2Date: null, b3Date: null, cDate: null }
+    }
+    return item as TypeEndorsement
+  })
+}
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -275,7 +286,7 @@ export default async function ProfilePage() {
               profile={{
                 aml_licence_number: profile.aml_licence_number ?? '',
                 aml_categories: profile.aml_categories ?? [],
-                type_ratings: profile.type_ratings ?? [],
+                type_ratings: normaliseTypeRatings(profile.type_ratings),
               }}
             />
           </CardContent>

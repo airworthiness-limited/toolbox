@@ -133,19 +133,69 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
 
-          {/* Type Ratings */}
+          {/* Type Endorsements */}
           {profile.type_ratings && profile.type_ratings.length > 0 && (
-            <Card>
+            <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle className="text-base">Aircraft Type Ratings</CardTitle>
+                <CardTitle className="text-base">Type Endorsements</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.type_ratings.map((type: string) => (
-                    <Badge key={type} variant="outline" className="text-xs">
-                      {type}
-                    </Badge>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-2 px-2 font-semibold text-gray-700">Aircraft Type</th>
+                        <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[100px]">B1</th>
+                        <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[100px]">B2</th>
+                        <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[100px]">B3</th>
+                        <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[100px]">C</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {profile.type_ratings.map((item: any, i: number) => {
+                        const rating = typeof item === 'string' ? item : item.rating
+                        const b1 = typeof item === 'string' ? null : item.b1Date
+                        const b2 = typeof item === 'string' ? null : item.b2Date
+                        const b3 = typeof item === 'string' ? null : item.b3Date
+                        const c = typeof item === 'string' ? null : item.cDate
+                        const formatDate = (d: string | null) =>
+                          d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null
+                        return (
+                          <tr key={i} className="border-b border-gray-100">
+                            <td className="py-2 px-2 font-medium">{rating}</td>
+                            <td className="py-2 px-2 text-center">
+                              {b1 ? (
+                                <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{formatDate(b1)}</span>
+                              ) : (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">N/A</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              {b2 ? (
+                                <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{formatDate(b2)}</span>
+                              ) : (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">N/A</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              {b3 ? (
+                                <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{formatDate(b3)}</span>
+                              ) : (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">N/A</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              {c ? (
+                                <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{formatDate(c)}</span>
+                              ) : (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">N/A</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
