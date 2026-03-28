@@ -30,7 +30,7 @@ function useUser() {
   return { user, loaded, hasPremium }
 }
 
-function GoAdFreeButton({ className }: { className?: string }) {
+function RemoveAdvertsButton({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
@@ -39,19 +39,21 @@ function GoAdFreeButton({ className }: { className?: string }) {
     const data = await res.json()
     if (data.url) {
       window.location.href = data.url
+    } else {
+      // Not logged in — send to signup
+      window.location.href = '/signup'
     }
     setLoading(false)
   }
 
   return (
-    <Button
-      size="sm"
+    <button
       onClick={handleClick}
       disabled={loading}
-      className={`bg-amber-500 text-white hover:bg-amber-600 font-bold ${className ?? ''}`}
+      className={`bg-white text-[#2d3a80] text-xs font-bold px-3 py-1.5 rounded-full hover:bg-white/90 transition-colors tracking-wide uppercase ${className ?? ''}`}
     >
-      {loading ? 'Redirecting...' : 'Go Ad-Free'}
-    </Button>
+      {loading ? 'REDIRECTING...' : 'REMOVE ADVERTS'}
+    </button>
   )
 }
 
@@ -224,6 +226,9 @@ function MobileMenu({
           </div>
 
           <div className="border-t border-white/10 mt-4 pt-4 space-y-3">
+            {loaded && !hasPremium && (
+              <RemoveAdvertsButton className="w-full" />
+            )}
             {loaded && !user && (
               <Link href="/signup" onClick={onClose}>
                 <Button className="w-full bg-white text-[#2d3a80] hover:bg-white/90 font-bold">
@@ -232,14 +237,11 @@ function MobileMenu({
               </Link>
             )}
             {loaded && user && (
-              <>
-                {!hasPremium && <GoAdFreeButton className="w-full" />}
-                <Link href="/profile" onClick={onClose}>
-                  <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
-                    Manage Profile
-                  </Button>
-                </Link>
-              </>
+              <Link href="/profile" onClick={onClose}>
+                <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                  Manage Profile
+                </Button>
+              </Link>
             )}
           </div>
         </div>
@@ -281,9 +283,17 @@ export function Navbar() {
     <>
       <nav className="aw-gradient sticky top-0 z-50 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl text-white tracking-tight" style={{ fontWeight: 'bold', letterSpacing: '-0.04em' }}>
-            Airworthiness
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-xl text-white tracking-tight" style={{ fontWeight: 'bold', letterSpacing: '-0.04em' }}>
+              Airworthiness
+            </Link>
+            {loaded && !hasPremium && <RemoveAdvertsButton />}
+            {loaded && hasPremium && (
+              <span className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide uppercase">
+                SUBSCRIBED
+              </span>
+            )}
+          </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
@@ -306,14 +316,11 @@ export function Navbar() {
             )}
 
             {loaded && user && (
-              <div className="flex items-center gap-3">
-                {!hasPremium && <GoAdFreeButton />}
-                <Link href="/profile">
-                  <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
-                    Manage Profile
-                  </Button>
-                </Link>
-              </div>
+              <Link href="/profile">
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                  Manage Profile
+                </Button>
+              </Link>
             )}
           </div>
 

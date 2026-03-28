@@ -9,12 +9,12 @@ interface AdPlaceholderProps {
 }
 
 function useAdFreeStatus() {
-  const [state, setState] = useState<{ hasPremium: boolean; loggedIn: boolean } | null>(null)
+  const [hasPremium, setHasPremium] = useState<boolean | null>(null)
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
-        setState({ hasPremium: false, loggedIn: false })
+        setHasPremium(false)
         return
       }
       supabase
@@ -23,48 +23,18 @@ function useAdFreeStatus() {
         .eq('user_id', data.user.id)
         .single()
         .then(({ data: purchase }) => {
-          setState({ hasPremium: !!purchase, loggedIn: true })
+          setHasPremium(!!purchase)
         })
     })
   }, [])
-  return state
-}
-
-function GoAdFreeLink({ loggedIn }: { loggedIn: boolean }) {
-  const [loading, setLoading] = useState(false)
-
-  async function handleClick() {
-    if (!loggedIn) {
-      window.location.href = '/signup'
-      return
-    }
-    setLoading(true)
-    const res = await fetch('/api/checkout', { method: 'POST' })
-    const data = await res.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else {
-      window.location.href = '/signup'
-    }
-    setLoading(false)
-  }
-
-  return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      className="text-[10px] text-amber-600 hover:text-amber-700 font-bold mt-1 hover:underline transition-colors"
-    >
-      {loading ? 'Redirecting...' : 'Remove ads'}
-    </button>
-  )
+  return hasPremium
 }
 
 export function AdPlaceholder({ format = 'banner', className = '' }: AdPlaceholderProps) {
-  const status = useAdFreeStatus()
+  const hasPremium = useAdFreeStatus()
 
   // Hide ads for premium users, or while loading auth state
-  if (!status || status.hasPremium) return null
+  if (hasPremium !== false) return null
 
   const sizes = {
     banner: 'w-full h-[90px]',
@@ -77,7 +47,6 @@ export function AdPlaceholder({ format = 'banner', className = '' }: AdPlacehold
       <div className="text-center">
         <p className="text-xs text-gray-400 font-medium">Advertisement</p>
         <p className="text-[10px] text-gray-300 mt-0.5">Google AdSense</p>
-        <GoAdFreeLink loggedIn={status.loggedIn} />
       </div>
     </div>
   )
