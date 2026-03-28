@@ -15,6 +15,10 @@ import {
   ENTRY_STATUSES,
   MAINTENANCE_CATEGORIES,
   ATA_CHAPTERS,
+  AIRCRAFT_CATEGORIES,
+  RECENCY_TASK_THRESHOLD,
+  RECENCY_DAY_THRESHOLD,
+  SCOPE_OF_WORK,
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
@@ -27,6 +31,10 @@ function getCategoryLabel(value: string) {
 
 function getAtaLabel(value: string) {
   return ATA_CHAPTERS.find(c => c.value === value)?.label ?? `ATA ${value}`
+}
+
+function getAircraftCategoryLabel(value: string) {
+  return AIRCRAFT_CATEGORIES.find(c => c.value === value)?.label ?? value
 }
 
 function StatusBadge({ status }: { status: EntryStatus }) {
@@ -49,8 +57,13 @@ export default async function LogbookPage({
   const statusFilter = params.status || 'all'
   const offset = (page - 1) * PAGE_SIZE
 
-  // Fetch profile and stats counts in parallel
-  const [{ data: profile }, { data: statsEntries }] = await Promise.all([
+  // Two years ago from today
+  const twoYearsAgo = new Date()
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+  const twoYearsAgoStr = twoYearsAgo.toISOString().split('T')[0]
+
+  // Fetch profile, all stats, and recency data in parallel
+  const [{ data: profile }, { data: statsEntries }, { data: recencyEntries }] = await Promise.all([
     supabase
       .from('profiles')
       .select('aml_licence_number')
@@ -58,23 +71,37 @@ export default async function LogbookPage({
       .single(),
     supabase
       .from('logbook_entries')
-      .select('status, duration_hours')
+      .select('status')
       .eq('user_id', user.id),
+    supabase
+      .from('logbook_entries')
+      .select('aircraft_category, task_date')
+      .eq('user_id', user.id)
+      .in('status', ['verified', 'qc_approved', 'pending_qc'])
+      .gte('task_date', twoYearsAgoStr),
   ])
 
   const isAmlHolder = !!profile?.aml_licence_number
 
   const allStats = statsEntries ?? []
   const totalCount = allStats.length
-  const totalHours = allStats.reduce((sum, e) => sum + Number(e.duration_hours), 0)
   const verifiedCount = allStats.filter(e => e.status === 'verified' || e.status === 'qc_approved' || e.status === 'pending_qc').length
   const pendingCount = allStats.filter(e => e.status === 'pending_verification').length
   const draftCount = allStats.filter(e => e.status === 'draft').length
 
+  // Calculate recency per aircraft type
+  const recencyData = AIRCRAFT_CATEGORIES.map(cat => {
+    const catEntries = (recencyEntries ?? []).filter(e => e.aircraft_category === cat.value)
+    const tasks = catEntries.length
+    const uniqueDays = new Set(catEntries.map(e => e.task_date)).size
+    const meetsRecency = tasks >= RECENCY_TASK_THRESHOLD || uniqueDays >= RECENCY_DAY_THRESHOLD
+    return { ...cat, tasks, days: uniqueDays, meetsRecency }
+  }).filter(cat => cat.tasks > 0)
+
   // Fetch the current page of entries with the active filter
   let query = supabase
     .from('logbook_entries')
-    .select('id, task_date, aircraft_type, aircraft_registration, ata_chapter, category, duration_hours, status')
+    .select('id, task_date, aircraft_type, aircraft_registration, ata_chapter, category, status')
     .eq('user_id', user.id)
     .order('task_date', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1)
@@ -88,7 +115,6 @@ export default async function LogbookPage({
   const pageEntries = entries ?? []
   const hasNextPage = pageEntries.length === PAGE_SIZE
 
-  // Count for the active filter (for accurate "showing X of Y")
   const filteredTotal = statusFilter === 'all'
     ? totalCount
     : allStats.filter(e => e.status === statusFilter).length
@@ -100,17 +126,17 @@ export default async function LogbookPage({
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl text-white">Aircraft Maintenance Digital Logbook</h1>
-            <p className="text-white/60 mt-1">Track your tasks in the format required by the Civil Aviation Authority.</p>
+            <h1 className="text-2xl text-white">Digital Logbook (CAP 741)</h1>
+            <p className="text-white/60 mt-1">Track your maintenance tasks in the CAP 741 format.</p>
           </div>
           <div className="flex items-center gap-3">
             {isAmlHolder && (
               <Link href="/logbook/verify">
-                <Button variant="outline">Verification Queue</Button>
+                <Button variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10">Verification Queue</Button>
               </Link>
             )}
             <Link href="/logbook/export">
-              <Button variant="outline">Print / Export</Button>
+              <Button variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10">Print / Export</Button>
             </Link>
             <Link href="/logbook/new">
               <Button>New Entry</Button>
@@ -119,14 +145,10 @@ export default async function LogbookPage({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-            <p className="text-sm text-white/70">Total Entries</p>
+            <p className="text-sm text-white/70">Tasks</p>
             <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-            <p className="text-sm text-white/70">Total Hours</p>
-            <p className="text-3xl font-bold mt-1 text-white">{totalHours.toFixed(1)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
             <p className="text-sm text-white/70">Verified</p>
@@ -137,6 +159,54 @@ export default async function LogbookPage({
             <p className="text-3xl font-bold mt-1 text-white">{draftCount}</p>
           </div>
         </div>
+
+        {/* Recency Tracking */}
+        {recencyData.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-white mb-3">Recency (Last 2 Years)</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recencyData.map(cat => (
+                <div
+                  key={cat.value}
+                  className={`bg-white rounded-xl p-5 border-2 ${
+                    cat.meetsRecency ? 'border-green-300' : 'border-amber-300'
+                  }`}
+                >
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{cat.label}</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Tasks</span>
+                      <span className={`text-sm font-bold ${cat.tasks >= RECENCY_TASK_THRESHOLD ? 'text-green-600' : 'text-gray-900'}`}>
+                        {cat.tasks} / {RECENCY_TASK_THRESHOLD}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${cat.tasks >= RECENCY_TASK_THRESHOLD ? 'bg-green-500' : 'bg-amber-500'}`}
+                        style={{ width: `${Math.min(100, (cat.tasks / RECENCY_TASK_THRESHOLD) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-sm text-gray-600">Days</span>
+                      <span className={`text-sm font-bold ${cat.days >= RECENCY_DAY_THRESHOLD ? 'text-green-600' : 'text-gray-900'}`}>
+                        {cat.days} / {RECENCY_DAY_THRESHOLD}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${cat.days >= RECENCY_DAY_THRESHOLD ? 'bg-green-500' : 'bg-amber-500'}`}
+                        style={{ width: `${Math.min(100, (cat.days / RECENCY_DAY_THRESHOLD) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className={`text-xs font-bold mt-3 ${cat.meetsRecency ? 'text-green-600' : 'text-amber-600'}`}>
+                    {cat.meetsRecency ? 'Recent' : 'Not yet recent'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick links */}
         <div className="flex gap-3 mb-6 text-sm">
@@ -150,7 +220,7 @@ export default async function LogbookPage({
 
         <AdPlaceholder format="inline" className="my-6" />
 
-        {/* Status filter tabs (link-based for pagination compat) */}
+        {/* Status filter tabs */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {[
             { value: 'all', label: `All (${totalCount})` },
@@ -191,7 +261,6 @@ export default async function LogbookPage({
                   <TableHead>Aircraft</TableHead>
                   <TableHead className="hidden md:table-cell">ATA</TableHead>
                   <TableHead className="hidden md:table-cell">Category</TableHead>
-                  <TableHead>Hours</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -214,7 +283,6 @@ export default async function LogbookPage({
                     <TableCell className="hidden md:table-cell text-sm text-gray-600">
                       {getCategoryLabel(entry.category)}
                     </TableCell>
-                    <TableCell>{Number(entry.duration_hours).toFixed(1)}</TableCell>
                     <TableCell>
                       <StatusBadge status={entry.status} />
                     </TableCell>
