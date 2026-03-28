@@ -124,6 +124,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-alexandria), sans-serif;
   }
   html {
     @apply font-sans;
@@ -132,6 +133,9 @@
     font-family: var(--font-alexandria), sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
+  }
+  input, textarea, select, button {
+    font-family: var(--font-alexandria), sans-serif;
   }
 }
 

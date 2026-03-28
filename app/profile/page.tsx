@@ -389,6 +389,19 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
+        {/* Delete Account */}
+        <Card className="bg-white border-red-100">
+          <CardHeader>
+            <CardTitle className="text-base text-red-600">Delete Account</CardTitle>
+            <CardDescription>
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DeleteAccountButton />
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   )
@@ -396,3 +409,4 @@ export default async function ProfilePage() {
 
 // Client component for removing assessment
 import { RemoveAssessmentButton } from './remove-assessment-button'
+import { DeleteAccountButton } from './delete-account-button'
