@@ -13,7 +13,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   const { session_id } = await searchParams
 
   if (!session_id) {
-    redirect('/courses')
+    redirect('/profile')
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -28,7 +28,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/signup')
   }
 
   const session = await stripe.checkout.sessions.retrieve(session_id)
@@ -37,15 +37,14 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-white rounded-2xl border p-12 text-center max-w-md">
-          <div className="text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Payment not confirmed
           </h1>
           <p className="text-gray-500 mb-8">
-            We couldn&apos;t confirm this payment yet.
+            We could not confirm this payment yet. If you have been charged, please contact us and we will resolve it.
           </p>
-          <Link href="/courses">
-            <Button className="w-full">Back to courses</Button>
+          <Link href="/profile">
+            <Button className="w-full">Back to profile</Button>
           </Link>
         </div>
       </div>
@@ -58,15 +57,14 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-white rounded-2xl border p-12 text-center max-w-md">
-          <div className="text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Payment user mismatch
           </h1>
           <p className="text-gray-500 mb-8">
-            This payment session does not belong to the current user.
+            This payment session does not belong to the current user. Please contact us if you believe this is an error.
           </p>
-          <Link href="/courses">
-            <Button className="w-full">Back to courses</Button>
+          <Link href="/profile">
+            <Button className="w-full">Back to profile</Button>
           </Link>
         </div>
       </div>
@@ -82,14 +80,15 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-white rounded-2xl border p-12 text-center max-w-md">
-          <div className="text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Payment received, but unlock failed
+            Payment received, but activation failed
           </h1>
-          <p className="text-gray-500 mb-8">{error.message}</p>
-          <Link href="/courses">
-            <Button className="w-full">Back to courses</Button>
-          </Link>
+          <p className="text-gray-500 mb-8">
+            Your payment was successful but we could not activate your ad-free experience. Please contact us and we will resolve this immediately.
+          </p>
+          <a href="mailto:contact@airworthiness.org.uk">
+            <Button className="w-full">Contact us</Button>
+          </a>
         </div>
       </div>
     )
@@ -98,15 +97,14 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen aw-gradient flex items-center justify-center">
       <div className="bg-white rounded-2xl border p-12 text-center max-w-md">
-        <div className="text-5xl mb-4">🎉</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          You&apos;re now a premium member!
+          Adverts removed
         </h1>
         <p className="text-gray-500 mb-8">
-          All premium courses are now unlocked. Start learning.
+          Thank you for your support. All advertisements have been removed from your account. Enjoy the clean experience.
         </p>
-        <Link href="/courses">
-          <Button className="w-full">Browse premium courses →</Button>
+        <Link href="/profile">
+          <Button className="w-full bg-[#2d3a80] text-white hover:bg-[#232e66]">Go to your profile</Button>
         </Link>
       </div>
     </div>

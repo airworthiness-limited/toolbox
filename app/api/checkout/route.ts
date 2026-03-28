@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
   const supabase = await createClient()
 
@@ -12,7 +12,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Not logged in' }, { status: 401 })
   }
 
-  console.log('Creating checkout for user:', user.id)
+  const origin = request.headers.get('origin') || request.nextUrl.origin
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
@@ -22,17 +22,12 @@ export async function POST() {
         quantity: 1,
       },
     ],
-
-    // 🔥 THIS IS THE IMPORTANT PART
     metadata: {
       user_id: user.id,
     },
-
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/courses`,
+    success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/profile`,
   })
-
-  console.log('Stripe session created:', session.id)
 
   return NextResponse.json({ url: session.url })
 }
