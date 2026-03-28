@@ -150,13 +150,13 @@ export default async function VerifyPage({
             <div className="flex items-center justify-between mt-6">
               {page > 1 ? (
                 <Link href={`/logbook/verify?page=${page - 1}`}>
-                  <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10">Previous</Button>
+                  <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Previous</Button>
                 </Link>
               ) : <div />}
               <span className="text-sm text-white/60">Page {page}</span>
               {hasNextPage ? (
                 <Link href={`/logbook/verify?page=${page + 1}`}>
-                  <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10">Next</Button>
+                  <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Next</Button>
                 </Link>
               ) : <div />}
             </div>

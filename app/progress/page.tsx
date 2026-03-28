@@ -182,7 +182,7 @@ export default async function ProgressPage({
             </p>
           </div>
           <Link href="/profile">
-            <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10">Profile</Button>
+            <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Profile</Button>
           </Link>
         </div>
 

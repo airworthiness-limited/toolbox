@@ -238,7 +238,7 @@ function MobileMenu({
             )}
             {loaded && user && (
               <Link href="/profile" onClick={onClose}>
-                <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                <Button variant="outline" className="w-full bg-transparent border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
                   Manage Profile
                 </Button>
               </Link>
@@ -317,7 +317,7 @@ export function Navbar() {
 
             {loaded && user && (
               <Link href="/profile">
-                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
                   Manage Profile
                 </Button>
               </Link>

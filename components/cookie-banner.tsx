@@ -32,7 +32,7 @@ export function CookieBanner() {
           <Link href="/cookies" className="text-white underline hover:text-white/90">Cookie Policy</Link>.
         </p>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={reject} className="border-white/20 text-white hover:bg-white/10">
+          <Button variant="outline" size="sm" onClick={reject} className="bg-transparent border-white/20 text-white hover:bg-white/10">
             Reject
           </Button>
           <Button size="sm" onClick={accept} className="bg-white text-gray-900 hover:bg-white/90">

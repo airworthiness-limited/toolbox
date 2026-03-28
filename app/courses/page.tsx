@@ -64,7 +64,7 @@ export default async function CoursesPage() {
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base text-white/70">{title}</CardTitle>
-                    <Badge variant="outline" className="text-xs border-white/30 text-white/60">Coming Soon</Badge>
+                    <Badge variant="outline" className="text-xs bg-transparent border-white/30 text-white/60">Coming Soon</Badge>
                   </div>
                 </CardHeader>
               </Card>
