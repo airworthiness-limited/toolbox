@@ -114,13 +114,13 @@ function AuthForm() {
           <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
             Airworthiness
           </h1>
-          <p className="text-white/50 text-sm mt-1 tracking-wide uppercase">Limited</p>
+          <p className="text-white/50 text-sm mt-1 tracking-wide uppercase">for Everyone</p>
         </div>
 
         <div className="space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-white leading-snug">
-              The digital platform for<br />UK aircraft maintenance<br />professionals.
+              The digital platform for<br />aviation engineering<br />professionals.
             </h2>
           </div>
           <div className="space-y-4">
@@ -154,7 +154,7 @@ function AuthForm() {
               </div>
               <div>
                 <p className="text-white font-medium text-sm">Verified professional network</p>
-                <p className="text-white/50 text-xs mt-0.5">Connect with licence-verified engineers across the UK.</p>
+                <p className="text-white/50 text-xs mt-0.5">Connect with licence-verified aviation engineering professionals.</p>
               </div>
             </div>
           </div>
@@ -171,7 +171,7 @@ function AuthForm() {
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
             <h1 className="text-2xl font-bold text-white tracking-tight">Airworthiness</h1>
-            <p className="text-white/50 text-xs mt-0.5 tracking-wide uppercase">Limited</p>
+            <p className="text-white/50 text-xs mt-0.5 tracking-wide uppercase">for Everyone</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">

@@ -9,7 +9,7 @@ export function Footer() {
           <div>
             <h3 className="text-white font-bold text-sm tracking-tight mb-3">Airworthiness Limited</h3>
             <p className="text-xs leading-relaxed">
-              The digital platform for UK aircraft maintenance professionals. CAA-aligned licence management, digital logbooks, and continuation training.
+              The digital platform for aviation engineering professionals and initial and continuing airworthiness organisations.
             </p>
           </div>
 
