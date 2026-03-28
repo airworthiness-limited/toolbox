@@ -9,7 +9,7 @@ export default async function CoursesPage() {
 
   const { data: courses } = await supabase
     .from('courses')
-    .select('*')
+    .select('id, title, slug, description, is_premium')
     .eq('is_published', true)
     .order('created_at', { ascending: false })
 

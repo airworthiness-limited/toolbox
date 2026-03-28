@@ -17,49 +17,49 @@ export default async function CoursePage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Get course
+  // Get course first (needed for course_id in subsequent queries)
   const { data: course } = await supabase
     .from('courses')
-    .select('*')
+    .select('id, title, slug, description, is_premium, is_published')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
 
   if (!course) notFound()
 
-  // Modules
-  const { data: modules } = await supabase
-    .from('modules')
-    .select('*')
-    .eq('course_id', course.id)
-    .order('order_index', { ascending: true })
-
-  // Progress
-  const { data: progress } = await supabase
-    .from('module_progress')
-    .select('module_id')
-    .eq('user_id', user.id)
+  // Run remaining queries in parallel
+  const [
+    { data: modules },
+    { data: progress },
+    { data: purchase },
+    { data: certificate },
+  ] = await Promise.all([
+    supabase
+      .from('modules')
+      .select('id, title, order_index')
+      .eq('course_id', course.id)
+      .order('order_index', { ascending: true }),
+    supabase
+      .from('module_progress')
+      .select('module_id')
+      .eq('user_id', user.id),
+    supabase
+      .from('purchases')
+      .select('id')
+      .eq('user_id', user.id)
+      .single(),
+    supabase
+      .from('certificates')
+      .select('token')
+      .eq('user_id', user.id)
+      .eq('course_id', course.id)
+      .single(),
+  ])
 
   const completedIds = new Set(progress?.map(p => p.module_id) ?? [])
   const completedCount = modules?.filter(m => completedIds.has(m.id)).length ?? 0
   const totalModules = modules?.length ?? 0
-
-  // Premium check
-  const { data: purchase } = await supabase
-    .from('purchases')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
   const hasPremium = !!purchase
-
-  // Certificate check
-  const { data: certificate } = await supabase
-    .from('certificates')
-    .select('token')
-    .eq('user_id', user.id)
-    .eq('course_id', course.id)
-    .single()
 
   return (
     <div className="min-h-screen aw-gradient">

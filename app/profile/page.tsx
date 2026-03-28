@@ -29,7 +29,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch profile
+  // Fetch profile first (needed for redirect check and aml_categories)
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, full_name, role, aml_licence_number, aml_categories, type_ratings, aml_photo_path, aml_verified, is_public, competency_completed_at, created_at')
@@ -38,19 +38,34 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/login')
 
-  // Premium check
-  const { data: purchase } = await supabase
-    .from('purchases')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
+  const selectedCategory = profile.aml_categories?.[0] || 'B1.1'
 
-  // Fetch certificates with course slugs for training currency check
-  const { data: certificates } = await supabase
-    .from('certificates')
-    .select('token, issued_at, courses(slug, title)')
-    .eq('user_id', user.id)
-    .order('issued_at', { ascending: false })
+  // Run remaining queries in parallel -- none depend on each other
+  const [
+    { data: purchase },
+    { data: certificates },
+    { data: allLogbookEntries },
+    { data: allProgress },
+  ] = await Promise.all([
+    supabase
+      .from('purchases')
+      .select('id')
+      .eq('user_id', user.id)
+      .single(),
+    supabase
+      .from('certificates')
+      .select('token, issued_at, courses(slug, title)')
+      .eq('user_id', user.id)
+      .order('issued_at', { ascending: false }),
+    supabase
+      .from('logbook_entries')
+      .select('task_date, status')
+      .eq('user_id', user.id),
+    supabase
+      .from('module_exam_progress')
+      .select('id, user_id, target_category, module_id, issue_date, mcq_score, essay_score, essay_score_2, essay_split, is_btc')
+      .eq('user_id', user.id),
+  ])
 
   // Calculate training status
   const now = new Date()
@@ -66,12 +81,6 @@ export default async function ProfilePage() {
       isCurrent: certDate ? certDate >= twoYearsAgo : false,
     }
   })
-
-  // Logbook stats (all entries)
-  const { data: allLogbookEntries } = await supabase
-    .from('logbook_entries')
-    .select('task_date, status')
-    .eq('user_id', user.id)
 
   const logbookCount = allLogbookEntries?.length ?? 0
 
@@ -91,13 +100,6 @@ export default async function ProfilePage() {
     periodStart: periodStart.toISOString().split('T')[0],
     periodEnd: now.toISOString().split('T')[0],
   }
-
-  // Module exam progress for the selected category (default B1.1)
-  const selectedCategory = profile.aml_categories?.[0] || 'B1.1'
-  const { data: allProgress } = await supabase
-    .from('module_exam_progress')
-    .select('*')
-    .eq('user_id', user.id)
 
   const progressRecords = (allProgress ?? []) as ModuleExamProgress[]
   const requiredModuleIds = MODULE_REQUIREMENTS[selectedCategory] ?? []

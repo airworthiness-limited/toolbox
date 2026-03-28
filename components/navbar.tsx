@@ -9,14 +9,50 @@ import { Button } from '@/components/ui/button'
 function useUser() {
   const [user, setUser] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
+  const [hasPremium, setHasPremium] = useState(false)
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
       setLoaded(true)
+      if (data.user) {
+        supabase
+          .from('purchases')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single()
+          .then(({ data: purchase }) => {
+            setHasPremium(!!purchase)
+          })
+      }
     })
   }, [])
-  return { user, loaded }
+  return { user, loaded, hasPremium }
+}
+
+function GoAdFreeButton({ className }: { className?: string }) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleClick() {
+    setLoading(true)
+    const res = await fetch('/api/checkout', { method: 'POST' })
+    const data = await res.json()
+    if (data.url) {
+      window.location.href = data.url
+    }
+    setLoading(false)
+  }
+
+  return (
+    <Button
+      size="sm"
+      onClick={handleClick}
+      disabled={loading}
+      className={`bg-amber-500 text-white hover:bg-amber-600 font-bold ${className ?? ''}`}
+    >
+      {loading ? 'Redirecting...' : 'Go Ad-Free'}
+    </Button>
+  )
 }
 
 function Dropdown({
@@ -47,7 +83,7 @@ function Dropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`text-sm transition-colors tracking-wide uppercase flex items-center gap-1 ${
+        className={`text-sm font-bold transition-colors tracking-wide uppercase flex items-center gap-1 ${
           isActive ? 'text-white' : 'text-white/70 hover:text-white'
         }`}
       >
@@ -64,9 +100,9 @@ function Dropdown({
                 key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`block px-4 py-2.5 text-sm transition-colors ${
+                className={`block px-4 py-2.5 text-sm font-bold transition-colors ${
                   pathname === item.href || pathname.startsWith(item.href + '/')
-                    ? 'text-[#2d3a80] font-medium bg-gray-50'
+                    ? 'text-[#2d3a80] bg-gray-50'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -75,7 +111,7 @@ function Dropdown({
             ) : (
               <span
                 key={item.label}
-                className="block px-4 py-2.5 text-sm text-gray-400 cursor-default"
+                className="block px-4 py-2.5 text-sm font-bold text-gray-400 cursor-default"
               >
                 {item.label}
               </span>
@@ -92,6 +128,7 @@ function MobileMenu({
   onClose,
   user,
   loaded,
+  hasPremium,
   professionalsItems,
   organisationsItems,
 }: {
@@ -99,6 +136,7 @@ function MobileMenu({
   onClose: () => void
   user: any
   loaded: boolean
+  hasPremium: boolean
   professionalsItems: { label: string; href: string | null }[]
   organisationsItems: { label: string; href: string | null }[]
 }) {
@@ -132,31 +170,31 @@ function MobileMenu({
           <Link
             href="/about"
             onClick={onClose}
-            className={`block py-3 text-sm uppercase tracking-wider ${
-              pathname === '/about' ? 'text-white font-medium' : 'text-white/70'
+            className={`block py-3 text-sm font-bold uppercase tracking-wider ${
+              pathname === '/about' ? 'text-white' : 'text-white/70'
             }`}
           >
             About
           </Link>
 
           <div className="border-t border-white/10 mt-2 pt-4">
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Professionals</p>
+            <p className="text-xs text-white/40 uppercase tracking-wider font-bold mb-2">Professionals</p>
             {professionalsItems.map(item => (
               item.href ? (
                 <Link
                   key={item.label}
                   href={item.href}
                   onClick={onClose}
-                  className={`block py-2.5 text-sm ${
+                  className={`block py-2.5 text-sm font-bold ${
                     pathname === item.href || pathname.startsWith(item.href + '/')
-                      ? 'text-white font-medium'
+                      ? 'text-white'
                       : 'text-white/70'
                   }`}
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span key={item.label} className="block py-2.5 text-sm text-white/30">
+                <span key={item.label} className="block py-2.5 text-sm font-bold text-white/30">
                   {item.label}
                 </span>
               )
@@ -164,41 +202,44 @@ function MobileMenu({
           </div>
 
           <div className="border-t border-white/10 mt-4 pt-4">
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Organisations</p>
+            <p className="text-xs text-white/40 uppercase tracking-wider font-bold mb-2">Organisations</p>
             {organisationsItems.map(item => (
               item.href ? (
                 <Link
                   key={item.label}
                   href={item.href}
                   onClick={onClose}
-                  className={`block py-2.5 text-sm ${
-                    pathname === item.href ? 'text-white font-medium' : 'text-white/70'
+                  className={`block py-2.5 text-sm font-bold ${
+                    pathname === item.href ? 'text-white' : 'text-white/70'
                   }`}
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span key={item.label} className="block py-2.5 text-sm text-white/30">
+                <span key={item.label} className="block py-2.5 text-sm font-bold text-white/30">
                   {item.label}
                 </span>
               )
             ))}
           </div>
 
-          <div className="border-t border-white/10 mt-4 pt-4">
+          <div className="border-t border-white/10 mt-4 pt-4 space-y-3">
             {loaded && !user && (
               <Link href="/signup" onClick={onClose}>
-                <Button className="w-full bg-white text-[#2d3a80] hover:bg-white/90">
+                <Button className="w-full bg-white text-[#2d3a80] hover:bg-white/90 font-bold">
                   Sign up
                 </Button>
               </Link>
             )}
             {loaded && user && (
-              <Link href="/profile" onClick={onClose}>
-                <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white hover:text-[#2d3a80]">
-                  My Account
-                </Button>
-              </Link>
+              <>
+                {!hasPremium && <GoAdFreeButton className="w-full" />}
+                <Link href="/profile" onClick={onClose}>
+                  <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                    Manage Profile
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -208,7 +249,7 @@ function MobileMenu({
 }
 
 export function Navbar() {
-  const { user, loaded } = useUser()
+  const { user, loaded, hasPremium } = useUser()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -247,7 +288,7 @@ export function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <Link href="/about"
-              className={`text-sm transition-colors tracking-wide uppercase ${
+              className={`text-sm font-bold transition-colors tracking-wide uppercase ${
                 pathname === '/about' ? 'text-white' : 'text-white/70 hover:text-white'
               }`}>
               About
@@ -258,18 +299,21 @@ export function Navbar() {
 
             {loaded && !user && (
               <Link href="/signup">
-                <Button size="sm" className="bg-white text-[#2d3a80] hover:bg-white/90">
+                <Button size="sm" className="bg-white text-[#2d3a80] hover:bg-white/90 font-bold">
                   Sign up
                 </Button>
               </Link>
             )}
 
             {loaded && user && (
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80]">
-                  My Account
-                </Button>
-              </Link>
+              <div className="flex items-center gap-3">
+                {!hasPremium && <GoAdFreeButton />}
+                <Link href="/profile">
+                  <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80] font-bold">
+                    Manage Profile
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
 
@@ -292,6 +336,7 @@ export function Navbar() {
         onClose={() => setMobileOpen(false)}
         user={user}
         loaded={loaded}
+        hasPremium={hasPremium}
         professionalsItems={professionalsItems}
         organisationsItems={organisationsItems}
       />

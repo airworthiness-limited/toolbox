@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   ENTRY_STATUSES,
   MAINTENANCE_CATEGORIES,
@@ -19,6 +18,8 @@ import {
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
+
+const PAGE_SIZE = 25
 
 function getCategoryLabel(value: string) {
   return MAINTENANCE_CATEGORIES.find(c => c.value === value)?.label ?? value
@@ -33,38 +34,64 @@ function StatusBadge({ status }: { status: EntryStatus }) {
   return <Badge variant={info.color as 'default' | 'secondary' | 'outline' | 'destructive'}>{info.label}</Badge>
 }
 
-export default async function LogbookPage() {
+export default async function LogbookPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; status?: string }>
+}) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('aml_licence_number')
-    .eq('id', user.id)
-    .single()
+  const params = await searchParams
+  const page = Math.max(1, parseInt(params.page || '1', 10))
+  const statusFilter = params.status || 'all'
+  const offset = (page - 1) * PAGE_SIZE
+
+  // Fetch profile and stats counts in parallel
+  const [{ data: profile }, { data: statsEntries }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('aml_licence_number')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('logbook_entries')
+      .select('status, duration_hours')
+      .eq('user_id', user.id),
+  ])
 
   const isAmlHolder = !!profile?.aml_licence_number
 
-  const { data: entries } = await supabase
+  const allStats = statsEntries ?? []
+  const totalCount = allStats.length
+  const totalHours = allStats.reduce((sum, e) => sum + Number(e.duration_hours), 0)
+  const verifiedCount = allStats.filter(e => e.status === 'verified' || e.status === 'qc_approved' || e.status === 'pending_qc').length
+  const pendingCount = allStats.filter(e => e.status === 'pending_verification').length
+  const draftCount = allStats.filter(e => e.status === 'draft').length
+
+  // Fetch the current page of entries with the active filter
+  let query = supabase
     .from('logbook_entries')
-    .select('*')
+    .select('id, task_date, aircraft_type, aircraft_registration, ata_chapter, category, duration_hours, status')
     .eq('user_id', user.id)
     .order('task_date', { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1)
 
-  const allEntries = entries ?? []
-  const totalHours = allEntries.reduce((sum, e) => sum + Number(e.duration_hours), 0)
-  const verifiedCount = allEntries.filter(e => e.status === 'verified' || e.status === 'qc_approved' || e.status === 'pending_qc').length
-  const pendingCount = allEntries.filter(e => e.status === 'pending_verification').length
-  const draftCount = allEntries.filter(e => e.status === 'draft').length
-
-  const statuses: (EntryStatus | 'all')[] = ['all', 'draft', 'pending_verification', 'verified', 'rejected', 'pending_qc', 'qc_approved', 'qc_rejected']
-
-  function filterEntries(status: EntryStatus | 'all') {
-    if (status === 'all') return allEntries
-    return allEntries.filter(e => e.status === status)
+  if (statusFilter !== 'all') {
+    query = query.eq('status', statusFilter)
   }
+
+  const { data: entries } = await query
+
+  const pageEntries = entries ?? []
+  const hasNextPage = pageEntries.length === PAGE_SIZE
+
+  // Count for the active filter (for accurate "showing X of Y")
+  const filteredTotal = statusFilter === 'all'
+    ? totalCount
+    : allStats.filter(e => e.status === statusFilter).length
 
   return (
     <div className="min-h-screen aw-gradient">
@@ -95,7 +122,7 @@ export default async function LogbookPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
             <p className="text-sm text-white/70">Total Entries</p>
-            <p className="text-3xl font-bold mt-1 text-white">{allEntries.length}</p>
+            <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
             <p className="text-sm text-white/70">Total Hours</p>
@@ -123,76 +150,104 @@ export default async function LogbookPage() {
 
         <AdPlaceholder format="inline" className="my-6" />
 
-        {/* Entries table */}
-        <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">All ({allEntries.length})</TabsTrigger>
-            <TabsTrigger value="draft">Drafts ({draftCount})</TabsTrigger>
-            <TabsTrigger value="pending_verification">Pending ({pendingCount})</TabsTrigger>
-            <TabsTrigger value="verified">Verified ({verifiedCount})</TabsTrigger>
-          </TabsList>
-
-          {['all', 'draft', 'pending_verification', 'verified'].map(tab => (
-            <TabsContent key={tab} value={tab}>
-              {filterEntries(tab as EntryStatus | 'all').length === 0 ? (
-                <div className="bg-white rounded-xl border p-8 text-center text-gray-500 bg-white">
-                  <p>No entries{tab !== 'all' ? ` with status "${ENTRY_STATUSES[tab as EntryStatus]?.label ?? tab}"` : ''}.</p>
-                  {tab === 'all' && (
-                    <p className="text-sm mt-1">
-                      <Link href="/logbook/new" className="text-blue-600 hover:underline">Create your first entry</Link>
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-xl border overflow-hidden bg-white">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Aircraft</TableHead>
-                        <TableHead className="hidden md:table-cell">ATA</TableHead>
-                        <TableHead className="hidden md:table-cell">Category</TableHead>
-                        <TableHead>Hours</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filterEntries(tab as EntryStatus | 'all').map(entry => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="whitespace-nowrap">
-                            {new Date(entry.task_date).toLocaleDateString('en-GB', {
-                              day: '2-digit', month: 'short', year: 'numeric'
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">{entry.aircraft_type}</div>
-                            <div className="text-xs text-gray-500">{entry.aircraft_registration}</div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                            {getAtaLabel(entry.ata_chapter)}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                            {getCategoryLabel(entry.category)}
-                          </TableCell>
-                          <TableCell>{Number(entry.duration_hours).toFixed(1)}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={entry.status} />
-                          </TableCell>
-                          <TableCell>
-                            <Link href={`/logbook/${entry.id}`}>
-                              <Button variant="ghost" size="sm">View</Button>
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </TabsContent>
+        {/* Status filter tabs (link-based for pagination compat) */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {[
+            { value: 'all', label: `All (${totalCount})` },
+            { value: 'draft', label: `Drafts (${draftCount})` },
+            { value: 'pending_verification', label: `Pending (${pendingCount})` },
+            { value: 'verified', label: `Verified (${verifiedCount})` },
+          ].map(tab => (
+            <Link
+              key={tab.value}
+              href={`/logbook?status=${tab.value}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === tab.value
+                  ? 'bg-white text-gray-900'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20'
+              }`}
+            >
+              {tab.label}
+            </Link>
           ))}
-        </Tabs>
+        </div>
+
+        {/* Entries table */}
+        {pageEntries.length === 0 ? (
+          <div className="bg-white rounded-xl border p-8 text-center text-gray-500">
+            <p>No entries{statusFilter !== 'all' ? ` with status "${ENTRY_STATUSES[statusFilter as EntryStatus]?.label ?? statusFilter}"` : ''}.</p>
+            {statusFilter === 'all' && (
+              <p className="text-sm mt-1">
+                <Link href="/logbook/new" className="text-blue-600 hover:underline">Create your first entry</Link>
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border overflow-hidden bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Aircraft</TableHead>
+                  <TableHead className="hidden md:table-cell">ATA</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead>Hours</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageEntries.map(entry => (
+                  <TableRow key={entry.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {new Date(entry.task_date).toLocaleDateString('en-GB', {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{entry.aircraft_type}</div>
+                      <div className="text-xs text-gray-500">{entry.aircraft_registration}</div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-gray-600">
+                      {getAtaLabel(entry.ata_chapter)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-gray-600">
+                      {getCategoryLabel(entry.category)}
+                    </TableCell>
+                    <TableCell>{Number(entry.duration_hours).toFixed(1)}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={entry.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/logbook/${entry.id}`}>
+                        <Button variant="ghost" size="sm">View</Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredTotal > PAGE_SIZE && (
+          <div className="flex items-center justify-between mt-6">
+            {page > 1 ? (
+              <Link href={`/logbook?status=${statusFilter}&page=${page - 1}`}>
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10">Previous</Button>
+              </Link>
+            ) : <div />}
+            <span className="text-sm text-white/60">
+              Page {page} of {Math.ceil(filteredTotal / PAGE_SIZE)}
+            </span>
+            {hasNextPage ? (
+              <Link href={`/logbook?status=${statusFilter}&page=${page + 1}`}>
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10">Next</Button>
+              </Link>
+            ) : <div />}
+          </div>
+        )}
 
       </div>
     </div>

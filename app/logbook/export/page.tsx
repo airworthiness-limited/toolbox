@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Button } from '@/components/ui/button'
 import { PrintButton } from './print-button'
 import {
   Table,
@@ -15,11 +17,21 @@ function label(list: readonly { value: string; label: string }[], value: string)
   return list.find(i => i.value === value)?.label ?? value
 }
 
-export default async function ExportPage() {
+const PAGE_SIZE = 25
+
+export default async function ExportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const params = await searchParams
+  const page = Math.max(1, parseInt(params.page || '1', 10))
+  const offset = (page - 1) * PAGE_SIZE
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -27,15 +39,17 @@ export default async function ExportPage() {
     .eq('id', user.id)
     .single()
 
-  // Fetch all verified/qc_approved entries with verifier info
+  // Fetch paginated verified/qc_approved entries
   const { data: entries } = await supabase
     .from('logbook_entries')
-    .select('*')
+    .select('id, task_date, aircraft_type, aircraft_registration, ata_chapter, description, category, duration_hours, supervised, job_number, verifier_id, verified_at, status')
     .eq('user_id', user.id)
     .in('status', ['verified', 'qc_approved', 'pending_qc'])
     .order('task_date', { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1)
 
   const allEntries = entries ?? []
+  const hasNextPage = allEntries.length === PAGE_SIZE
 
   // Fetch verifier profiles for all entries
   const verifierIds = [...new Set(allEntries.map(e => e.verifier_id).filter(Boolean))]
@@ -140,6 +154,23 @@ export default async function ExportPage() {
                 })}
               </TableBody>
             </Table>
+          </div>
+        )}
+
+        {/* Pagination (hidden in print) */}
+        {(page > 1 || hasNextPage) && (
+          <div className="flex items-center justify-between mt-6 print:hidden">
+            {page > 1 ? (
+              <Link href={`/logbook/export?page=${page - 1}`}>
+                <Button variant="outline" size="sm">Previous</Button>
+              </Link>
+            ) : <div />}
+            <span className="text-sm text-gray-500">Page {page}</span>
+            {hasNextPage ? (
+              <Link href={`/logbook/export?page=${page + 1}`}>
+                <Button variant="outline" size="sm">Next</Button>
+              </Link>
+            ) : <div />}
           </div>
         )}
 
