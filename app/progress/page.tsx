@@ -192,22 +192,29 @@ export default async function ProgressPage({
           </p>
         </div>
 
-        {/* Category Selector */}
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-4">
-            Categories
-          </label>
+        {/* BTC strip */}
+        <div className="bg-white rounded-xl px-5 py-3 mb-4">
+          <BtcToggle
+            initialValue={hasBtc}
+            selectedCategory={selectedCategory}
+            userId={user.id}
+          />
+        </div>
 
-          <div className="space-y-4">
+        {/* Two columns: Categories (wider) | Progress (narrower) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
+
+          {/* Categories */}
+          <div className="bg-white rounded-xl p-5 space-y-3">
             {categoryGroups.map(group => (
               <div key={group.label}>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{group.label}</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">{group.label}</p>
+                <div className="flex flex-wrap gap-1.5">
                   {group.cats.map(catValue => (
                     <Link
                       key={catValue}
                       href={`/progress?category=${catValue}`}
-                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
                         selectedCategory === catValue
                           ? 'bg-gray-900 text-white border-gray-900'
                           : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
@@ -221,49 +228,27 @@ export default async function ProgressPage({
             ))}
           </div>
 
-          <p className="text-xs text-gray-400 mt-3">
-            {categoryDescription}
-          </p>
-        </div>
-
-        <AdPlaceholder format="banner" className="my-6" />
-
-        {/* Progress Overview */}
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-3xl font-bold text-gray-900">{progressPercent}%</p>
-              <p className="text-sm text-gray-500">
-                {passedCount} of {totalExams} exams passed for {selectedCategory}
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div
-              className={`h-3 rounded-full transition-all ${
-                progressPercent === 100 ? 'bg-green-500' : 'bg-amber-500'
-              }`}
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-
-          {progressPercent === 100 && (
-            <p className="text-sm text-green-700 mt-3 font-medium">
-              All exams completed for {selectedCategory}. You may be eligible to apply for your licence once experience requirements are met.
+          {/* Progress */}
+          <div className="bg-white rounded-xl p-5 flex flex-col justify-center">
+            <p className="text-4xl font-bold text-gray-900">{progressPercent}%</p>
+            <p className="text-sm text-gray-500 mt-1 mb-3">
+              {passedCount} of {totalExams} exams passed for {selectedCategory}
             </p>
-          )}
-        </div>
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className={`h-3 rounded-full transition-all ${
+                  progressPercent === 100 ? 'bg-green-500' : 'bg-amber-500'
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {progressPercent === 100 && (
+              <p className="text-sm text-green-700 mt-3 font-medium">
+                All exams completed for {selectedCategory}.
+              </p>
+            )}
+          </div>
 
-        <AdPlaceholder format="banner" className="my-6" />
-
-        {/* Basic Training Course */}
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <BtcToggle
-            initialValue={hasBtc}
-            selectedCategory={selectedCategory}
-            userId={user.id}
-          />
         </div>
 
         <AdPlaceholder format="banner" className="my-6" />
