@@ -20,11 +20,11 @@ import {
   RECENCY_DAY_THRESHOLD,
   EXPERIENCE_REQUIREMENTS,
   EXPERIENCE_VALIDITY_YEARS,
-  MIN_CIVIL_MONTHS,
   CATEGORY_TO_AIRCRAFT,
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
+import { MilitaryExperience } from './military-experience'
 
 const PAGE_SIZE = 25
 
@@ -141,10 +141,6 @@ export default async function LogbookPage({
   const militaryMonths = calcMonths(militaryPeriods, tenYearsAgo)
   const totalExpMonths = civilMonths + militaryMonths
 
-  // Check if meets requirements
-  const meetsFullExp = expReq ? totalExpMonths >= expReq.years * 12 : false
-  const meetsCivilMin = civilMonths >= MIN_CIVIL_MONTHS
-
   // 10-year cutoff for entries
   const tenYearsAgoTime = tenYearsAgo.getTime()
 
@@ -206,8 +202,8 @@ export default async function LogbookPage({
 
         {/* Category Selector */}
         <div className="bg-white rounded-xl p-5 mb-6">
-          <div className="flex flex-wrap gap-x-6 gap-y-3">
-            <div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
               <Link
                 href="/logbook"
                 className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
@@ -220,27 +216,29 @@ export default async function LogbookPage({
               </Link>
             </div>
             {CATEGORY_GROUPS.map(group => (
-              <div key={group.label} className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{group.label}</span>
-                {group.cats.map(catValue => (
-                  <Link
-                    key={catValue}
-                    href={buildUrl({ category: catValue, page: '1' })}
-                    className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                      selectedCategory === catValue
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    {catValue}
-                  </Link>
-                ))}
+              <div key={group.label}>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">{group.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.cats.map(catValue => (
+                    <Link
+                      key={catValue}
+                      href={buildUrl({ category: catValue, page: '1' })}
+                      className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                        selectedCategory === catValue
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {catValue}
+                    </Link>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Stats + Recency + Experience in grid */}
+        {/* Stats + Recency */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-6">
 
           {/* Left: Stats */}
@@ -260,9 +258,9 @@ export default async function LogbookPage({
           </div>
 
           {/* Right: Recency */}
-          <div className={`bg-white rounded-xl p-5 border-2 ${meetsRecency ? 'border-green-300' : 'border-amber-300'}`}>
+          <div className="bg-white rounded-xl p-5">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Recency (Last 2 Years){selectedCategory ? ` \u2013 ${selectedCategory}` : ''}
+              Recency (6 Months / 2 Years){selectedCategory ? ` \u2013 ${selectedCategory}` : ''}
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -300,55 +298,20 @@ export default async function LogbookPage({
           </div>
         </div>
 
-        {/* Experience Calculator (when category selected) */}
+        {/* Military Experience (when category selected) */}
         {selectedCategory && expReq && (
-          <div className="bg-white rounded-xl p-5 mb-6">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-              Experience Requirement \u2013 {selectedCategory}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Civil Experience</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.floor(civilMonths / 12)}y {civilMonths % 12}m</p>
-                {civilMonths < MIN_CIVIL_MONTHS && (
-                  <p className="text-xs text-amber-600 font-medium mt-1">Minimum {MIN_CIVIL_MONTHS} months civil required</p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Military / Non-Civil</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.floor(militaryMonths / 12)}y {militaryMonths % 12}m</p>
-                {militaryMonths > 0 && (
-                  <p className="text-xs text-gray-400 mt-1">Recognised toward total</p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total (last {EXPERIENCE_VALIDITY_YEARS} years)</p>
-                <p className={`text-2xl font-bold ${meetsFullExp && meetsCivilMin ? 'text-green-600' : 'text-gray-900'}`}>
-                  {Math.floor(totalExpMonths / 12)}y {totalExpMonths % 12}m
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Required: {expReq.years} years (or {expReq.yearsWithBtc} year{expReq.yearsWithBtc > 1 ? 's' : ''} with Part 147 BTC)
-                </p>
-                {meetsFullExp && meetsCivilMin && (
-                  <p className="text-xs text-green-600 font-bold mt-1">Requirement met</p>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 mt-3">
-              Based on <Link href="/logbook/employment" className="text-blue-600 hover:underline">employment history</Link>. Mark military/non-civil periods in your employment records.
-            </p>
+          <div className="mb-6">
+            <MilitaryExperience
+              selectedCategory={selectedCategory}
+              hasMilitaryPeriod={militaryMonths > 0}
+              militaryStart={militaryPeriods[0]?.start_date ?? ''}
+              militaryEnd={militaryPeriods[0]?.end_date ?? null}
+              civilMonths={civilMonths}
+              militaryMonths={militaryMonths}
+              totalExpMonths={totalExpMonths}
+            />
           </div>
         )}
-
-        {/* Quick links */}
-        <div className="flex gap-3 mb-6 text-sm">
-          <Link href="/logbook/employment" className="text-white/70 hover:text-white underline">
-            Employment History
-          </Link>
-          <Link href="/profile" className="text-white/70 hover:text-white underline">
-            AML Profile
-          </Link>
-        </div>
 
         <AdPlaceholder format="inline" className="my-6" />
 
