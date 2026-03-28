@@ -17,20 +17,32 @@ export type AmlCategory = (typeof AML_CATEGORIES)[number]['value']
 
 // Aircraft categories -determines which AML categories can verify
 export const AIRCRAFT_CATEGORIES = [
-  { value: 'large_aeroplane', label: 'Large Aeroplane' },
-  { value: 'small_aeroplane', label: 'Small Aeroplane' },
-  { value: 'large_helicopter', label: 'Large Helicopter' },
-  { value: 'small_helicopter', label: 'Small Helicopter' },
+  { value: 'aeroplane_turbine', label: 'Aeroplane \u2013 Turbine' },
+  { value: 'aeroplane_piston', label: 'Aeroplane \u2013 Piston' },
+  { value: 'helicopter_turbine', label: 'Helicopter \u2013 Turbine' },
+  { value: 'helicopter_piston', label: 'Helicopter \u2013 Piston' },
 ] as const
 
 export type AircraftCategory = (typeof AIRCRAFT_CATEGORIES)[number]['value']
 
 // Which AML categories can verify work on which aircraft categories
 export const VERIFICATION_AUTHORITY: Record<AircraftCategory, AmlCategory[]> = {
-  large_aeroplane: ['A1', 'B1.1', 'C'],
-  small_aeroplane: ['A2', 'B1.2', 'B3'],
-  large_helicopter: ['A3', 'B1.3'],
-  small_helicopter: ['A4', 'B1.4'],
+  aeroplane_turbine: ['A1', 'B1.1', 'C'],
+  aeroplane_piston: ['A2', 'B1.2', 'B3'],
+  helicopter_turbine: ['A3', 'B1.3'],
+  helicopter_piston: ['A4', 'B1.4'],
+}
+
+// Recency thresholds per CAP 741
+export const RECENCY_PERIOD_YEARS = 2
+export const RECENCY_TASK_THRESHOLD = 180
+export const RECENCY_DAY_THRESHOLD = 100
+
+// Scope of work descriptions per licence category group
+export const SCOPE_OF_WORK: Record<string, string> = {
+  'B1/B3': 'Maintenance on structure, powerplant, mechanical and electrical systems; simple avionics tests not requiring troubleshooting.',
+  'B2': 'Avionics and electrical systems; electrical and avionics within powerplant and mechanical systems requiring simple tests.',
+  'Category A': 'Minor scheduled line maintenance and simple defect rectification.',
 }
 
 // B2 can verify avionics/electrical tasks on any aircraft category
