@@ -14,6 +14,7 @@ import {
 } from '@/lib/progress/constants'
 import type { ModuleExamProgress, ExamRow } from '@/lib/progress/types'
 import { ProgressTracker } from './progress-tracker'
+import { AdPlaceholder } from '@/components/ad-placeholder'
 
 export default async function ProgressPage({
   searchParams,
@@ -209,6 +210,8 @@ export default async function ProgressPage({
             {categoryDescription}
           </p>
         </div>
+
+        <AdPlaceholder format="inline" className="my-6" />
 
         {/* Progress Overview */}
         <div className="bg-white rounded-xl p-6 mb-6">

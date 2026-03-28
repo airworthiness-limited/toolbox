@@ -18,6 +18,7 @@ import {
   ATA_CHAPTERS,
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
+import { AdPlaceholder } from '@/components/ad-placeholder'
 
 function getCategoryLabel(value: string) {
   return MAINTENANCE_CATEGORIES.find(c => c.value === value)?.label ?? value
@@ -119,6 +120,8 @@ export default async function LogbookPage() {
             AML Profile
           </Link>
         </div>
+
+        <AdPlaceholder format="inline" className="my-6" />
 
         {/* Entries table */}
         <Tabs defaultValue="all">

@@ -9,6 +9,7 @@ import { MODULE_REQUIREMENTS, PART_66_MODULES, ESSAY_MODULES, PASS_MARK, PASS_VA
 import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
 import { ProfileEditor } from './profile-editor'
+import { AdPlaceholder } from '@/components/ad-placeholder'
 import { LogoutButton } from '../dashboard/logout-button'
 
 // Handle backward compatibility: convert old string[] type_ratings to TypeEndorsement[]
@@ -274,6 +275,8 @@ export default async function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        <AdPlaceholder format="inline" className="my-6" />
 
         {/* Aircraft Maintenance Licence */}
         <Card className="mb-6 bg-white">

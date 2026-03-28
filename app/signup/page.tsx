@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AdPlaceholder } from '@/components/ad-placeholder'
 
 function AuthForm() {
   const router = useRouter()
@@ -107,74 +108,85 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex aw-gradient">
-      {/* Left panel - branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
-        <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
-            Airworthiness
-          </h1>
-          <p className="text-white/50 text-sm mt-1 tracking-wide uppercase">for Everyone</p>
-        </div>
-
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold text-white leading-snug">
-              The digital platform for<br />aviation engineering<br />professionals.
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm">CAA-aligned licence management</p>
-                <p className="text-white/50 text-xs mt-0.5">Track your Part 66 modules, type ratings, and continuation training.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm">Digital maintenance logbook</p>
-                <p className="text-white/50 text-xs mt-0.5">Record, verify, and export your maintenance task history.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm">Verified professional network</p>
-                <p className="text-white/50 text-xs mt-0.5">Connect with licence-verified aviation engineering professionals.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-white/30 text-xs">
-          Airworthiness Limited. All rights reserved.
-        </p>
+    <div className="aw-gradient">
+      {/* Top ad banner */}
+      <div className="max-w-6xl mx-auto px-4 pt-4">
+        <AdPlaceholder format="banner" />
       </div>
 
-      {/* Right panel - form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-8 text-center">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Airworthiness</h1>
-            <p className="text-white/50 text-xs mt-0.5 tracking-wide uppercase">for Everyone</p>
+      <div className="flex min-h-[calc(100vh-200px)]">
+        {/* Left sidebar ad */}
+        <div className="hidden xl:flex items-center pl-4">
+          <AdPlaceholder format="sidebar" />
+        </div>
+
+        {/* Left panel - branding */}
+        <div className="hidden lg:flex flex-1 flex-col justify-center p-12">
+          <div className="mb-10">
+            <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
+              Airworthiness
+            </h1>
+            <p className="text-white/50 text-sm mt-1 tracking-wide">for Everyone</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold text-white leading-snug">
+                The digital platform for<br />aviation engineering<br />professionals and airworthiness<br />organisations.
+              </h2>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Aircraft Maintenance Licence (Part 66) Module Tracker</p>
+                  <p className="text-white/50 text-xs mt-0.5">Track your progress towards completing your subject modules required for a licence category.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Digital Logbook (CAP741)</p>
+                  <p className="text-white/50 text-xs mt-0.5">Record your range of tasks towards a licence category, or to demonstrate recent experience.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">Verification by Licensed Engineers</p>
+                  <p className="text-white/50 text-xs mt-0.5">Licensed Aircraft Engineers will be awarded trusted user privileges to verify an Aircraft Mechanic's tasks on their licence journey.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-white/30 text-xs mt-12">
+            Airworthiness Limited. All rights reserved.
+          </p>
+        </div>
+
+        {/* Right panel - form */}
+        <div className="w-full lg:w-auto lg:min-w-[480px] flex items-center justify-center p-6 lg:p-12">
+          <div className="w-full max-w-md">
+            {/* Mobile logo */}
+            <div className="lg:hidden mb-8 text-center">
+              <h1 className="text-2xl font-bold text-white tracking-tight">Airworthiness</h1>
+              <p className="text-white/50 text-xs mt-0.5 tracking-wide">for Everyone</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             {/* Tab switcher */}
             <div className="flex border-b border-gray-100">
               <button
@@ -369,8 +381,19 @@ function AuthForm() {
                 </p>
               )}
             </div>
+            </div>
           </div>
         </div>
+
+        {/* Right sidebar ad */}
+        <div className="hidden xl:flex items-center pr-4">
+          <AdPlaceholder format="sidebar" />
+        </div>
+      </div>
+
+      {/* Bottom ad banner */}
+      <div className="max-w-6xl mx-auto px-4 pb-4">
+        <AdPlaceholder format="banner" />
       </div>
     </div>
   )

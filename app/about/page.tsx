@@ -1,3 +1,5 @@
+import { AdPlaceholder } from '@/components/ad-placeholder'
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -31,6 +33,8 @@ export default function AboutPage() {
             </p>
           </div>
         </section>
+
+        <AdPlaceholder format="sidebar" className="my-6" />
 
         {/* Values */}
         <section className="mb-16">
