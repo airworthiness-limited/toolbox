@@ -105,7 +105,7 @@ export default async function VerifyPage() {
 
         <div className="bg-white rounded-xl border p-4 mb-6">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Your AML:</span> {profile.aml_licence_number} — Categories: {verifierCategories.join(', ') || 'None'}
+            <span className="font-medium">Your AML:</span> {profile.aml_licence_number}, Categories: {verifierCategories.join(', ') || 'None'}
           </p>
         </div>
 

@@ -30,7 +30,7 @@ export function MarkCompleteButton({ moduleId, courseSlug, isCompleted, nextModu
       return
     }
 
-    // Save progress — user_id is now included so RLS allows the insert
+    // Save progress - user_id is now included so RLS allows the insert
     const { error } = await supabase
       .from('module_progress')
       .upsert({

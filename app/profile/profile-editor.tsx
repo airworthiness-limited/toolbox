@@ -78,11 +78,11 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // Licence holder toggle — default to open if they already have data
+  // Licence holder toggle -default to open if they already have data
   const hasExistingLicence = !!(profile.aml_licence_number || profile.aml_categories.length > 0)
   const [isLicenceHolder, setIsLicenceHolder] = useState(hasExistingLicence)
 
-  // Type ratings toggle — default open if they already have entries
+  // Type ratings toggle -default open if they already have entries
   const hasExistingRatings = profile.type_ratings.length > 0
   const [showTypeRatings, setShowTypeRatings] = useState(hasExistingRatings)
 

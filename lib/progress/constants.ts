@@ -1,4 +1,4 @@
-// Part-66 Appendix I — Basic Knowledge Requirements
+// Part-66 Appendix I -Basic Knowledge Requirements
 // Module definitions, category requirements, knowledge levels, and equivalency rules
 
 export const PART_66_MODULES = [
@@ -32,7 +32,7 @@ export const ESSAY_MODULES: readonly string[] = ['7A', '7B', '9A', '9B', '10']
 
 export const PASS_MARK = 75
 
-// Target categories available for progress tracking (excludes C — no modular exams)
+// Target categories available for progress tracking (excludes C -no modular exams)
 export const PROGRESS_CATEGORIES = [
   { value: 'A1', label: 'Turbine Aeroplanes' },
   { value: 'A2', label: 'Piston Aeroplanes' },
@@ -51,21 +51,21 @@ export type ProgressCategory = (typeof PROGRESS_CATEGORIES)[number]['value']
 // Required modules per sub-category
 // Module 4 is NOT required for any Category A
 export const MODULE_REQUIREMENTS: Record<string, string[]> = {
-  // Category A — Aeroplanes
+  // Category A -Aeroplanes
   A1: ['1', '2', '3', '5', '6', '7A', '8', '9A', '10', '11A', '15', '17A'],
   A2: ['1', '2', '3', '5', '6', '7A', '8', '9A', '10', '11B', '16', '17A'],
-  // Category A — Helicopters
+  // Category A -Helicopters
   A3: ['1', '2', '3', '5', '6', '7A', '8', '9A', '10', '12', '15'],
   A4: ['1', '2', '3', '5', '6', '7A', '8', '9A', '10', '12', '16'],
-  // Category B1 — Aeroplanes
+  // Category B1 -Aeroplanes
   'B1.1': ['1', '2', '3', '4', '5', '6', '7A', '8', '9A', '10', '11A', '15', '17A'],
   'B1.2': ['1', '2', '3', '4', '5', '6', '7A', '8', '9A', '10', '11B', '16', '17A'],
-  // Category B1 — Helicopters
+  // Category B1 -Helicopters
   'B1.3': ['1', '2', '3', '4', '5', '6', '7A', '8', '9A', '10', '12', '15', '17A'],
   'B1.4': ['1', '2', '3', '4', '5', '6', '7A', '8', '9A', '10', '12', '16', '17A'],
-  // Category B2 — Avionics
+  // Category B2 -Avionics
   B2: ['1', '2', '3', '4', '5', '6', '7B', '8', '9B', '10', '13', '14'],
-  // Category B3 — Non-Pressurised Piston Aeroplanes
+  // Category B3 -Non-Pressurised Piston Aeroplanes
   B3: ['1', '2', '3', '4', '5', '6', '7A', '8', '9A', '10', '11C', '16', '17B'],
 }
 
@@ -202,7 +202,7 @@ export type VerificationStatus = keyof typeof VERIFICATION_STATUSES
 // Module passes are valid for 10 years from issue date
 export const PASS_VALIDITY_YEARS = 10
 
-// Experience requirements (years) per category — with and without Basic Training Course
+// Experience requirements (years) per category -with and without Basic Training Course
 export const EXPERIENCE_REQUIREMENTS: Record<string, { withBtc: number; withoutBtc: number }> = {
   A1: { withBtc: 2, withoutBtc: 3 },
   A2: { withBtc: 2, withoutBtc: 3 },

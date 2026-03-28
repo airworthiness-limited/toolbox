@@ -108,7 +108,7 @@ function AuthForm() {
 
   return (
     <div className="min-h-screen flex aw-gradient">
-      {/* Left panel — branding */}
+      {/* Left panel - branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
@@ -165,7 +165,7 @@ function AuthForm() {
         </p>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel - form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           {/* Mobile logo */}

@@ -71,9 +71,9 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Access</strong> your personal data.</li>
               <li><strong>Rectify</strong> inaccurate or incomplete data.</li>
-              <li><strong>Erase</strong> your data ("right to be forgotten") — you can delete your account from your profile page.</li>
+              <li><strong>Erase</strong> your data ("right to be forgotten"); you can delete your account from your profile page.</li>
               <li><strong>Restrict</strong> processing of your data.</li>
-              <li><strong>Data portability</strong> — receive your data in a structured, machine-readable format.</li>
+              <li><strong>Data portability</strong>, receive your data in a structured, machine-readable format.</li>
               <li><strong>Object</strong> to processing based on legitimate interests.</li>
               <li><strong>Withdraw consent</strong> at any time where consent is the lawful basis.</li>
             </ul>

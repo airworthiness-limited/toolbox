@@ -52,7 +52,7 @@ export default async function ExportPage() {
 
   const totalHours = allEntries.reduce((sum, e) => sum + Number(e.duration_hours), 0)
   const dateRange = allEntries.length > 0
-    ? `${new Date(allEntries[0].task_date).toLocaleDateString('en-GB')} — ${new Date(allEntries[allEntries.length - 1].task_date).toLocaleDateString('en-GB')}`
+    ? `${new Date(allEntries[0].task_date).toLocaleDateString('en-GB')} to ${new Date(allEntries[allEntries.length - 1].task_date).toLocaleDateString('en-GB')}`
     : 'N/A'
 
   return (
@@ -129,11 +129,11 @@ export default async function ExportPage() {
                       </TableCell>
                       <TableCell className="print:px-1">{Number(entry.duration_hours).toFixed(1)}</TableCell>
                       <TableCell className="print:px-1">{entry.supervised ? 'Y' : 'N'}</TableCell>
-                      <TableCell className="print:px-1">{entry.job_number ?? '—'}</TableCell>
-                      <TableCell className="print:px-1">{verifier?.full_name ?? '—'}</TableCell>
-                      <TableCell className="print:px-1">{verifier?.aml_licence_number ?? '—'}</TableCell>
+                      <TableCell className="print:px-1">{entry.job_number ?? '-'}</TableCell>
+                      <TableCell className="print:px-1">{verifier?.full_name ?? '-'}</TableCell>
+                      <TableCell className="print:px-1">{verifier?.aml_licence_number ?? '-'}</TableCell>
                       <TableCell className="whitespace-nowrap print:px-1">
-                        {entry.verified_at ? new Date(entry.verified_at).toLocaleDateString('en-GB') : '—'}
+                        {entry.verified_at ? new Date(entry.verified_at).toLocaleDateString('en-GB') : '-'}
                       </TableCell>
                     </TableRow>
                   )
@@ -145,7 +145,7 @@ export default async function ExportPage() {
 
         {/* Footer */}
         <div className="mt-8 pt-4 border-t text-xs text-gray-400 print:mt-4">
-          <p>Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} — Airworthiness Limited Digital Logbook</p>
+          <p>Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} , Airworthiness Limited Digital Logbook</p>
         </div>
       </div>
     </>

@@ -45,7 +45,7 @@ export default async function HomePage() {
               <div className="p-8 lg:p-10">
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
                   All professional tools are free to use. Airworthiness is a data platform built to support
-                  licence holders throughout their career — from first module to type rating endorsement.
+                  licence holders throughout their career, from first module to type rating endorsement.
                 </p>
 
                 <div className="space-y-6">
@@ -134,9 +134,10 @@ export default async function HomePage() {
 
               <div className="p-8 lg:p-10">
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                  Expert consultancy from a former CAA regulator. We work with initial and continuing
-                  airworthiness organisations — approved, pre-approval, and subcontractors — to strengthen
-                  compliance, prepare for oversight, and build safety culture at every level.
+                  We work with initial and continuing airworthiness organisations; whether approved,
+                  seeking approval, or subcontracting to approved organisations. Our advisory services
+                  help ensure ongoing compliance with safety requirements, so you can continue to trade
+                  in the aviation market with confidence.
                 </p>
 
                 <div className="space-y-6">
@@ -166,9 +167,10 @@ export default async function HomePage() {
                     <div>
                       <h3 className="font-bold text-gray-900 text-sm">Safety Advisory Services</h3>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                        Expert safety advisory in a capacity similar to a non-executive director or independent
-                        committee member. Attend Safety Review Boards for senior leadership and Safety Action
-                        Groups at the local level, strengthening your Safety Management System from the ground up.
+                        Advisory services for your management system, delivered in a capacity similar to a
+                        non-executive director or independent committee member. We attend Safety Review Boards
+                        at leadership level and Safety Action Groups locally, helping ensure non-compliances
+                        are identified and closed before they put your approval at risk.
                       </p>
                     </div>
                   </div>
@@ -200,8 +202,8 @@ export default async function HomePage() {
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         Preparing your Compliance Monitoring Manager, Safety Manager, Quality Manager, or
                         other nominated personnel for CAA acceptance interviews. Covering Part 145, Part 147,
-                        Part CAMO, and Part 21G approvals. From an ex-regulator who knows what the CAA
-                        expects and how to manage that relationship effectively.
+                        Part CAMO, and Part 21G approvals. Delivered with deep regulatory experience and a
+                        practical understanding of how to manage that relationship effectively.
                       </p>
                     </div>
                   </div>

@@ -71,7 +71,7 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
                   <p className="font-medium text-gray-900">{period.employer}</p>
                   <p className="text-sm text-gray-500">
                     {new Date(period.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                    {' — '}
+                    {' - '}
                     {period.end_date
                       ? new Date(period.end_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
                       : 'Present'}

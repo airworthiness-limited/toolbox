@@ -139,7 +139,7 @@ export default async function LogbookEntryPage({ params }: Props) {
             </CardHeader>
             <CardContent className="space-y-3">
               <Row label="Date" value={new Date(entry.task_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} />
-              <Row label="Aircraft" value={`${entry.aircraft_type} — ${entry.aircraft_registration}`} />
+              <Row label="Aircraft" value={`${entry.aircraft_type}, ${entry.aircraft_registration}`} />
               <Row label="Aircraft Category" value={label(AIRCRAFT_CATEGORIES, entry.aircraft_category)} />
               <Row label="ATA Chapter" value={label(ATA_CHAPTERS, entry.ata_chapter)} />
               <Row label="Maintenance Category" value={label(MAINTENANCE_CATEGORIES, entry.category)} />

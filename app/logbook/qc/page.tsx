@@ -100,7 +100,7 @@ export default async function QcPage() {
                       <div className="text-xs text-gray-500">{entry.aircraft_registration}</div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                      {entry.job_number ?? '—'}
+                      {entry.job_number ?? '-'}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-gray-600">
                       {label(ATA_CHAPTERS, entry.ata_chapter)}
