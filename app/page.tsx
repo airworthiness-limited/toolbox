@@ -18,9 +18,9 @@ export default async function HomePage() {
           <h1 className="text-5xl lg:text-6xl text-white leading-tight tracking-tight">
             Airworthiness
           </h1>
-          <p className="text-white/40 text-sm tracking-[0.3em] uppercase mt-2 mb-6">Limited</p>
+          <p className="text-white/40 text-sm tracking-[0.3em] uppercase mt-2 mb-6">for Everyone</p>
           <p className="text-xl lg:text-2xl text-white/70 max-w-2xl mx-auto leading-relaxed">
-            The UK platform for aircraft maintenance professionals and approved organisations.
+            The platform for aviation engineering professionals and initial and continuing airworthiness organisations.
           </p>
         </div>
       </section>
@@ -45,7 +45,7 @@ export default async function HomePage() {
               <div className="p-8 lg:p-10">
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
                   All professional tools are free to use. Airworthiness is a data platform built to support
-                  UK licence holders throughout their career — from first module to type rating endorsement.
+                  licence holders throughout their career — from first module to type rating endorsement.
                 </p>
 
                 <div className="space-y-6">
@@ -134,8 +134,9 @@ export default async function HomePage() {
 
               <div className="p-8 lg:p-10">
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                  Expert consultancy from a former UK CAA regulator. We work with approved organisations
-                  to strengthen compliance, prepare for oversight, and build safety culture at every level.
+                  Expert consultancy from a former CAA regulator. We work with initial and continuing
+                  airworthiness organisations — approved, pre-approval, and subcontractors — to strengthen
+                  compliance, prepare for oversight, and build safety culture at every level.
                 </p>
 
                 <div className="space-y-6">
