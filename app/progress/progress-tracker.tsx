@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,11 +12,13 @@ import {
   VERIFICATION_STATUSES,
 } from '@/lib/progress/constants'
 import type { ExamRow } from '@/lib/progress/types'
+import { AdPlaceholder } from '@/components/ad-placeholder'
 
 interface ProgressTrackerProps {
   examRows: ExamRow[]
   selectedCategory: string
   userId: string
+  showAds?: boolean
 }
 
 // MCQ form state
@@ -65,7 +67,7 @@ function initEssayForm(row: ExamRow): EssayFormState {
   }
 }
 
-export function ProgressTracker({ examRows, selectedCategory, userId }: ProgressTrackerProps) {
+export function ProgressTracker({ examRows, selectedCategory, userId, showAds }: ProgressTrackerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -254,7 +256,7 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
 
   return (
     <div className="space-y-4">
-      {examRows.map(row => {
+      {examRows.map((row, index) => {
         const isEquivalent = !!row.equivalentFrom
         const isMcq = row.examType === 'mcq'
         const isEssay = row.examType === 'essay'
@@ -290,8 +292,8 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
         const statusInfo2 = VERIFICATION_STATUSES[displayVerification]
 
         return (
+          <React.Fragment key={cardKey}>
           <Card
-            key={cardKey}
             className={`${
               row.isExpired
                 ? 'border-red-200 bg-red-50/30'
@@ -303,13 +305,10 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
             }`}
           >
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">
+              <CardTitle className="text-base whitespace-nowrap overflow-hidden text-ellipsis">
                 Module {row.moduleId}: {row.title}
               </CardTitle>
               <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                <Badge variant="secondary" className="text-xs">
-                  {isMcq ? 'Multiple Choice Question' : 'Essay'}
-                </Badge>
                 {row.isExpired && (
                   <Badge variant="destructive">Expired</Badge>
                 )}
@@ -382,6 +381,10 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
               />
             )}
           </Card>
+          {showAds && index < examRows.length - 1 && (
+            <AdPlaceholder format="banner" className="my-2" />
+          )}
+        </React.Fragment>
         )
       })}
     </div>
@@ -413,8 +416,33 @@ function McqCardContent({
 }) {
   return (
     <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Issue Date */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">
+            Part 147 Approval Reference
+          </label>
+          <Input
+            type="text"
+            value={form.part_147_approval_number}
+            onChange={e => onFieldChange(row.moduleId, 'part_147_approval_number', e.target.value)}
+            placeholder="e.g. UK.147.0000"
+            className="text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">
+            Certificate Reference
+          </label>
+          <Input
+            type="text"
+            value={form.certificate_number}
+            onChange={e => onFieldChange(row.moduleId, 'certificate_number', e.target.value)}
+            placeholder="e.g. UK.147.0000.001"
+            className="text-sm"
+          />
+        </div>
+
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">
             Issue Date
@@ -427,35 +455,6 @@ function McqCardContent({
           />
         </div>
 
-        {/* Part 147 Approval Number */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">
-            Part 147 Approval Number
-          </label>
-          <Input
-            type="text"
-            value={form.part_147_approval_number}
-            onChange={e => onFieldChange(row.moduleId, 'part_147_approval_number', e.target.value)}
-            placeholder="e.g. UK.147.0000"
-            className="text-sm"
-          />
-        </div>
-
-        {/* Certificate Number */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">
-            Certificate Number
-          </label>
-          <Input
-            type="text"
-            value={form.certificate_number}
-            onChange={e => onFieldChange(row.moduleId, 'certificate_number', e.target.value)}
-            placeholder="e.g. UK.147.0000.001"
-            className="text-sm"
-          />
-        </div>
-
-        {/* Mark */}
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">
             Mark (%)
@@ -466,7 +465,7 @@ function McqCardContent({
             max={100}
             value={form.score}
             onChange={e => onFieldChange(row.moduleId, 'score', e.target.value)}
-            placeholder="0–100"
+            placeholder="0-100"
             className={`text-sm ${scoreColor(form.score)}`}
           />
         </div>
@@ -554,8 +553,33 @@ function EssayCardContent({
   return (
     <CardContent>
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Issue Date */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Part 147 Approval Reference
+            </label>
+            <Input
+              type="text"
+              value={form.part_147_approval_number}
+              onChange={e => onFieldChange(row.moduleId, 'part_147_approval_number', e.target.value)}
+              placeholder="e.g. UK.147.0000"
+              className="text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Certificate Reference
+            </label>
+            <Input
+              type="text"
+              value={form.certificate_number}
+              onChange={e => onFieldChange(row.moduleId, 'certificate_number', e.target.value)}
+              placeholder="e.g. UK.147.0000.001"
+              className="text-sm"
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               Issue Date
@@ -568,36 +592,23 @@ function EssayCardContent({
             />
           </div>
 
-          {/* Part 147 Approval Number */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
-              Part 147 Approval Number
+              {form.essay_split ? 'Mark 1 (%)' : 'Mark (%)'}
             </label>
             <Input
-              type="text"
-              value={form.part_147_approval_number}
-              onChange={e => onFieldChange(row.moduleId, 'part_147_approval_number', e.target.value)}
-              placeholder="e.g. UK.147.0000"
-              className="text-sm"
-            />
-          </div>
-
-          {/* Certificate Number */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Certificate Number
-            </label>
-            <Input
-              type="text"
-              value={form.certificate_number}
-              onChange={e => onFieldChange(row.moduleId, 'certificate_number', e.target.value)}
-              placeholder="e.g. UK.147.0000.001"
-              className="text-sm"
+              type="number"
+              min={0}
+              max={100}
+              value={form.score}
+              onChange={e => onFieldChange(row.moduleId, 'score', e.target.value)}
+              placeholder="0-100"
+              className={`text-sm ${scoreColor(form.score)}`}
             />
           </div>
         </div>
 
-        {/* Split essay toggle (Module 7 only) */}
+        {/* Split essay toggle */}
         {row.canSplitEssay && (
           <label className="flex items-center gap-2">
             <input
@@ -612,25 +623,9 @@ function EssayCardContent({
           </label>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Essay Mark */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              {form.essay_split ? 'Mark 1 (%)' : 'Mark (%)'}
-            </label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={form.score}
-              onChange={e => onFieldChange(row.moduleId, 'score', e.target.value)}
-              placeholder="0–100"
-              className={`text-sm ${scoreColor(form.score)}`}
-            />
-          </div>
-
-          {/* Second essay mark (only when split) */}
-          {form.essay_split && (
+        {form.essay_split && (
+          <div className="grid grid-cols-2 gap-4">
+            <div />
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Mark 2 (%)
@@ -641,12 +636,12 @@ function EssayCardContent({
                 max={100}
                 value={form.score_2}
                 onChange={e => onFieldChange(row.moduleId, 'score_2', e.target.value)}
-                placeholder="0–100"
+                placeholder="0-100"
                 className={`text-sm ${scoreColor(form.score_2)}`}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Save */}

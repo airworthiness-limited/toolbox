@@ -50,7 +50,7 @@ export function BtcToggle({ initialValue, selectedCategory, userId }: BtcToggleP
       />
       <div>
         <span className="text-sm font-medium text-gray-900">
-          Basic Training Course completed
+          Basic Training Course
         </span>
         <p className="text-xs text-gray-400">
           I have completed a Part 147 Basic Training Course to reduce the practical experience required in my logbook.

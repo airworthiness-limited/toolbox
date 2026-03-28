@@ -168,11 +168,17 @@ export default async function ProgressPage({
   // Category description
   const categoryDescription = PROGRESS_CATEGORIES.find(c => c.value === selectedCategory)?.label ?? ''
 
-  const categoryA = PROGRESS_CATEGORIES.filter(c => c.value.startsWith('A'))
-  const categoryB = PROGRESS_CATEGORIES.filter(c => c.value.startsWith('B'))
-
   const mcqRows = examRows.filter(r => r.examType === 'mcq')
   const essayRows = examRows.filter(r => r.examType === 'essay')
+
+  // Group categories by aircraft type
+  const categoryGroups = [
+    { label: 'Aeroplane \u2013 Turbine', cats: ['A1', 'B1.1'] },
+    { label: 'Aeroplane \u2013 Piston', cats: ['A2', 'B1.2', 'B3'] },
+    { label: 'Helicopter \u2013 Turbine', cats: ['A3', 'B1.3'] },
+    { label: 'Helicopter \u2013 Piston', cats: ['A4', 'B1.4'] },
+    { label: 'Avionics', cats: ['B2'] },
+  ]
 
   return (
     <div className="min-h-screen aw-gradient">
@@ -180,9 +186,9 @@ export default async function ProgressPage({
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl text-white">Aircraft Maintenance Licence (Part 66) Subject Module Progress</h1>
+          <h1 className="text-2xl text-white">Exam Progress</h1>
           <p className="text-white/60 mt-1">
-            Track your subject module examination progress.
+            Track your Aircraft Maintenance Licence (Part 66) subject module examination progress.
           </p>
         </div>
 
@@ -193,43 +199,26 @@ export default async function ProgressPage({
           </label>
 
           <div className="space-y-4">
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category A</p>
-              <div className="flex flex-wrap gap-2">
-                {categoryA.map(cat => (
-                  <Link
-                    key={cat.value}
-                    href={`/progress?category=${cat.value}`}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      selectedCategory === cat.value
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    {cat.value}
-                  </Link>
-                ))}
+            {categoryGroups.map(group => (
+              <div key={group.label}>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{group.label}</p>
+                <div className="flex flex-wrap gap-2">
+                  {group.cats.map(catValue => (
+                    <Link
+                      key={catValue}
+                      href={`/progress?category=${catValue}`}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        selectedCategory === catValue
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {catValue}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category B</p>
-              <div className="flex flex-wrap gap-2">
-                {categoryB.map(cat => (
-                  <Link
-                    key={cat.value}
-                    href={`/progress?category=${cat.value}`}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      selectedCategory === cat.value
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    {cat.value}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
 
           <p className="text-xs text-gray-400 mt-3">
@@ -288,6 +277,7 @@ export default async function ProgressPage({
               examRows={mcqRows}
               selectedCategory={selectedCategory}
               userId={user.id}
+              showAds
             />
           </div>
 
@@ -299,6 +289,7 @@ export default async function ProgressPage({
                 examRows={essayRows}
                 selectedCategory={selectedCategory}
                 userId={user.id}
+                showAds
               />
             ) : (
               <div className="bg-white/10 rounded-xl border border-white/20 p-6 text-center">
@@ -307,8 +298,6 @@ export default async function ProgressPage({
             )}
           </div>
         </div>
-
-        <AdPlaceholder format="banner" className="my-6" />
 
       </div>
     </div>
