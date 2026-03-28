@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import {
   PART_66_MODULES,
   MODULE_REQUIREMENTS,
@@ -169,49 +168,76 @@ export default async function ProgressPage({
   // Category description
   const categoryDescription = PROGRESS_CATEGORIES.find(c => c.value === selectedCategory)?.label ?? ''
 
+  const categoryA = PROGRESS_CATEGORIES.filter(c => c.value.startsWith('A'))
+  const categoryB = PROGRESS_CATEGORIES.filter(c => c.value.startsWith('B'))
+
+  const mcqRows = examRows.filter(r => r.examType === 'mcq')
+  const essayRows = examRows.filter(r => r.examType === 'essay')
+
   return (
     <div className="min-h-screen aw-gradient">
       <div className="max-w-6xl mx-auto px-4 py-12">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl text-white">Module Exam Progress</h1>
-            <p className="text-white/60 mt-1">
-              Track your Aircraft Maintenance Licence Module Examination progress.
-            </p>
-          </div>
-          <Link href="/profile">
-            <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Profile</Button>
-          </Link>
+        <div className="mb-8">
+          <h1 className="text-2xl text-white">Aircraft Maintenance Licence (Part 66) Subject Module Progress</h1>
+          <p className="text-white/60 mt-1">
+            Track your subject module examination progress.
+          </p>
         </div>
 
         {/* Category Selector */}
         <div className="bg-white rounded-xl p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Aircraft Maintenance Licence Categories
+          <label className="block text-sm font-medium text-gray-700 mb-4">
+            Categories
           </label>
-          <div className="flex flex-wrap gap-2">
-            {PROGRESS_CATEGORIES.map(cat => (
-              <Link
-                key={cat.value}
-                href={`/progress?category=${cat.value}`}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  selectedCategory === cat.value
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                {cat.value}
-              </Link>
-            ))}
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category A</p>
+              <div className="flex flex-wrap gap-2">
+                {categoryA.map(cat => (
+                  <Link
+                    key={cat.value}
+                    href={`/progress?category=${cat.value}`}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      selectedCategory === cat.value
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {cat.value}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category B</p>
+              <div className="flex flex-wrap gap-2">
+                {categoryB.map(cat => (
+                  <Link
+                    key={cat.value}
+                    href={`/progress?category=${cat.value}`}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      selectedCategory === cat.value
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {cat.value}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+
+          <p className="text-xs text-gray-400 mt-3">
             {categoryDescription}
           </p>
         </div>
 
-        <AdPlaceholder format="inline" className="my-6" />
+        <AdPlaceholder format="banner" className="my-6" />
 
         {/* Progress Overview */}
         <div className="bg-white rounded-xl p-6 mb-6">
@@ -224,7 +250,6 @@ export default async function ProgressPage({
             </div>
           </div>
 
-          {/* Progress bar */}
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
               className={`h-3 rounded-full transition-all ${
@@ -241,11 +266,10 @@ export default async function ProgressPage({
           )}
         </div>
 
+        <AdPlaceholder format="banner" className="my-6" />
+
         {/* Basic Training Course */}
         <div className="bg-white rounded-xl p-6 mb-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
-            Basic Training Course
-          </h2>
           <BtcToggle
             initialValue={hasBtc}
             selectedCategory={selectedCategory}
@@ -253,12 +277,38 @@ export default async function ProgressPage({
           />
         </div>
 
-        {/* Exam Progress Cards */}
-        <ProgressTracker
-          examRows={examRows}
-          selectedCategory={selectedCategory}
-          userId={user.id}
-        />
+        <AdPlaceholder format="banner" className="my-6" />
+
+        {/* Exam Progress - Two Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* MCQ Column */}
+          <div>
+            <h2 className="text-lg font-bold text-white mb-4">Multiple-Choice Question Exams</h2>
+            <ProgressTracker
+              examRows={mcqRows}
+              selectedCategory={selectedCategory}
+              userId={user.id}
+            />
+          </div>
+
+          {/* Essay Column */}
+          <div>
+            <h2 className="text-lg font-bold text-white mb-4">Essay Exams</h2>
+            {essayRows.length > 0 ? (
+              <ProgressTracker
+                examRows={essayRows}
+                selectedCategory={selectedCategory}
+                userId={user.id}
+              />
+            ) : (
+              <div className="bg-white/10 rounded-xl border border-white/20 p-6 text-center">
+                <p className="text-white/50 text-sm">No essay exams required for {selectedCategory}.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <AdPlaceholder format="banner" className="my-6" />
 
       </div>
     </div>
