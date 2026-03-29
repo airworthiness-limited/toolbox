@@ -34,6 +34,7 @@ const CATEGORY_FILTERS: { value: string; label: string; cats: AircraftCategory[]
 export function AtaChart({ entries }: AtaChartProps) {
   const [typeFilter, setTypeFilter] = useState('all')
   const [catFilter, setCatFilter] = useState('all')
+  const [sortBy, setSortBy] = useState<'ata' | 'most' | 'least'>('ata')
 
   const filtered = useMemo(() => {
     let result = entries
@@ -65,8 +66,11 @@ export function AtaChart({ entries }: AtaChartProps) {
         counts[ch] = (counts[ch] || 0) + 1
       }
     }
-    return ATA_2200_CHAPTERS.map(ch => ({ code: ch.value, count: counts[ch.value] }))
-  }, [filtered])
+    const result = ATA_2200_CHAPTERS.map(ch => ({ code: ch.value, count: counts[ch.value] }))
+    if (sortBy === 'most') return [...result].sort((a, b) => b.count - a.count)
+    if (sortBy === 'least') return [...result].sort((a, b) => a.count - b.count)
+    return result
+  }, [filtered, sortBy])
 
   // Round max up to nearest 5, minimum 15 so target line has room above
   const rawMax = Math.max(15, ...ataCounts.map(a => a.count))
@@ -108,48 +112,65 @@ export function AtaChart({ entries }: AtaChartProps) {
         </div>
       </div>
 
-      {/* Category filters on second row */}
-      <div className="flex gap-2 flex-wrap mb-4">
-        {CATEGORY_FILTERS.map(f => (
-          <button
-            key={f.value}
-            onClick={() => setCatFilter(f.value)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-              catFilter === f.value
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Category filters + sort on second row */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {CATEGORY_FILTERS.map(f => (
+            <button
+              key={f.value}
+              onClick={() => setCatFilter(f.value)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                catFilter === f.value
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-1">
+          {([['ata', 'ATA Order'], ['most', 'Most Tasks'], ['least', 'Least Tasks']] as const).map(([val, label]) => (
+            <button
+              key={val}
+              onClick={() => setSortBy(val)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                sortBy === val
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
-        {/* Chart wrapper: bar area is 160px tall, labels 40px below */}
-        <div className="flex" style={{ paddingTop: 12 }}>
-          {/* Left: Y-axis labels */}
-          <div className="relative flex-shrink-0" style={{ width: 24, height: 160 }}>
-            {yTicks.map(tick => {
-              const pct = (1 - tick / maxCount) * 100
-              return (
-                <div
-                  key={tick}
-                  className="absolute text-[10px] leading-none text-gray-400 text-right flex items-center"
-                  style={{ top: `calc(${pct}% - 5px)`, left: 0, right: 2, height: 10 }}
-                >
-                  {tick}
-                </div>
-              )
-            })}
-          </div>
+      {/* Scrollable chart with fixed-width bars */}
+      <div className="flex" style={{ paddingTop: 12 }}>
+        {/* Y-axis labels (sticky left) */}
+        <div className="relative flex-shrink-0 sticky left-0 bg-white z-10" style={{ width: 24, height: 180 }}>
+          {yTicks.map(tick => {
+            const pct = (1 - tick / maxCount) * 100
+            return (
+              <div
+                key={tick}
+                className="absolute text-[10px] leading-none text-gray-400 text-right flex items-center"
+                style={{ top: `calc(${pct}% - 5px)`, left: 0, right: 2, height: 10 }}
+              >
+                {tick}
+              </div>
+            )
+          })}
+        </div>
 
-          {/* Middle: bars + x labels */}
-          <div className="flex-1 min-w-0">
-            {/* Bar area with grid lines inside */}
-            <div className="relative border-l border-b border-gray-300" style={{ height: 160 }}>
+        {/* Scrollable bar area */}
+        <div className="overflow-x-auto flex-1">
+          <div style={{ width: ataCounts.length * 8 + 2, minWidth: '100%' }}>
+            {/* Bar area */}
+            <div className="relative border-l border-b border-gray-300" style={{ height: 180 }}>
 
-              {/* Grid lines inside bar area */}
               {yTicks.filter(t => t > 0).map(tick => (
                 <div
                   key={`grid-${tick}`}
@@ -158,26 +179,25 @@ export function AtaChart({ entries }: AtaChartProps) {
                 />
               ))}
 
-              {/* Target line inside bar area */}
               <div
-                className="absolute left-0 right-0 border-t-2 border-dashed border-green-400 z-10"
-                style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 100}%` }}
+                className="absolute left-0 right-0 border-t-2 border-dashed z-10"
+                style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 100}%`, borderColor: '#22c55e' }}
               >
-                <span className="absolute -top-4 left-2 text-[10px] text-green-600 font-medium">Target: {ATA_SUB_CHAPTER_TARGET}</span>
+                <span className="absolute -top-4 left-2 text-[10px] font-medium" style={{ color: '#22c55e' }}>Target: {ATA_SUB_CHAPTER_TARGET}</span>
               </div>
 
-              {/* Bars */}
-              <div className="flex items-end gap-0 h-full">
+              <div className="flex items-end h-full" style={{ gap: 1 }}>
                 {ataCounts.map(({ code, count }) => {
                   const pct = count > 0 ? (count / maxCount) * 100 : 0
                   const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
                   return (
-                    <div key={code} className="flex-1 min-w-[1px] flex items-end group relative">
+                    <div key={code} className="flex items-end group relative" style={{ width: 7 }}>
                       <div
-                        className="w-full"
+                        className="rounded-t-sm"
                         style={{
-                          height: count > 0 ? `${Math.max(1, pct)}%` : 0,
-                          backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#60a5fa') : undefined,
+                          width: 7,
+                          height: count > 0 ? `${Math.max(2, pct)}%` : 1,
+                          backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#60a5fa') : '#e5e7eb',
                         }}
                       />
                       <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
@@ -189,23 +209,17 @@ export function AtaChart({ entries }: AtaChartProps) {
               </div>
             </div>
 
-            {/* X-axis labels */}
-            <div className="flex gap-0" style={{ height: 40 }}>
-              {ataCounts.map(({ code }, i) => {
-                const showLabel = i % Math.max(1, Math.floor(ataCounts.length / 25)) === 0
-                return (
-                  <div key={`label-${code}`} className="flex-1 min-w-[1px] flex items-start justify-center pt-1">
-                    {showLabel && (
-                      <span className="text-[7px] text-gray-400 leading-none" style={{ writingMode: 'vertical-lr' }}>
-                        {code}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
+            {/* X-axis labels — every single ATA shown */}
+            <div className="flex" style={{ gap: 1, height: 48 }}>
+              {ataCounts.map(({ code }) => (
+                <div key={`label-${code}`} className="flex items-start justify-center pt-1" style={{ width: 7 }}>
+                  <span className="text-[6px] text-gray-400 leading-none" style={{ writingMode: 'vertical-lr' }}>
+                    {code}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-
         </div>
       </div>
 
