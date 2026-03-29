@@ -125,68 +125,73 @@ export function AtaChart({ entries }: AtaChartProps) {
         ))}
       </div>
 
-      <div className="relative overflow-x-auto">
-        {/* Chart container: bars area + Y-axis on right */}
-        <div className="relative" style={{ paddingRight: 30 }}>
+      <div className="overflow-x-auto">
+        <div className="relative" style={{ paddingRight: 32 }}>
 
-          {/* Horizontal grid lines */}
-          {yTicks.map(tick => (
+          {/* Grid lines (positioned relative to bar area) */}
+          {yTicks.filter(t => t > 0).map(tick => (
             <div
               key={`grid-${tick}`}
               className="absolute left-0 border-t border-gray-100"
-              style={{ bottom: `${(tick / maxCount) * 160 + 44}px`, right: 30 }}
+              style={{ bottom: `${(tick / maxCount) * 160 + 40}px`, right: 32 }}
             />
           ))}
 
           {/* Target line */}
           <div
             className="absolute left-0 border-t-2 border-dashed border-green-400 z-10"
-            style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 160 + 44}px`, right: 30 }}
+            style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 160 + 40}px`, right: 32 }}
           >
             <span className="absolute -top-4 left-2 text-[10px] text-green-600 font-medium">Target: {ATA_SUB_CHAPTER_TARGET}</span>
           </div>
 
-          {/* Y-axis labels on right */}
+          {/* Y-axis labels on right, outside chart */}
           {yTicks.map(tick => (
             <div
               key={tick}
               className="absolute text-[10px] text-gray-400 -translate-y-1/2"
-              style={{ bottom: `${(tick / maxCount) * 160 + 44}px`, right: 0, width: 25, textAlign: 'right' }}
+              style={{ bottom: `${(tick / maxCount) * 160 + 40}px`, right: 0, width: 28, textAlign: 'right' }}
             >
               {tick}
             </div>
           ))}
 
-          {/* Bars + X-axis labels */}
-          <div className="flex items-end gap-0 border-b border-l border-gray-200" style={{ height: 160 + 44, paddingBottom: 44 }}>
-            {ataCounts.map(({ code, count }, i) => {
-              const barH = count > 0 ? Math.max(2, (count / maxCount) * 160) : 0
-              const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
-              const showLabel = i % Math.max(1, Math.floor(ataCounts.length / 25)) === 0
-              return (
-                <div key={code} className="flex-1 min-w-[1px] flex flex-col items-stretch group relative" style={{ gap: 0 }}>
-                  {/* Bar area */}
-                  <div className="flex-1 flex items-end">
+          {/* Bar area — bars sit directly on the X-axis line */}
+          <div className="border-l border-gray-200 relative" style={{ marginRight: 0 }}>
+            <div className="flex items-end gap-0 border-b border-gray-300" style={{ height: 160 }}>
+              {ataCounts.map(({ code, count }) => {
+                const barH = count > 0 ? Math.max(2, (count / maxCount) * 160) : 0
+                const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
+                return (
+                  <div key={code} className="flex-1 min-w-[1px] flex items-end group relative">
                     <div
-                      className={`w-full ${count > 0 ? (meetsTarget ? 'bg-green-500' : 'bg-blue-400') : 'bg-gray-100'}`}
-                      style={{ height: count > 0 ? barH : 1 }}
+                      className={`w-full ${count > 0 ? (meetsTarget ? 'bg-green-500' : 'bg-blue-400') : ''}`}
+                      style={{ height: barH }}
                     />
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+                      {code}: {count} task{count !== 1 ? 's' : ''}
+                    </div>
                   </div>
-                  {/* X label */}
-                  <div className="h-[44px] flex items-start justify-center" style={{ paddingTop: 2 }}>
+                )
+              })}
+            </div>
+
+            {/* X-axis labels below the line */}
+            <div className="flex gap-0" style={{ height: 40 }}>
+              {ataCounts.map(({ code }, i) => {
+                const showLabel = i % Math.max(1, Math.floor(ataCounts.length / 25)) === 0
+                return (
+                  <div key={`label-${code}`} className="flex-1 min-w-[1px] flex items-start justify-center pt-1">
                     {showLabel && (
                       <span className="text-[7px] text-gray-400 leading-none" style={{ writingMode: 'vertical-lr' }}>
                         {code}
                       </span>
                     )}
                   </div>
-                  {/* Tooltip */}
-                  <div className="absolute bottom-[48px] left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
-                    {code}: {count} task{count !== 1 ? 's' : ''}
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
