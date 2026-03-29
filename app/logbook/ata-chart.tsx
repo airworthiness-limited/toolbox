@@ -174,8 +174,11 @@ export function AtaChart({ entries }: AtaChartProps) {
                   return (
                     <div key={code} className="flex-1 min-w-[1px] flex items-end group relative">
                       <div
-                        className={`w-full ${count > 0 ? (meetsTarget ? 'bg-green-500' : 'bg-blue-400') : ''}`}
-                        style={{ height: count > 0 ? `${Math.max(1, pct)}%` : 0 }}
+                        className="w-full"
+                        style={{
+                          height: count > 0 ? `${Math.max(1, pct)}%` : 0,
+                          backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#60a5fa') : undefined,
+                        }}
                       />
                       <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
                         {code}: {count} task{count !== 1 ? 's' : ''}
