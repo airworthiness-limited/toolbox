@@ -152,14 +152,34 @@ export default async function LogbookPage({
   const militaryMonths = calcMonths(militaryPeriods, tenYearsAgo)
   const totalExpMonths = civilMonths + militaryMonths
 
-  // Civil experience span: first task to latest task
-  const taskDates = allStats.map(e => new Date(e.task_date).getTime()).filter(t => t >= tenYearsAgo.getTime())
-  const firstTaskDate = taskDates.length > 0 ? new Date(Math.min(...taskDates)) : null
-  const latestTaskDate = taskDates.length > 0 ? new Date(Math.max(...taskDates)) : null
-  let civilExpMonths = 0
-  if (firstTaskDate && latestTaskDate) {
-    civilExpMonths = (latestTaskDate.getFullYear() - firstTaskDate.getFullYear()) * 12 + (latestTaskDate.getMonth() - firstTaskDate.getMonth())
+  // Civil experience: only count continuous periods where tasks are within 5 days of each other
+  // Gaps > 5 days break the chain (prevents fraud: 2 tasks 5 years apart)
+  const MAX_GAP_DAYS = 5
+  const sortedTaskDates = allStats
+    .map(e => new Date(e.task_date).getTime())
+    .filter(t => t >= tenYearsAgo.getTime())
+    .sort((a, b) => a - b)
+
+  let civilExpDays = 0
+  if (sortedTaskDates.length > 0) {
+    let periodStart = sortedTaskDates[0]
+    let periodEnd = sortedTaskDates[0]
+    for (let i = 1; i < sortedTaskDates.length; i++) {
+      const gap = (sortedTaskDates[i] - periodEnd) / (1000 * 60 * 60 * 24)
+      if (gap <= MAX_GAP_DAYS) {
+        // Continuous — extend the period
+        periodEnd = sortedTaskDates[i]
+      } else {
+        // Gap too large — close this period and start a new one
+        civilExpDays += Math.round((periodEnd - periodStart) / (1000 * 60 * 60 * 24))
+        periodStart = sortedTaskDates[i]
+        periodEnd = sortedTaskDates[i]
+      }
+    }
+    // Close the final period
+    civilExpDays += Math.round((periodEnd - periodStart) / (1000 * 60 * 60 * 24))
   }
+  const civilExpMonths = Math.round(civilExpDays / 30.44)
   const totalCombinedMonths = civilExpMonths + militaryMonths
   const meetsExpThreshold = totalCombinedMonths >= 60 // 5 years
 
@@ -235,12 +255,12 @@ export default async function LogbookPage({
             <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-            <p className="text-sm text-white/70">Verified</p>
-            <p className="text-3xl font-bold mt-1 text-white">{verifiedCount}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
             <p className="text-sm text-white/70">Drafts</p>
             <p className="text-3xl font-bold mt-1 text-white">{draftCount}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
+            <p className="text-sm text-white/70">Verified</p>
+            <p className="text-3xl font-bold mt-1 text-white">{verifiedCount}</p>
           </div>
           <div className="rounded-xl p-5" style={{ backgroundColor: meetsExpThreshold ? '#22c55e' : 'rgba(255,255,255,0.1)', borderWidth: meetsExpThreshold ? 0 : 1, borderColor: 'rgba(255,255,255,0.2)' }}>
             <p className="text-sm" style={{ color: meetsExpThreshold ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.7)' }}>Experience</p>
