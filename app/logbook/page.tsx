@@ -61,7 +61,7 @@ function calcMonths(periods: { start_date: string; end_date: string | null }[], 
 export default async function LogbookPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; category?: string }>
+  searchParams: Promise<{ page?: string; status?: string; category?: string; sort?: string; dir?: string }>
 }) {
   const supabase = await createClient()
 
@@ -72,6 +72,8 @@ export default async function LogbookPage({
   const page = Math.max(1, parseInt(params.page || '1', 10))
   const statusFilter = params.status || 'all'
   const selectedCategory = params.category || ''
+  const sortColumn = params.sort || 'task_date'
+  const sortDir = params.dir === 'asc'
   const offset = (page - 1) * PAGE_SIZE
 
   // Date boundaries
@@ -157,7 +159,7 @@ export default async function LogbookPage({
     .from('logbook_entries')
     .select('id, task_date, aircraft_type, aircraft_registration, aircraft_category, ata_chapter, category, status')
     .eq('user_id', user.id)
-    .order('task_date', { ascending: false })
+    .order(sortColumn, { ascending: sortDir })
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (statusFilter !== 'all') {
@@ -178,7 +180,7 @@ export default async function LogbookPage({
 
   // Build URL helper
   function buildUrl(overrides: Record<string, string>) {
-    const p = { category: selectedCategory, status: statusFilter, page: String(page), ...overrides }
+    const p = { category: selectedCategory, status: statusFilter, page: String(page), sort: sortColumn, dir: sortDir ? 'asc' : 'desc', ...overrides }
     const parts = Object.entries(p).filter(([, v]) => v).map(([k, v]) => `${k}=${v}`)
     return `/logbook?${parts.join('&')}`
   }
@@ -212,48 +214,10 @@ export default async function LogbookPage({
           ata_chapters: (e as any).ata_chapters ?? [],
         }))} />
 
-        {/* Category Selector */}
-        <div className="bg-white rounded-xl p-5 mb-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Link
-                href="/logbook"
-                className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                  !selectedCategory
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                All
-              </Link>
-            </div>
-            {CATEGORY_GROUPS.map(group => (
-              <div key={group.label}>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">{group.label}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {group.cats.map(catValue => (
-                    <Link
-                      key={catValue}
-                      href={buildUrl({ category: catValue, page: '1' })}
-                      className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                        selectedCategory === catValue
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                      }`}
-                    >
-                      {catValue}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Stats + Recency */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-6">
-
-          {/* Left: Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
               <p className="text-sm text-white/70">Tasks</p>
@@ -269,61 +233,55 @@ export default async function LogbookPage({
             </div>
           </div>
 
-          {/* Right: Recency */}
           <div className="bg-white rounded-xl p-5">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Recency (6 Months / 2 Years){selectedCategory ? ` \u2013 ${selectedCategory}` : ''}
+              Recency (6 Months / 2 Years)
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Tasks</span>
-                  <span className={`text-sm font-bold ${recencyTasks >= RECENCY_TASK_THRESHOLD ? 'text-green-600' : 'text-gray-900'}`}>
-                    {recencyTasks} / {RECENCY_TASK_THRESHOLD}
-                  </span>
+                  <span className="text-sm font-bold text-gray-900">{recencyTasks} / {RECENCY_TASK_THRESHOLD}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                   <div
-                    className={`h-1.5 rounded-full ${recencyTasks >= RECENCY_TASK_THRESHOLD ? 'bg-green-500' : 'bg-amber-500'}`}
-                    style={{ width: `${Math.min(100, (recencyTasks / RECENCY_TASK_THRESHOLD) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (recencyTasks / RECENCY_TASK_THRESHOLD) * 100)}%`, backgroundColor: recencyTasks >= RECENCY_TASK_THRESHOLD ? '#22c55e' : '#3b82f6' }}
+                    className="h-1.5 rounded-full"
                   />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Days</span>
-                  <span className={`text-sm font-bold ${recencyDays >= RECENCY_DAY_THRESHOLD ? 'text-green-600' : 'text-gray-900'}`}>
-                    {recencyDays} / {RECENCY_DAY_THRESHOLD}
-                  </span>
+                  <span className="text-sm font-bold text-gray-900">{recencyDays} / {RECENCY_DAY_THRESHOLD}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                   <div
-                    className={`h-1.5 rounded-full ${recencyDays >= RECENCY_DAY_THRESHOLD ? 'bg-green-500' : 'bg-amber-500'}`}
-                    style={{ width: `${Math.min(100, (recencyDays / RECENCY_DAY_THRESHOLD) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (recencyDays / RECENCY_DAY_THRESHOLD) * 100)}%`, backgroundColor: recencyDays >= RECENCY_DAY_THRESHOLD ? '#22c55e' : '#3b82f6' }}
+                    className="h-1.5 rounded-full"
                   />
                 </div>
               </div>
             </div>
-            <p className={`text-xs font-bold mt-2 ${meetsRecency ? 'text-green-600' : 'text-amber-600'}`}>
-              {meetsRecency ? 'Recent experience met' : 'Not yet recent'}
-            </p>
           </div>
         </div>
 
-        {/* Military Experience (when category selected) */}
-        {selectedCategory && expReq && (
-          <div className="mb-6">
-            <MilitaryExperience
-              selectedCategory={selectedCategory}
-              hasMilitaryPeriod={militaryMonths > 0}
-              militaryStart={militaryPeriods[0]?.start_date ?? ''}
-              militaryEnd={militaryPeriods[0]?.end_date ?? null}
-              civilMonths={civilMonths}
-              militaryMonths={militaryMonths}
-              totalExpMonths={totalExpMonths}
-            />
-          </div>
-        )}
+        <AdPlaceholder format="banner" className="my-4" />
+
+        {/* Military Experience */}
+        <div className="mb-6">
+          <MilitaryExperience
+            selectedCategory={selectedCategory || 'B1.1'}
+            hasMilitaryPeriod={militaryMonths > 0}
+            militaryStart={militaryPeriods[0]?.start_date ?? ''}
+            militaryEnd={militaryPeriods[0]?.end_date ?? null}
+            civilMonths={civilMonths}
+            militaryMonths={militaryMonths}
+            totalExpMonths={totalExpMonths}
+          />
+        </div>
+
+        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Mass Input */}
         <h2 className="text-lg font-bold text-white mb-3">New Entries</h2>
@@ -332,7 +290,7 @@ export default async function LogbookPage({
           lastMaintenanceType={lastMaintenanceType}
         />
 
-        <AdPlaceholder format="inline" className="my-6" />
+        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Status filter tabs */}
         <div className="flex gap-2 mb-4 flex-wrap">
@@ -356,26 +314,43 @@ export default async function LogbookPage({
           ))}
         </div>
 
+        <AdPlaceholder format="banner" className="my-4" />
+
         {/* Entries table */}
         {pageEntries.length === 0 ? (
           <div className="bg-white rounded-xl border p-8 text-center text-gray-500">
-            <p>No entries{statusFilter !== 'all' ? ` with status "${ENTRY_STATUSES[statusFilter as EntryStatus]?.label ?? statusFilter}"` : ''}{selectedCategory ? ` for ${selectedCategory}` : ''}.</p>
-            {statusFilter === 'all' && (
-              <p className="text-sm mt-1">
-                <Link href="/logbook/new" className="text-blue-600 hover:underline">Create your first entry</Link>
-              </p>
-            )}
+            <p>No entries{statusFilter !== 'all' ? ` with status "${ENTRY_STATUSES[statusFilter as EntryStatus]?.label ?? statusFilter}"` : ''}.</p>
           </div>
         ) : (
           <div className="rounded-xl border overflow-hidden bg-white">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Aircraft</TableHead>
-                  <TableHead className="hidden md:table-cell">ATA</TableHead>
-                  <TableHead className="hidden md:table-cell">Category</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
+                    <Link href={buildUrl({ sort: 'task_date', dir: params.sort === 'task_date' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
+                      Date {params.sort === 'task_date' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                    </Link>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
+                    <Link href={buildUrl({ sort: 'aircraft_type', dir: params.sort === 'aircraft_type' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
+                      Aircraft {params.sort === 'aircraft_type' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                    </Link>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell cursor-pointer hover:bg-gray-50 select-none">
+                    <Link href={buildUrl({ sort: 'ata_chapter', dir: params.sort === 'ata_chapter' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
+                      ATA {params.sort === 'ata_chapter' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                    </Link>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell cursor-pointer hover:bg-gray-50 select-none">
+                    <Link href={buildUrl({ sort: 'category', dir: params.sort === 'category' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
+                      Category {params.sort === 'category' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                    </Link>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
+                    <Link href={buildUrl({ sort: 'status', dir: params.sort === 'status' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
+                      Status {params.sort === 'status' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                    </Link>
+                  </TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>

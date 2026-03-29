@@ -15,12 +15,10 @@ interface AtaChartProps {
   entries: ChartEntry[]
 }
 
-const TYPE_FILTERS = [
-  { value: 'all', label: 'All Tasks' },
-  { value: 'aircraft', label: 'Aircraft Maintenance' },
-  { value: 'military_experience', label: 'Military' },
-  { value: 'student_experience', label: 'Student' },
-]
+const btnClass = (active: boolean) =>
+  `px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+    active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+  }`
 
 const CATEGORY_FILTERS: { value: string; label: string; cats: AircraftCategory[] }[] = [
   { value: 'all', label: 'All', cats: [] },
@@ -41,6 +39,8 @@ export function AtaChart({ entries }: AtaChartProps) {
 
     if (typeFilter === 'aircraft') {
       result = result.filter(e => e.maintenance_type === 'base_maintenance' || e.maintenance_type === 'line_maintenance')
+    } else if (typeFilter === 'military_student') {
+      result = result.filter(e => e.maintenance_type === 'military_experience' || e.maintenance_type === 'student_experience')
     } else if (typeFilter !== 'all') {
       result = result.filter(e => e.maintenance_type === typeFilter)
     }
@@ -54,7 +54,6 @@ export function AtaChart({ entries }: AtaChartProps) {
   }, [entries, typeFilter, catFilter])
 
   const ataCounts = useMemo(() => {
-    // Count tasks per 4-digit sub-chapter
     const subCounts: Record<string, number> = {}
     for (const entry of filtered) {
       const chapters = entry.ata_chapters ?? []
@@ -63,7 +62,6 @@ export function AtaChart({ entries }: AtaChartProps) {
       }
     }
 
-    // Get unique 2-digit main chapters from ATA 2200
     const mainChapters = new Map<string, string>()
     for (const ch of ATA_2200_CHAPTERS) {
       const main = ch.value.split('-')[0]
@@ -72,7 +70,6 @@ export function AtaChart({ entries }: AtaChartProps) {
       }
     }
 
-    // Group sub-chapters into main chapters
     const result = Array.from(mainChapters.entries()).map(([main, name]) => {
       const subs = ATA_2200_CHAPTERS.filter(ch => ch.value.startsWith(main + '-'))
       const total = subs.reduce((sum, ch) => sum + (subCounts[ch.value] || 0), 0)
@@ -87,11 +84,9 @@ export function AtaChart({ entries }: AtaChartProps) {
     return result
   }, [filtered, sortBy])
 
-  // Round max up to nearest 5, minimum 15 so target line has room above
   const rawMax = Math.max(15, ...ataCounts.map(a => a.count))
   const maxCount = Math.ceil(rawMax / 5) * 5
 
-  // Y-axis ticks in increments of 5
   const yTicks: number[] = []
   for (let i = 0; i <= maxCount; i += 5) yTicks.push(i)
 
@@ -106,65 +101,53 @@ export function AtaChart({ entries }: AtaChartProps) {
 
   return (
     <div className="bg-white rounded-xl p-5 mb-6">
-      {/* Filters */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="text-sm font-bold text-gray-700">Tasks by ATA</h2>
 
+      {/* Licence Categories */}
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Licence Categories</p>
         <div className="flex gap-2 flex-wrap">
-          {TYPE_FILTERS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setTypeFilter(f.value)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                typeFilter === f.value
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
+          {CATEGORY_FILTERS.map(f => (
+            <button key={f.value} onClick={() => setCatFilter(f.value)} className={btnClass(catFilter === f.value)}>
               {f.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Category filters + sort on second row */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      {/* Tasks by Environment */}
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tasks by Environment</p>
         <div className="flex gap-2 flex-wrap">
-          {CATEGORY_FILTERS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setCatFilter(f.value)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                catFilter === f.value
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
+          {[
+            { value: 'all', label: 'All Tasks' },
+            { value: 'aircraft', label: 'Aircraft Maintenance' },
+            { value: 'military_student', label: 'Military / Student' },
+          ].map(f => (
+            <button key={f.value} onClick={() => setTypeFilter(f.value)} className={btnClass(typeFilter === f.value)}>
               {f.label}
             </button>
           ))}
         </div>
+      </div>
 
-        <div className="flex gap-1">
+      {/* Arrange */}
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Arrange</p>
+        <div className="flex gap-2 flex-wrap">
           {([['ata', 'ATA Order'], ['most', 'Most Tasks'], ['least', 'Least Tasks']] as const).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setSortBy(val)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                sortBy === val
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-              }`}
-            >
+            <button key={val} onClick={() => setSortBy(val)} className={btnClass(sortBy === val)}>
               {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Chart with ~40 main chapter bars */}
+      {/* Chart */}
       <div className="flex" style={{ paddingTop: 12 }}>
-        {/* Y-axis labels */}
+        {/* Y-axis title + labels */}
+        <div className="flex flex-col items-center mr-1">
+          <span className="text-[8px] text-gray-400 font-medium" style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)', marginBottom: 4 }}>Amount of Tasks</span>
+        </div>
         <div className="relative flex-shrink-0" style={{ width: 24, height: 250 }}>
           {yTicks.map(tick => {
             const pct = (1 - tick / maxCount) * 100
@@ -212,7 +195,6 @@ export function AtaChart({ entries }: AtaChartProps) {
                         backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#3b82f6') : undefined,
                       }}
                     />
-                    {/* Tooltip with sub-chapter breakdown */}
                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-3 py-2 rounded-lg shadow-lg pointer-events-none" style={{ minWidth: 160 }}>
                       <div className="font-bold mb-1">ATA {code}: {count} task{count !== 1 ? 's' : ''}</div>
                       {breakdown.length > 0 ? (
@@ -235,13 +217,15 @@ export function AtaChart({ entries }: AtaChartProps) {
           </div>
 
           {/* X-axis labels */}
-          <div className="flex gap-1 px-1" style={{ height: 32 }}>
+          <div className="flex gap-1 px-1" style={{ height: 24 }}>
             {ataCounts.map(({ code }) => (
               <div key={`label-${code}`} className="flex-1 flex items-start justify-center pt-1">
                 <span className="text-[9px] text-gray-500 font-medium">{code}</span>
               </div>
             ))}
           </div>
+          {/* X-axis title */}
+          <p className="text-[8px] text-gray-400 font-medium text-center">ATA Chapters</p>
         </div>
       </div>
 

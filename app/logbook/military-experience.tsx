@@ -20,6 +20,15 @@ interface MilitaryExperienceProps {
   totalExpMonths: number
 }
 
+function formatDuration(months: number): string {
+  const y = Math.floor(months / 12)
+  const m = months % 12
+  const parts: string[] = []
+  if (y > 0) parts.push(`${y} YEAR${y > 1 ? 'S' : ''}`)
+  if (m > 0) parts.push(`${m} MONTH${m > 1 ? 'S' : ''}`)
+  return parts.join(' AND ') || '0 MONTHS'
+}
+
 export function MilitaryExperience({
   selectedCategory,
   hasMilitaryPeriod,
@@ -38,10 +47,6 @@ export function MilitaryExperience({
   const expReq = EXPERIENCE_REQUIREMENTS[selectedCategory]
   if (!expReq) return null
 
-  const meetsFullExp = totalExpMonths >= expReq.years * 12
-  const meetsCivilMin = civilMonths >= MIN_CIVIL_MONTHS
-
-  // Calculate how many months of civil experience still needed
   const civilRequired = militaryMonths > 0
     ? Math.max(MIN_CIVIL_MONTHS, (expReq.years * 12) - militaryMonths)
     : expReq.years * 12
@@ -54,14 +59,12 @@ export function MilitaryExperience({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
-    // Delete any existing military periods for this user first
     await supabase
       .from('employment_periods')
       .delete()
       .eq('user_id', user.id)
       .eq('is_military', true)
 
-    // Insert the new military period
     await supabase
       .from('employment_periods')
       .insert({
@@ -105,8 +108,8 @@ export function MilitaryExperience({
           className="h-5 w-5 rounded border-gray-300 mt-0.5 shrink-0"
         />
         <div>
-          <span className="text-sm font-medium text-gray-900">Military Experience?</span>
-          <p className="text-xs text-gray-400">I have aircraft maintenance experience from military or non-civil aviation service.</p>
+          <span className="text-sm font-medium text-gray-900">Military Experience</span>
+          <p className="text-xs text-gray-400">Up to four years of aircraft maintenance experience in the military may be counted towards the issue of a licence.</p>
         </div>
       </label>
 
@@ -149,35 +152,11 @@ export function MilitaryExperience({
             )}
           </div>
 
-          {/* Calculator */}
           {militaryMonths > 0 && (
-            <div className="border border-gray-200 rounded-lg p-4 space-y-2">
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Military</p>
-                  <p className="font-bold text-gray-900">{Math.floor(militaryMonths / 12)}y {militaryMonths % 12}m</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Civil</p>
-                  <p className="font-bold text-gray-900">{Math.floor(civilMonths / 12)}y {civilMonths % 12}m</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Total</p>
-                  <p className={`font-bold ${meetsFullExp && meetsCivilMin ? 'text-green-600' : 'text-gray-900'}`}>
-                    {Math.floor(totalExpMonths / 12)}y {totalExpMonths % 12}m
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400">
-                Required: {expReq.years} years (or {expReq.yearsWithBtc} year{expReq.yearsWithBtc > 1 ? 's' : ''} with Part 147 BTC)
+            <div className="border border-gray-200 rounded-lg p-4">
+              <p className="text-sm text-gray-900">
+                You have {formatDuration(militaryMonths)} military experience, therefore you need {formatDuration(civilRemaining)} more civil experience for {selectedCategory}.
               </p>
-              {civilRemaining > 0 ? (
-                <p className="text-xs text-amber-600 font-medium">
-                  You need {Math.floor(civilRemaining / 12) > 0 ? `${Math.floor(civilRemaining / 12)} year${Math.floor(civilRemaining / 12) > 1 ? 's' : ''} ` : ''}{civilRemaining % 12 > 0 ? `${civilRemaining % 12} month${civilRemaining % 12 > 1 ? 's' : ''}` : ''} more civil experience for {selectedCategory}.
-                </p>
-              ) : (
-                <p className="text-xs text-green-600 font-bold">Experience requirement met for {selectedCategory}.</p>
-              )}
             </div>
           )}
         </div>
