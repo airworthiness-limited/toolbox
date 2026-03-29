@@ -165,7 +165,7 @@ export function AtaChart({ entries }: AtaChartProps) {
       {/* Chart with ~40 main chapter bars */}
       <div className="flex" style={{ paddingTop: 12 }}>
         {/* Y-axis labels */}
-        <div className="relative flex-shrink-0" style={{ width: 24, height: 180 }}>
+        <div className="relative flex-shrink-0" style={{ width: 24, height: 250 }}>
           {yTicks.map(tick => {
             const pct = (1 - tick / maxCount) * 100
             return (
@@ -182,7 +182,7 @@ export function AtaChart({ entries }: AtaChartProps) {
 
         {/* Bar area */}
         <div className="flex-1 min-w-0">
-          <div className="relative border-l border-b border-gray-300" style={{ height: 180 }}>
+          <div className="relative border-l border-b border-gray-300" style={{ height: 250 }}>
 
             {yTicks.filter(t => t > 0).map(tick => (
               <div
@@ -208,8 +208,8 @@ export function AtaChart({ entries }: AtaChartProps) {
                     <div
                       className="w-full rounded-t-sm"
                       style={{
-                        height: count > 0 ? `${Math.max(2, pct)}%` : 1,
-                        backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#60a5fa') : '#e5e7eb',
+                        height: count > 0 ? `max(8px, ${pct}%)` : 0,
+                        backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#3b82f6') : undefined,
                       }}
                     />
                     {/* Tooltip with sub-chapter breakdown */}
