@@ -128,7 +128,20 @@ export function AtaChart({ entries }: AtaChartProps) {
       <div className="overflow-x-auto">
         {/* Chart wrapper: bar area is 160px tall, labels 40px below */}
         <div className="flex">
-          {/* Left: bars + x labels */}
+          {/* Left: Y-axis labels */}
+          <div className="relative flex-shrink-0" style={{ width: 24, height: 160 }}>
+            {yTicks.map(tick => (
+              <div
+                key={tick}
+                className="absolute text-[10px] text-gray-400 -translate-y-1/2 text-right"
+                style={{ bottom: `${(tick / maxCount) * 100}%`, left: 0, right: 2 }}
+              >
+                {tick}
+              </div>
+            ))}
+          </div>
+
+          {/* Middle: bars + x labels */}
           <div className="flex-1 min-w-0">
             {/* Bar area with grid lines inside */}
             <div className="relative border-l border-b border-gray-300" style={{ height: 160 }}>
@@ -187,18 +200,6 @@ export function AtaChart({ entries }: AtaChartProps) {
             </div>
           </div>
 
-          {/* Right: Y-axis labels aligned to bar area */}
-          <div className="relative flex-shrink-0" style={{ width: 30, height: 160 }}>
-            {yTicks.map(tick => (
-              <div
-                key={tick}
-                className="absolute text-[10px] text-gray-400 -translate-y-1/2 text-right"
-                style={{ bottom: `${(tick / maxCount) * 100}%`, left: 4, right: 0 }}
-              >
-                {tick}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
