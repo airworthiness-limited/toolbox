@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-red-500">{error}</p>}
 
               <Button
-                className="w-full bg-[#2d3a80] text-white hover:bg-[#232e66]"
+                className="w-full bg-[#1565C0] text-white hover:bg-[#0A3A8A]"
                 onClick={handleReset}
                 disabled={loading || !email}
               >
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
 
               <p className="text-sm text-center text-gray-500">
                 Remember your password?{' '}
-                <Link href="/login" className="text-[#2d3a80] hover:underline font-medium">
+                <Link href="/login" className="text-[#1565C0] hover:underline font-medium">
                   Log in
                 </Link>
               </p>

@@ -43,7 +43,7 @@ function Dropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="text-sm text-white/70 hover:text-white transition-colors tracking-wide uppercase flex items-center gap-1"
+        className="text-sm font-bold text-white/70 hover:text-white transition-colors tracking-wide flex items-center gap-1"
       >
         {label}
         <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -108,17 +108,12 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <Link href="/about"
-            className="text-sm text-white/70 hover:text-white transition-colors tracking-wide uppercase">
-            About
-          </Link>
-
           <Dropdown label="Professionals" items={professionalsItems} />
           <Dropdown label="Organisations" items={organisationsItems} />
 
           {loaded && !user && (
             <Link href="/signup">
-              <Button size="sm" className="bg-white text-[#2d3a80] hover:bg-white/90">
+              <Button size="sm" className="bg-white text-[#1565C0] hover:bg-white/90">
                 Sign up
               </Button>
             </Link>
@@ -126,7 +121,7 @@ export function Navbar() {
 
           {loaded && user && (
             <Link href="/profile">
-              <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#2d3a80]">
+              <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white hover:text-[#1565C0]">
                 My Account
               </Button>
             </Link>

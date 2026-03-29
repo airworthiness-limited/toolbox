@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <Button
-            className="w-full bg-[#2d3a80] text-white hover:bg-[#232e66]"
+            className="w-full bg-[#1565C0] text-white hover:bg-[#0A3A8A]"
             onClick={handleUpdatePassword}
             disabled={loading}
           >

@@ -98,14 +98,14 @@ export default function CookiePolicyPage() {
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">4. Third-Party Cookies</h2>
             <p>Some cookies are placed by third-party services that appear on our pages. We do not control these cookies. For more information, refer to the privacy policies of:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><a href="https://policies.google.com/privacy" className="text-[#2d3a80] hover:underline" target="_blank" rel="noopener noreferrer">Google (Analytics and AdSense)</a></li>
-              <li><a href="https://supabase.com/privacy" className="text-[#2d3a80] hover:underline" target="_blank" rel="noopener noreferrer">Supabase</a></li>
+              <li><a href="https://policies.google.com/privacy" className="text-[#1565C0] hover:underline" target="_blank" rel="noopener noreferrer">Google (Analytics and AdSense)</a></li>
+              <li><a href="https://supabase.com/privacy" className="text-[#1565C0] hover:underline" target="_blank" rel="noopener noreferrer">Supabase</a></li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">5. Contact</h2>
-            <p>For questions about our use of cookies, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#2d3a80] hover:underline">contact@airworthiness.org.uk</a>.</p>
+            <p>For questions about our use of cookies, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#1565C0] hover:underline">contact@airworthiness.org.uk</a>.</p>
           </section>
         </div>
       </div>

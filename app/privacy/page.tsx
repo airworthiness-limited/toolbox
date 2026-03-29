@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">1. Who We Are</h2>
             <p>Airworthiness Limited ("we", "us", "our") operates the website airworthiness.org.uk. We are the data controller responsible for your personal data under the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.</p>
-            <p>Contact: <a href="mailto:contact@airworthiness.org.uk" className="text-[#2d3a80] hover:underline">contact@airworthiness.org.uk</a></p>
+            <p>Contact: <a href="mailto:contact@airworthiness.org.uk" className="text-[#1565C0] hover:underline">contact@airworthiness.org.uk</a></p>
           </section>
 
           <section>
@@ -77,17 +77,17 @@ export default function PrivacyPolicyPage() {
               <li><strong>Object</strong> to processing based on legitimate interests.</li>
               <li><strong>Withdraw consent</strong> at any time where consent is the lawful basis.</li>
             </ul>
-            <p>To exercise any of these rights, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#2d3a80] hover:underline">contact@airworthiness.org.uk</a>.</p>
+            <p>To exercise any of these rights, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#1565C0] hover:underline">contact@airworthiness.org.uk</a>.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">8. Cookies</h2>
-            <p>We use cookies and similar technologies. For full details, see our <a href="/cookies" className="text-[#2d3a80] hover:underline">Cookie Policy</a>.</p>
+            <p>We use cookies and similar technologies. For full details, see our <a href="/cookies" className="text-[#1565C0] hover:underline">Cookie Policy</a>.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">9. Complaints</h2>
-            <p>If you believe we have not handled your data correctly, you have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-[#2d3a80] hover:underline" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.</p>
+            <p>If you believe we have not handled your data correctly, you have the right to lodge a complaint with the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" className="text-[#1565C0] hover:underline" target="_blank" rel="noopener noreferrer">ico.org.uk</a>.</p>
           </section>
 
           <section>

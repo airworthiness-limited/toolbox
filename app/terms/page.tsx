@@ -88,7 +88,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-bold text-gray-900 mt-8 mb-3">14. Contact</h2>
-            <p>For questions about these Terms, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#2d3a80] hover:underline">contact@airworthiness.org.uk</a>.</p>
+            <p>For questions about these Terms, contact us at <a href="mailto:contact@airworthiness.org.uk" className="text-[#1565C0] hover:underline">contact@airworthiness.org.uk</a>.</p>
           </section>
         </div>
       </div>

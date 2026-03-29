@@ -56,18 +56,18 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.35 0.15 265);
+  --primary: oklch(0.45 0.18 255);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.95 0.02 265);
-  --secondary-foreground: oklch(0.25 0.1 265);
-  --muted: oklch(0.95 0.02 265);
+  --secondary: oklch(0.95 0.02 255);
+  --secondary-foreground: oklch(0.25 0.12 255);
+  --muted: oklch(0.95 0.02 255);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.92 0.03 265);
-  --accent-foreground: oklch(0.25 0.1 265);
+  --accent: oklch(0.92 0.03 255);
+  --accent-foreground: oklch(0.25 0.12 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.02 265);
-  --input: oklch(0.9 0.02 265);
-  --ring: oklch(0.5 0.15 265);
+  --border: oklch(0.9 0.02 255);
+  --input: oklch(0.9 0.02 255);
+  --ring: oklch(0.5 0.18 255);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -140,9 +140,9 @@
 }
 
 .aw-gradient {
-  background: linear-gradient(135deg, #4f6abf 0%, #2d3a80 50%, #1e2760 100%);
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%);
 }
 
 .aw-gradient-light {
-  background: linear-gradient(135deg, #5a75cc 0%, #3b4fa0 100%);
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
 }

@@ -9,7 +9,7 @@ import { MODULE_REQUIREMENTS, PART_66_MODULES, ESSAY_MODULES, PASS_MARK, PASS_VA
 import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
 import { ProfileEditor } from './profile-editor'
-import { AdPlaceholder } from '@/components/ad-placeholder'
+import { ExternalTrainingForm } from './external-training-form'
 import { LogoutButton } from '../dashboard/logout-button'
 
 // Handle backward compatibility: convert old string[] type_ratings to TypeEndorsement[]
@@ -52,18 +52,42 @@ export default async function ProfilePage() {
     .eq('user_id', user.id)
     .order('issued_at', { ascending: false })
 
-  // Calculate training status
+  // Fetch external training certificates
+  const { data: externalCerts } = await supabase
+    .from('external_training_certificates')
+    .select('training_slug, completion_date, expiry_date, certificate_path')
+    .eq('user_id', user.id)
+
+  // Calculate training status (merge platform + external certificates)
   const now = new Date()
   const twoYearsAgo = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate())
 
   const trainingStatuses: TrainingStatus[] = REQUIRED_TRAINING.map(training => {
     const cert = certificates?.find(c => (c.courses as any)?.slug === training.slug)
     const certDate = cert?.issued_at ? new Date(cert.issued_at) : null
+
+    const extCert = externalCerts?.find(c => c.training_slug === training.slug)
+    const extDate = extCert?.completion_date ? new Date(extCert.completion_date) : null
+
+    // Use the most recent valid date from either source
+    let effectiveDate: Date | null = null
+    let effectiveDateStr: string | null = null
+    if (certDate && extDate) {
+      effectiveDate = certDate > extDate ? certDate : extDate
+      effectiveDateStr = certDate > extDate ? cert!.issued_at : extCert!.completion_date
+    } else if (certDate) {
+      effectiveDate = certDate
+      effectiveDateStr = cert!.issued_at
+    } else if (extDate) {
+      effectiveDate = extDate
+      effectiveDateStr = extCert!.completion_date
+    }
+
     return {
       slug: training.slug,
       label: training.label,
-      certificateDate: cert?.issued_at ?? null,
-      isCurrent: certDate ? certDate >= twoYearsAgo : false,
+      certificateDate: effectiveDateStr,
+      isCurrent: effectiveDate ? effectiveDate >= twoYearsAgo : false,
     }
   })
 
@@ -187,7 +211,7 @@ export default async function ProfilePage() {
             <p className="text-white/60 mt-1">Your aircraft maintenance licence journey at a glance.</p>
             {purchase && (
               <span
-                className="inline-block mt-2 text-xs px-3 py-1 rounded-full text-white"
+                className="inline-block mt-2 text-xs px-3 py-1 rounded-lg text-white"
                 style={{ fontWeight: 'bold', backgroundColor: '#000' }}
               >
                 No Adverts
@@ -216,26 +240,6 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Action Required Banner */}
-        <div className={`rounded-xl p-6 mb-8 ${
-          allComplete
-            ? 'bg-green-500/20 border border-green-400/30'
-            : 'bg-amber-500/20 border border-amber-400/30'
-        }`}>
-          <div>
-            <p className="font-semibold text-white">
-              {allComplete
-                ? 'Profile Complete'
-                : 'Action Required'}
-            </p>
-            <p className="text-sm text-white/70 mt-0.5">
-              {!allTrainingCurrent && 'Some continuation training is expired. '}
-              {!recencyStatus.isCurrent && 'Recency requirement not met. '}
-              {allComplete && 'All checks passed.'}
-            </p>
-          </div>
-        </div>
-
         {/* Continuation Training */}
         <Card className="mb-6 bg-white">
           <CardHeader>
@@ -244,27 +248,40 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
-              {trainingStatuses.map(training => (
-                <div key={training.slug} className={`rounded-lg border p-4 ${!training.isCurrent ? 'opacity-60' : ''}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-base font-semibold">{training.label}</p>
-                      {training.certificateDate ? (
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
-                            day: 'numeric', month: 'long', year: 'numeric'
-                          })}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-400 mt-0.5">No certificate on record</p>
-                      )}
+              {trainingStatuses.map(training => {
+                const extCert = externalCerts?.find(c => c.training_slug === training.slug)
+                return (
+                  <div key={training.slug} className="rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-base font-semibold">{training.label}</p>
+                        {training.certificateDate ? (
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
+                              day: 'numeric', month: 'long', year: 'numeric'
+                            })}
+                            {extCert?.expiry_date && (
+                              <span className="text-gray-400"> · Expires {new Date(extCert.expiry_date).toLocaleDateString('en-GB', {
+                                day: 'numeric', month: 'long', year: 'numeric'
+                              })}</span>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-400 mt-0.5">No certificate on record</p>
+                        )}
+                      </div>
+                      <Badge variant={training.isCurrent ? 'default' : 'destructive'}>
+                        {training.isCurrent ? 'Current' : 'Expired'}
+                      </Badge>
                     </div>
-                    <Badge variant={training.isCurrent ? 'default' : 'destructive'}>
-                      {training.isCurrent ? 'Current' : 'Expired'}
-                    </Badge>
+                    <ExternalTrainingForm
+                      slug={training.slug}
+                      existingDate={extCert?.completion_date ?? null}
+                      existingCertificatePath={extCert?.certificate_path ?? null}
+                    />
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             {!allTrainingCurrent && (
               <div className="mt-4">
@@ -275,8 +292,6 @@ export default async function ProfilePage() {
             )}
           </CardContent>
         </Card>
-
-        <AdPlaceholder format="inline" className="my-6" />
 
         {/* Aircraft Maintenance Licence */}
         <Card className="mb-6 bg-white">

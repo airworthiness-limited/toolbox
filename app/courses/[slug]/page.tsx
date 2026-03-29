@@ -123,7 +123,7 @@ export default async function CoursePage({ params }: Props) {
                   <Link key={module.id} href={`/courses/${slug}/modules/${module.id}`}>
                     <div className="bg-white rounded-xl border p-4 hover:shadow-md flex justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm
                           ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                           {isCompleted ? '✓' : index + 1}
                         </div>

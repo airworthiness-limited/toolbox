@@ -92,7 +92,7 @@ function AuthForm() {
       <div className="min-h-screen flex items-center justify-center aw-gradient px-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-green-100 flex items-center justify-center">
               <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
@@ -194,7 +194,7 @@ function AuthForm() {
                 onClick={() => { setMode('signup'); setError('') }}
                 className={`flex-1 py-4 text-sm font-semibold text-center transition-colors ${
                   mode === 'signup'
-                    ? 'text-[#2d3a80] border-b-2 border-[#2d3a80]'
+                    ? 'text-[#1565C0] border-b-2 border-[#1565C0]'
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
@@ -205,7 +205,7 @@ function AuthForm() {
                 onClick={() => { setMode('login'); setError('') }}
                 className={`flex-1 py-4 text-sm font-semibold text-center transition-colors ${
                   mode === 'login'
-                    ? 'text-[#2d3a80] border-b-2 border-[#2d3a80]'
+                    ? 'text-[#1565C0] border-b-2 border-[#1565C0]'
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
@@ -306,7 +306,7 @@ function AuthForm() {
 
               {mode === 'login' && (
                 <div className="flex justify-end">
-                  <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-[#2d3a80] transition-colors">
+                  <Link href="/forgot-password" className="text-xs text-gray-400 hover:text-[#1565C0] transition-colors">
                     Forgot password?
                   </Link>
                 </div>
@@ -319,7 +319,7 @@ function AuthForm() {
               )}
 
               <Button
-                className="w-full h-11 bg-[#2d3a80] text-white hover:bg-[#232e66] font-semibold text-sm"
+                className="w-full h-11 bg-[#1565C0] text-white hover:bg-[#0A3A8A] font-semibold text-sm"
                 onClick={handleSubmit}
                 disabled={loading}
               >
@@ -375,9 +375,9 @@ function AuthForm() {
               {mode === 'signup' && (
                 <p className="text-[10px] text-gray-400 text-center leading-relaxed">
                   By creating an account you agree to our{' '}
-                  <Link href="/terms" className="text-[#2d3a80] hover:underline">Terms of Service</Link>
+                  <Link href="/terms" className="text-[#1565C0] hover:underline">Terms of Service</Link>
                   {' '}and{' '}
-                  <Link href="/privacy" className="text-[#2d3a80] hover:underline">Privacy Policy</Link>.
+                  <Link href="/privacy" className="text-[#1565C0] hover:underline">Privacy Policy</Link>.
                 </p>
               )}
             </div>

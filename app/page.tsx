@@ -18,9 +18,8 @@ export default async function HomePage() {
           <h1 className="text-5xl lg:text-6xl text-white leading-tight tracking-tight">
             Airworthiness
           </h1>
-          <p className="text-white/40 text-sm tracking-[0.3em] uppercase mt-2 mb-6">for Everyone</p>
-          <p className="text-xl lg:text-2xl text-white/70 max-w-2xl mx-auto leading-relaxed">
-            The platform for aviation engineering professionals and initial and continuing airworthiness organisations.
+          <p className="text-xl lg:text-2xl text-white/70 max-w-2xl mx-auto leading-relaxed mt-4">
+            The platform for aviation professionals and engineering organisations.
           </p>
         </div>
       </section>
@@ -37,7 +36,7 @@ export default async function HomePage() {
                   Airworthiness
                 </h2>
                 <p className="text-white/60 text-lg mt-1">for Professionals</p>
-                <div className="mt-4 inline-block bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/30 uppercase tracking-wider">
+                <div className="mt-4 inline-block bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/30 uppercase tracking-wider">
                   Completely Free
                 </div>
               </div>
@@ -50,13 +49,13 @@ export default async function HomePage() {
 
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#2d3a80]/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-[#2d3a80]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-10 h-10 rounded-lg bg-[#1565C0]/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-[#1565C0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-sm">Continuation Training</h3>
+                      <Link href="/courses" className="font-bold text-gray-900 text-sm hover:text-[#1565C0] transition-colors"><h3>Continuation Training</h3></Link>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         Human Factors, Electrical Wiring Interconnection System (EWIS), and Fuel Tank Safety.
                         Complete the course, pass the exam, and receive a verifiable certificate.
@@ -65,13 +64,13 @@ export default async function HomePage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#2d3a80]/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-[#2d3a80]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-10 h-10 rounded-lg bg-[#1565C0]/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-[#1565C0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-sm">Digital Logbook</h3>
+                      <Link href="/logbook" className="font-bold text-gray-900 text-sm hover:text-[#1565C0] transition-colors"><h3>Digital Logbook</h3></Link>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         Record your maintenance tasks in the CAA-required format. Build recency for licence
                         applications and renewals. Tasks can be electronically verified or printed.
@@ -80,13 +79,13 @@ export default async function HomePage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#2d3a80]/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-[#2d3a80]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-10 h-10 rounded-lg bg-[#1565C0]/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-[#1565C0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-sm">Module Tracker</h3>
+                      <Link href="/progress" className="font-bold text-gray-900 text-sm hover:text-[#1565C0] transition-colors"><h3>Module Tracker</h3></Link>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         Working towards your Aircraft Maintenance Licence? Track your Part 66 module exam
                         progress, upload certificates, and monitor expiry dates across all categories.
@@ -95,13 +94,13 @@ export default async function HomePage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-[#2d3a80]/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-[#2d3a80]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="w-10 h-10 rounded-lg bg-[#1565C0]/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-[#1565C0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-sm">Competency Assessment</h3>
+                      <Link href="/profile/assessment" className="font-bold text-gray-900 text-sm hover:text-[#1565C0] transition-colors"><h3>Competency Assessment</h3></Link>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                         Practise core maintenance knowledge questions before being issued an authorisation
                         by your organisation. Covers human factors, maintenance procedures, and regulations.
@@ -112,7 +111,7 @@ export default async function HomePage() {
 
                 <div className="mt-8 pt-6 border-t border-gray-100">
                   <Link href="/signup">
-                    <Button className="w-full bg-[#2d3a80] text-white hover:bg-[#232e66] h-12 font-semibold">
+                    <Button className="w-full bg-[#1565C0] text-white hover:bg-[#0A3A8A] h-12 font-semibold">
                       Create your free account
                     </Button>
                   </Link>
@@ -127,7 +126,7 @@ export default async function HomePage() {
                   Airworthiness
                 </h2>
                 <p className="text-white/60 text-lg mt-1">for Organisations</p>
-                <div className="mt-4 inline-block bg-white/10 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 uppercase tracking-wider">
+                <div className="mt-4 inline-block bg-white/10 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 uppercase tracking-wider">
                   Tailored Consultancy
                 </div>
               </div>
