@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ATA_SUB_CHAPTER_TARGET, CATEGORY_TO_AIRCRAFT } from '@/lib/logbook/constants'
+import { ATA_SUB_CHAPTER_TARGET } from '@/lib/logbook/constants'
+import type { AircraftCategory } from '@/lib/logbook/constants'
 
 interface ChartEntry {
   maintenance_type: string
@@ -20,18 +21,13 @@ const TYPE_FILTERS = [
   { value: 'student_experience', label: 'Student' },
 ]
 
-const CATEGORY_FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'A1', label: 'A1' },
-  { value: 'B1.1', label: 'B1.1' },
-  { value: 'A2', label: 'A2' },
-  { value: 'B1.2', label: 'B1.2' },
-  { value: 'B3', label: 'B3' },
-  { value: 'A3', label: 'A3' },
-  { value: 'B1.3', label: 'B1.3' },
-  { value: 'A4', label: 'A4' },
-  { value: 'B1.4', label: 'B1.4' },
-  { value: 'B2', label: 'B2' },
+const CATEGORY_FILTERS: { value: string; label: string; cats: AircraftCategory[] }[] = [
+  { value: 'all', label: 'All', cats: [] },
+  { value: 'turbine_aeroplane', label: 'Turbine Aeroplane', cats: ['aeroplane_turbine'] },
+  { value: 'piston_aeroplane', label: 'Piston Aeroplane', cats: ['aeroplane_piston'] },
+  { value: 'turbine_helicopter', label: 'Turbine Helicopter', cats: ['helicopter_turbine'] },
+  { value: 'piston_helicopter', label: 'Piston Helicopter', cats: ['helicopter_piston'] },
+  { value: 'avionics', label: 'Avionics', cats: ['aeroplane_turbine', 'aeroplane_piston', 'helicopter_turbine', 'helicopter_piston'] },
 ]
 
 export function AtaChart({ entries }: AtaChartProps) {
@@ -41,25 +37,20 @@ export function AtaChart({ entries }: AtaChartProps) {
   const filtered = useMemo(() => {
     let result = entries
 
-    // Filter by maintenance type
     if (typeFilter === 'aircraft') {
       result = result.filter(e => e.maintenance_type === 'base_maintenance' || e.maintenance_type === 'line_maintenance')
     } else if (typeFilter !== 'all') {
       result = result.filter(e => e.maintenance_type === typeFilter)
     }
 
-    // Filter by AML category (maps to aircraft_category values)
-    if (catFilter !== 'all') {
-      const cats = CATEGORY_TO_AIRCRAFT[catFilter] ?? []
-      if (cats.length > 0) {
-        result = result.filter(e => cats.includes(e.aircraft_category))
-      }
+    const catDef = CATEGORY_FILTERS.find(f => f.value === catFilter)
+    if (catDef && catDef.cats.length > 0) {
+      result = result.filter(e => catDef.cats.includes(e.aircraft_category as AircraftCategory))
     }
 
     return result
   }, [entries, typeFilter, catFilter])
 
-  // Count tasks per ATA sub-chapter
   const ataCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const entry of filtered) {
@@ -68,13 +59,18 @@ export function AtaChart({ entries }: AtaChartProps) {
         counts[ch] = (counts[ch] || 0) + 1
       }
     }
-    // Sort by ATA code
     return Object.entries(counts)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([code, count]) => ({ code, count }))
   }, [filtered])
 
-  const maxCount = Math.max(ATA_SUB_CHAPTER_TARGET, ...ataCounts.map(a => a.count))
+  // Round max up to nearest 5
+  const rawMax = Math.max(ATA_SUB_CHAPTER_TARGET, ...ataCounts.map(a => a.count))
+  const maxCount = Math.ceil(rawMax / 5) * 5
+
+  // Y-axis ticks in increments of 5
+  const yTicks: number[] = []
+  for (let i = 0; i <= maxCount; i += 5) yTicks.push(i)
 
   if (entries.length === 0) {
     return (
@@ -87,11 +83,11 @@ export function AtaChart({ entries }: AtaChartProps) {
 
   return (
     <div className="bg-white rounded-xl p-5 mb-6">
+      {/* Filters */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-sm font-bold text-gray-700">Tasks by ATA</h2>
 
         <div className="flex gap-2 flex-wrap">
-          {/* Type filter */}
           {TYPE_FILTERS.map(f => (
             <button
               key={f.value}
@@ -105,88 +101,90 @@ export function AtaChart({ entries }: AtaChartProps) {
               {f.label}
             </button>
           ))}
-
-          <span className="text-gray-300">|</span>
-
-          {/* Category filter */}
-          {CATEGORY_FILTERS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setCatFilter(f.value)}
-              className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                catFilter === f.value
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
         </div>
+      </div>
+
+      {/* Category filters on second row */}
+      <div className="flex gap-2 flex-wrap mb-4">
+        {CATEGORY_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setCatFilter(f.value)}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+              catFilter === f.value
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {ataCounts.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-8">No tasks match the selected filters.</p>
       ) : (
-        <div className="relative">
-          {/* Y-axis label */}
-          <p className="text-[10px] text-gray-400 mb-1">Tasks</p>
+        <div className="relative overflow-x-auto">
+          <div className="relative border-l border-b border-gray-200 pl-8" style={{ minHeight: 220, paddingBottom: 60 }}>
 
-          {/* Chart area */}
-          <div className="relative border-l border-b border-gray-200 pl-8 pb-6" style={{ minHeight: 200 }}>
-
-            {/* Y-axis ticks */}
-            {[0, Math.ceil(maxCount / 4), Math.ceil(maxCount / 2), Math.ceil(maxCount * 3 / 4), maxCount].map((tick, i) => (
+            {/* Y-axis ticks (increments of 5) */}
+            {yTicks.map(tick => (
               <div
-                key={i}
+                key={tick}
                 className="absolute left-0 text-[10px] text-gray-400 -translate-y-1/2"
-                style={{ bottom: `${(tick / maxCount) * 100}%`, paddingBottom: 24 }}
+                style={{ bottom: `calc(${(tick / maxCount) * 100}% + 60px)` }}
               >
                 {tick}
               </div>
             ))}
 
+            {/* Horizontal grid lines at each 5 */}
+            {yTicks.map(tick => (
+              <div
+                key={`grid-${tick}`}
+                className="absolute left-8 right-0 border-t border-gray-100"
+                style={{ bottom: `calc(${(tick / maxCount) * 100}% + 60px)` }}
+              />
+            ))}
+
             {/* Target line at 10 */}
             <div
               className="absolute left-8 right-0 border-t-2 border-dashed border-green-400 z-10"
-              style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 100}%`, marginBottom: 24 }}
+              style={{ bottom: `calc(${(ATA_SUB_CHAPTER_TARGET / maxCount) * 100}% + 60px)` }}
             >
               <span className="absolute -top-4 right-0 text-[10px] text-green-600 font-medium">Target: {ATA_SUB_CHAPTER_TARGET}</span>
             </div>
 
-            {/* Bars */}
-            <div className="flex items-end gap-[2px] h-[200px]">
+            {/* Bars + X-axis labels */}
+            <div className="flex items-end gap-[2px] ml-8" style={{ height: 220 }}>
               {ataCounts.map(({ code, count }) => {
                 const height = (count / maxCount) * 100
                 const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
                 return (
-                  <div key={code} className="flex-1 min-w-[3px] max-w-[20px] flex flex-col items-center group relative">
-                    <div
-                      className={`w-full rounded-t-sm transition-all ${meetsTarget ? 'bg-green-500' : 'bg-blue-400'}`}
-                      style={{ height: `${height}%` }}
-                    />
-                    {/* Tooltip on hover */}
-                    <div className="absolute bottom-full mb-1 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap">
+                  <div key={code} className="flex-1 min-w-[14px] max-w-[24px] flex flex-col items-center group relative">
+                    {/* Bar */}
+                    <div className="w-full flex items-end" style={{ height: '160px' }}>
+                      <div
+                        className={`w-full rounded-t-sm transition-all ${meetsTarget ? 'bg-green-500' : 'bg-blue-400'}`}
+                        style={{ height: `${height}%` }}
+                      />
+                    </div>
+                    {/* X label (vertical) */}
+                    <div className="h-[60px] flex items-start justify-center pt-1">
+                      <span className="text-[9px] text-gray-500 font-medium" style={{ writingMode: 'vertical-lr' }}>
+                        {code}
+                      </span>
+                    </div>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full mb-1 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
                       {code}: {count} task{count !== 1 ? 's' : ''}
                     </div>
                   </div>
                 )
               })}
             </div>
-
-            {/* X-axis labels (show every few) */}
-            <div className="flex gap-[2px] mt-1">
-              {ataCounts.map(({ code }, i) => (
-                <div key={code} className="flex-1 min-w-[3px] max-w-[20px] text-center">
-                  {(i % Math.max(1, Math.floor(ataCounts.length / 15)) === 0) && (
-                    <span className="text-[8px] text-gray-400 -rotate-45 inline-block origin-top-left">{code}</span>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* X-axis label */}
           <p className="text-[10px] text-gray-400 text-center mt-1">ATA Chapter</p>
         </div>
       )}
