@@ -152,6 +152,17 @@ export default async function LogbookPage({
   const militaryMonths = calcMonths(militaryPeriods, tenYearsAgo)
   const totalExpMonths = civilMonths + militaryMonths
 
+  // Civil experience span: first task to latest task
+  const taskDates = allStats.map(e => new Date(e.task_date).getTime()).filter(t => t >= tenYearsAgo.getTime())
+  const firstTaskDate = taskDates.length > 0 ? new Date(Math.min(...taskDates)) : null
+  const latestTaskDate = taskDates.length > 0 ? new Date(Math.max(...taskDates)) : null
+  let civilExpMonths = 0
+  if (firstTaskDate && latestTaskDate) {
+    civilExpMonths = (latestTaskDate.getFullYear() - firstTaskDate.getFullYear()) * 12 + (latestTaskDate.getMonth() - firstTaskDate.getMonth())
+  }
+  const totalCombinedMonths = civilExpMonths + militaryMonths
+  const meetsExpThreshold = totalCombinedMonths >= 60 // 5 years
+
   // 10-year cutoff for entries
   const tenYearsAgoTime = tenYearsAgo.getTime()
 
@@ -217,22 +228,34 @@ export default async function LogbookPage({
 
         <AdPlaceholder format="banner" className="my-4" />
 
-        {/* Stats + Recency */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-6">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-              <p className="text-sm text-white/70">Tasks</p>
-              <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-              <p className="text-sm text-white/70">Verified</p>
-              <p className="text-3xl font-bold mt-1 text-white">{verifiedCount}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-              <p className="text-sm text-white/70">Drafts</p>
-              <p className="text-3xl font-bold mt-1 text-white">{draftCount}</p>
-            </div>
+        {/* Stats + Experience + Recency */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
+            <p className="text-sm text-white/70">Tasks</p>
+            <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
           </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
+            <p className="text-sm text-white/70">Verified</p>
+            <p className="text-3xl font-bold mt-1 text-white">{verifiedCount}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
+            <p className="text-sm text-white/70">Drafts</p>
+            <p className="text-3xl font-bold mt-1 text-white">{draftCount}</p>
+          </div>
+          <div className="rounded-xl p-5" style={{ backgroundColor: meetsExpThreshold ? '#22c55e' : 'rgba(255,255,255,0.1)', borderWidth: meetsExpThreshold ? 0 : 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <p className="text-sm" style={{ color: meetsExpThreshold ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.7)' }}>Experience</p>
+            <p className="text-3xl font-bold mt-1 text-white">
+              {Math.floor(totalCombinedMonths / 12)}y {totalCombinedMonths % 12}m
+            </p>
+            {militaryMonths > 0 && (
+              <p className="text-[10px] mt-1" style={{ color: meetsExpThreshold ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)' }}>
+                {Math.floor(civilExpMonths / 12)}y {civilExpMonths % 12}m civil + {Math.floor(militaryMonths / 12)}y {militaryMonths % 12}m military
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-6">
 
           <div className="bg-white rounded-xl p-5">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
