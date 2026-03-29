@@ -199,16 +199,16 @@ export function AtaChart({ entries }: AtaChartProps) {
               <span className="absolute -top-4 left-2 text-[10px] font-medium" style={{ color: '#22c55e' }}>Target: {ATA_SUB_CHAPTER_TARGET}</span>
             </div>
 
-            <div className="flex items-end gap-1 h-full px-1">
+            <div className="flex items-end gap-1 px-1" style={{ height: 250 }}>
               {ataCounts.map(({ code, count, breakdown }) => {
-                const pct = count > 0 ? (count / maxCount) * 100 : 0
+                const barPx = count > 0 ? Math.max(8, Math.round((count / maxCount) * 250)) : 0
                 const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
                 return (
-                  <div key={code} className="flex-1 flex items-end group relative">
+                  <div key={code} className="flex-1 flex items-end group relative" style={{ height: 250 }}>
                     <div
                       className="w-full rounded-t-sm"
                       style={{
-                        height: count > 0 ? `max(8px, ${pct}%)` : 0,
+                        height: barPx,
                         backgroundColor: count > 0 ? (meetsTarget ? '#22c55e' : '#3b82f6') : undefined,
                       }}
                     />
