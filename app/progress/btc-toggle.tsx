@@ -8,9 +8,10 @@ interface BtcToggleProps {
   initialValue: boolean
   selectedCategory: string
   userId: string
+  darkMode?: boolean
 }
 
-export function BtcToggle({ initialValue, selectedCategory, userId }: BtcToggleProps) {
+export function BtcToggle({ initialValue, selectedCategory, userId, darkMode }: BtcToggleProps) {
   const router = useRouter()
   const [checked, setChecked] = useState(initialValue)
   const [saving, setSaving] = useState(false)
@@ -21,8 +22,6 @@ export function BtcToggle({ initialValue, selectedCategory, userId }: BtcToggleP
 
     const supabase = createClient()
 
-    // Upsert a marker row for this category with the BTC flag
-    // We use module_id '_btc' as a sentinel row for the category-level BTC setting
     await supabase
       .from('module_exam_progress')
       .upsert(
@@ -40,19 +39,19 @@ export function BtcToggle({ initialValue, selectedCategory, userId }: BtcToggleP
   }
 
   return (
-    <label className="flex items-center gap-3 cursor-pointer">
+    <label className="flex items-start gap-3 cursor-pointer">
       <input
         type="checkbox"
         checked={checked}
         onChange={e => handleToggle(e.target.checked)}
         disabled={saving}
-        className="h-5 w-5 rounded border-gray-300"
+        className="h-5 w-5 rounded border-gray-300 mt-0.5 shrink-0"
       />
       <div>
-        <span className="text-sm font-medium text-gray-900">
-          Basic Training Course completed
+        <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          Basic Training Course
         </span>
-        <p className="text-xs text-gray-400">
+        <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-gray-400'}`}>
           I have completed a Part 147 Basic Training Course to reduce the practical experience required in my logbook.
         </p>
       </div>

@@ -213,7 +213,7 @@ function AuthForm() {
               </button>
             </div>
 
-            <div className="p-8 space-y-5">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="p-8 space-y-5">
               {mode === 'signup' && (
                 <>
                   <div className="grid grid-cols-2 gap-3">
@@ -319,8 +319,8 @@ function AuthForm() {
               )}
 
               <Button
+                type="submit"
                 className="w-full h-11 bg-[#1565C0] text-white hover:bg-[#0A3A8A] font-semibold text-sm"
-                onClick={handleSubmit}
                 disabled={loading}
               >
                 {loading
@@ -380,7 +380,7 @@ function AuthForm() {
                   <Link href="/privacy" className="text-[#1565C0] hover:underline">Privacy Policy</Link>.
                 </p>
               )}
-            </div>
+            </form>
             </div>
           </div>
         </div>

@@ -17,26 +17,88 @@ export type AmlCategory = (typeof AML_CATEGORIES)[number]['value']
 
 // Aircraft categories -determines which AML categories can verify
 export const AIRCRAFT_CATEGORIES = [
-  { value: 'large_aeroplane', label: 'Large Aeroplane' },
-  { value: 'small_aeroplane', label: 'Small Aeroplane' },
-  { value: 'large_helicopter', label: 'Large Helicopter' },
-  { value: 'small_helicopter', label: 'Small Helicopter' },
+  { value: 'aeroplane_turbine', label: 'Aeroplane \u2013 Turbine' },
+  { value: 'aeroplane_piston', label: 'Aeroplane \u2013 Piston' },
+  { value: 'helicopter_turbine', label: 'Helicopter \u2013 Turbine' },
+  { value: 'helicopter_piston', label: 'Helicopter \u2013 Piston' },
 ] as const
 
 export type AircraftCategory = (typeof AIRCRAFT_CATEGORIES)[number]['value']
 
 // Which AML categories can verify work on which aircraft categories
 export const VERIFICATION_AUTHORITY: Record<AircraftCategory, AmlCategory[]> = {
-  large_aeroplane: ['A1', 'B1.1', 'C'],
-  small_aeroplane: ['A2', 'B1.2', 'B3'],
-  large_helicopter: ['A3', 'B1.3'],
-  small_helicopter: ['A4', 'B1.4'],
+  aeroplane_turbine: ['A1', 'B1.1', 'C'],
+  aeroplane_piston: ['A2', 'B1.2', 'B3'],
+  helicopter_turbine: ['A3', 'B1.3'],
+  helicopter_piston: ['A4', 'B1.4'],
+}
+
+// Recency thresholds per CAP 741
+export const RECENCY_PERIOD_YEARS = 2
+export const RECENCY_TASK_THRESHOLD = 180
+export const RECENCY_DAY_THRESHOLD = 100
+
+// Scope of work descriptions per licence category group
+export const SCOPE_OF_WORK: Record<string, string> = {
+  'B1/B3': 'Maintenance on structure, powerplant, mechanical and electrical systems; simple avionics tests not requiring troubleshooting.',
+  'B2': 'Avionics and electrical systems; electrical and avionics within powerplant and mechanical systems requiring simple tests.',
+  'Category A': 'Minor scheduled line maintenance and simple defect rectification.',
+}
+
+// Experience validity
+export const EXPERIENCE_VALIDITY_YEARS = 10
+
+// Experience requirements per AML category (in years)
+export const EXPERIENCE_REQUIREMENTS: Record<string, { years: number; yearsWithBtc: number }> = {
+  A1: { years: 3, yearsWithBtc: 1 },
+  A2: { years: 3, yearsWithBtc: 1 },
+  A3: { years: 3, yearsWithBtc: 1 },
+  A4: { years: 3, yearsWithBtc: 1 },
+  'B1.1': { years: 5, yearsWithBtc: 2 },
+  'B1.2': { years: 3, yearsWithBtc: 1 },
+  'B1.3': { years: 5, yearsWithBtc: 2 },
+  'B1.4': { years: 3, yearsWithBtc: 1 },
+  B2: { years: 5, yearsWithBtc: 2 },
+  B3: { years: 3, yearsWithBtc: 1 },
+}
+
+// Military/non-civil: minimum civil experience always required
+export const MIN_CIVIL_MONTHS = 12
+
+// Map AML categories to the aircraft_category values they count toward
+export const CATEGORY_TO_AIRCRAFT: Record<string, AircraftCategory[]> = {
+  A1: ['aeroplane_turbine'],
+  A2: ['aeroplane_piston'],
+  A3: ['helicopter_turbine'],
+  A4: ['helicopter_piston'],
+  'B1.1': ['aeroplane_turbine'],
+  'B1.2': ['aeroplane_piston'],
+  'B1.3': ['helicopter_turbine'],
+  'B1.4': ['helicopter_piston'],
+  B2: ['aeroplane_turbine', 'aeroplane_piston', 'helicopter_turbine', 'helicopter_piston'],
+  B3: ['aeroplane_piston'],
 }
 
 // B2 can verify avionics/electrical tasks on any aircraft category
 export const B2_UNIVERSAL_AUTHORITY = 'B2' as const
 
-// Maintenance categories per CAP 741
+// Maintenance types for logbook entries
+export const MAINTENANCE_TYPES = [
+  { value: 'base_maintenance', label: 'Base Maintenance' },
+  { value: 'line_maintenance', label: 'Line Maintenance' },
+  { value: 'military_experience', label: 'Military Experience' },
+  { value: 'student_experience', label: 'Student Experience' },
+] as const
+
+export type MaintenanceType = (typeof MAINTENANCE_TYPES)[number]['value']
+
+// Maintenance types that require verification for licence application
+export const REQUIRES_VERIFICATION: MaintenanceType[] = ['base_maintenance', 'line_maintenance']
+
+// Maintenance types that don't need aircraft registration/type
+export const NO_AIRCRAFT_REQUIRED: MaintenanceType[] = ['military_experience', 'student_experience']
+
+// Legacy maintenance categories (kept for backward compatibility with existing entries)
 export const MAINTENANCE_CATEGORIES = [
   { value: 'line_maintenance', label: 'Line Maintenance' },
   { value: 'base_maintenance', label: 'Base Maintenance' },
@@ -45,6 +107,9 @@ export const MAINTENANCE_CATEGORIES = [
 ] as const
 
 export type MaintenanceCategory = (typeof MAINTENANCE_CATEGORIES)[number]['value']
+
+// ATA sub-chapter target for representative cross-section
+export const ATA_SUB_CHAPTER_TARGET = 10
 
 // Entry statuses
 export const ENTRY_STATUSES = {
@@ -59,66 +124,20 @@ export const ENTRY_STATUSES = {
 
 export type EntryStatus = keyof typeof ENTRY_STATUSES
 
-// ATA 100 chapters (commonly used in maintenance)
-export const ATA_CHAPTERS = [
-  { value: '05', label: 'ATA 05 -Time Limits / Maintenance Checks' },
-  { value: '06', label: 'ATA 06 -Dimensions & Areas' },
-  { value: '07', label: 'ATA 07 -Lifting & Shoring' },
-  { value: '08', label: 'ATA 08 -Levelling & Weighing' },
-  { value: '09', label: 'ATA 09 -Towing & Taxiing' },
-  { value: '10', label: 'ATA 10 -Parking, Mooring, Storage & Return to Service' },
-  { value: '11', label: 'ATA 11 -Placards & Markings' },
-  { value: '12', label: 'ATA 12 -Servicing' },
-  { value: '20', label: 'ATA 20 -Standard Practices – Airframe' },
-  { value: '21', label: 'ATA 21 -Air Conditioning & Pressurisation' },
-  { value: '22', label: 'ATA 22 -Auto Flight' },
-  { value: '23', label: 'ATA 23 -Communications' },
-  { value: '24', label: 'ATA 24 -Electrical Power' },
-  { value: '25', label: 'ATA 25 -Equipment / Furnishings' },
-  { value: '26', label: 'ATA 26 -Fire Protection' },
-  { value: '27', label: 'ATA 27 -Flight Controls' },
-  { value: '28', label: 'ATA 28 -Fuel' },
-  { value: '29', label: 'ATA 29 -Hydraulic Power' },
-  { value: '30', label: 'ATA 30 -Ice & Rain Protection' },
-  { value: '31', label: 'ATA 31 -Indicating / Recording Systems' },
-  { value: '32', label: 'ATA 32 -Landing Gear' },
-  { value: '33', label: 'ATA 33 -Lights' },
-  { value: '34', label: 'ATA 34 -Navigation' },
-  { value: '35', label: 'ATA 35 -Oxygen' },
-  { value: '36', label: 'ATA 36 -Pneumatic' },
-  { value: '37', label: 'ATA 37 -Vacuum' },
-  { value: '38', label: 'ATA 38 -Water / Waste' },
-  { value: '45', label: 'ATA 45 -Central Maintenance System' },
-  { value: '46', label: 'ATA 46 -Information Systems' },
-  { value: '49', label: 'ATA 49 -Airborne Auxiliary Power' },
-  { value: '51', label: 'ATA 51 -Standard Practices & Structures' },
-  { value: '52', label: 'ATA 52 -Doors' },
-  { value: '53', label: 'ATA 53 -Fuselage' },
-  { value: '54', label: 'ATA 54 -Nacelles / Pylons' },
-  { value: '55', label: 'ATA 55 -Stabilisers' },
-  { value: '56', label: 'ATA 56 -Windows' },
-  { value: '57', label: 'ATA 57 -Wings' },
-  { value: '61', label: 'ATA 61 -Propellers / Propulsors' },
-  { value: '62', label: 'ATA 62 -Main Rotor' },
-  { value: '63', label: 'ATA 63 -Main Rotor Drive' },
-  { value: '64', label: 'ATA 64 -Tail Rotor' },
-  { value: '65', label: 'ATA 65 -Tail Rotor Drive' },
-  { value: '67', label: 'ATA 67 -Rotors Flight Control' },
-  { value: '71', label: 'ATA 71 -Powerplant' },
-  { value: '72', label: 'ATA 72 -Engine -Turbine / Turboprop' },
-  { value: '73', label: 'ATA 73 -Engine -Fuel & Control' },
-  { value: '74', label: 'ATA 74 -Ignition' },
-  { value: '75', label: 'ATA 75 -Air' },
-  { value: '76', label: 'ATA 76 -Engine Controls' },
-  { value: '77', label: 'ATA 77 -Engine Indicating' },
-  { value: '78', label: 'ATA 78 -Exhaust' },
-  { value: '79', label: 'ATA 79 -Oil' },
-  { value: '80', label: 'ATA 80 -Starting' },
-  { value: '81', label: 'ATA 81 -Turbines' },
-  { value: '82', label: 'ATA 82 -Water Injection' },
-  { value: '83', label: 'ATA 83 -Accessory Gearboxes' },
-  { value: '85', label: 'ATA 85 -Reciprocating Engine' },
-] as const
+// ATA chapters: re-export ATA iSpec 2200 (314 sub-chapters)
+export { ATA_2200_CHAPTERS, type Ata2200Chapter } from './ata-2200'
+
+// Backward-compatible alias so existing files can still import ATA_CHAPTERS
+import { ATA_2200_CHAPTERS as _ATA_2200 } from './ata-2200'
+export const ATA_CHAPTERS = _ATA_2200
+
+// ATA label lookup (handles both 4-digit xx-xx and legacy 2-digit codes)
+export function getAtaLabel(code: string): string {
+  const match = _ATA_2200.find(c => c.value === code)
+  if (match) return match.label
+  const main = _ATA_2200.find(c => c.value.startsWith(code + '-'))
+  return main ? main.label.split(':')[0] + ` (${code})` : `ATA ${code}`
+}
 
 // Check if a verifier's AML categories allow them to verify a given aircraft category
 export function canVerify(

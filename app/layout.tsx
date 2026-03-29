@@ -4,6 +4,8 @@ import './globals.css'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { CookieBanner } from '@/components/cookie-banner'
+import { ScrollToTop } from '@/components/scroll-to-top'
+
 
 const alexandria = Alexandria({
   subsets: ['latin'],
@@ -30,6 +32,7 @@ export default function RootLayout({
         </main>
         <Footer />
         <CookieBanner />
+        <ScrollToTop />
       </body>
     </html>
   )

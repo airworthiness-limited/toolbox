@@ -29,7 +29,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch profile
+  // Fetch profile first (needed for redirect check and aml_categories)
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, full_name, role, aml_licence_number, aml_categories, type_ratings, aml_photo_path, aml_verified, is_public, competency_completed_at, created_at')
@@ -38,19 +38,34 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/login')
 
-  // Premium check
-  const { data: purchase } = await supabase
-    .from('purchases')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
+  const selectedCategory = profile.aml_categories?.[0] || 'B1.1'
 
-  // Fetch certificates with course slugs for training currency check
-  const { data: certificates } = await supabase
-    .from('certificates')
-    .select('token, issued_at, courses(slug, title)')
-    .eq('user_id', user.id)
-    .order('issued_at', { ascending: false })
+  // Run remaining queries in parallel -- none depend on each other
+  const [
+    { data: purchase },
+    { data: certificates },
+    { data: allLogbookEntries },
+    { data: allProgress },
+  ] = await Promise.all([
+    supabase
+      .from('purchases')
+      .select('id')
+      .eq('user_id', user.id)
+      .single(),
+    supabase
+      .from('certificates')
+      .select('token, issued_at, courses(slug, title)')
+      .eq('user_id', user.id)
+      .order('issued_at', { ascending: false }),
+    supabase
+      .from('logbook_entries')
+      .select('task_date, status')
+      .eq('user_id', user.id),
+    supabase
+      .from('module_exam_progress')
+      .select('id, user_id, target_category, module_id, issue_date, mcq_score, essay_score, essay_score_2, essay_split, is_btc')
+      .eq('user_id', user.id),
+  ])
 
   // Fetch external training certificates
   const { data: externalCerts } = await supabase
@@ -91,12 +106,6 @@ export default async function ProfilePage() {
     }
   })
 
-  // Logbook stats (all entries)
-  const { data: allLogbookEntries } = await supabase
-    .from('logbook_entries')
-    .select('task_date, status')
-    .eq('user_id', user.id)
-
   const logbookCount = allLogbookEntries?.length ?? 0
 
   // Calculate recency as distinct task days within the recency period
@@ -115,13 +124,6 @@ export default async function ProfilePage() {
     periodStart: periodStart.toISOString().split('T')[0],
     periodEnd: now.toISOString().split('T')[0],
   }
-
-  // Module exam progress for the selected category (default B1.1)
-  const selectedCategory = profile.aml_categories?.[0] || 'B1.1'
-  const { data: allProgress } = await supabase
-    .from('module_exam_progress')
-    .select('*')
-    .eq('user_id', user.id)
 
   const progressRecords = (allProgress ?? []) as ModuleExamProgress[]
   const requiredModuleIds = MODULE_REQUIREMENTS[selectedCategory] ?? []
@@ -240,8 +242,42 @@ export default async function ProfilePage() {
           </div>
         </div>
 
+        {/* Recency - same format as logbook */}
+        <div className="bg-white rounded-xl p-5 mb-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Recency (6 Months / 2 Years)
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Tasks</span>
+                <span className="text-sm font-bold text-gray-900">{logbookCount} / 180</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div
+                  style={{ width: `${Math.min(100, (logbookCount / 180) * 100)}%`, backgroundColor: logbookCount >= 180 ? '#22c55e' : '#3b82f6' }}
+                  className="h-1.5 rounded-full"
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Days</span>
+                <span className="text-sm font-bold text-gray-900">{recencyStatus.totalDays} / {recencyStatus.requiredDays}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div
+                  style={{ width: `${Math.min(100, (recencyStatus.totalDays / recencyStatus.requiredDays) * 100)}%`, backgroundColor: recencyStatus.isCurrent ? '#22c55e' : '#3b82f6' }}
+                  className="h-1.5 rounded-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+
         {/* Continuation Training */}
-        <Card className="mb-6 bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Continuation Training</CardTitle>
             <CardDescription>Required to be completed within the last 2 years.</CardDescription>
@@ -312,47 +348,8 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Recency */}
-        <Card className="mb-6 bg-white">
-          <CardHeader>
-            <CardTitle>Maintenance Recency</CardTitle>
-            <CardDescription>
-              6 months of maintenance experience ({RECENCY_REQUIRED_DAYS} task days) in the preceding {RECENCY_PERIOD_YEARS} years.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-3xl font-bold text-gray-900">{recencyStatus.totalDays}</p>
-                <p className="text-sm text-gray-500">of {recencyStatus.requiredDays} task days required</p>
-              </div>
-              <Badge variant={recencyStatus.isCurrent ? 'default' : 'destructive'}>
-                {recencyStatus.isCurrent ? 'Recency Met' : 'Not Met'}
-              </Badge>
-            </div>
-
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className={`h-3 rounded-full transition-all ${
-                  recencyStatus.isCurrent ? 'bg-green-500' : 'bg-amber-500'
-                }`}
-                style={{ width: `${Math.min((recencyStatus.totalDays / recencyStatus.requiredDays) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Period: {new Date(recencyStatus.periodStart).toLocaleDateString('en-GB')} – {new Date(recencyStatus.periodEnd).toLocaleDateString('en-GB')}
-            </p>
-
-            {!recencyStatus.isCurrent && (
-              <p className="text-sm text-gray-500 mt-3">
-                Log your maintenance tasks to build up recency days.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Competency Assessment */}
-        <Card className="mb-6 bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Competency Assessment</CardTitle>
             <CardDescription>
@@ -386,7 +383,7 @@ export default async function ProfilePage() {
         </Card>
 
         {/* Task Logbook */}
-        <Card className="bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Aircraft Maintenance Digital Logbook</CardTitle>
             <CardDescription>

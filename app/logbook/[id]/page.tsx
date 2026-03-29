@@ -31,46 +31,44 @@ export default async function LogbookEntryPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: entry } = await supabase
-    .from('logbook_entries')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // Fetch entry and user profile in parallel (both independent)
+  const [{ data: entry }, { data: profile }] = await Promise.all([
+    supabase
+      .from('logbook_entries')
+      .select('*')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('profiles')
+      .select('aml_licence_number, aml_categories')
+      .eq('id', user.id)
+      .single(),
+  ])
 
   if (!entry) notFound()
 
   const isOwner = entry.user_id === user.id
-
-  // Fetch verifier info if verified
-  let verifierInfo: { full_name: string; aml_licence_number: string } | null = null
-  if (entry.verifier_id) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, aml_licence_number')
-      .eq('id', entry.verifier_id)
-      .single()
-    verifierInfo = data
-  }
-
-  // Fetch QC info if reviewed
-  let qcInfo: { full_name: string } | null = null
-  if (entry.qc_auditor_id) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', entry.qc_auditor_id)
-      .single()
-    qcInfo = data
-  }
-
-  // Check if current user is an AML holder (for verification actions)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('aml_licence_number, aml_categories')
-    .eq('id', user.id)
-    .single()
-
   const isAmlHolder = !!profile?.aml_licence_number
+
+  // Fetch verifier and QC info in parallel (both depend on entry but not on each other)
+  const [verifierInfo, qcInfo] = await Promise.all([
+    entry.verifier_id
+      ? supabase
+          .from('profiles')
+          .select('full_name, aml_licence_number')
+          .eq('id', entry.verifier_id)
+          .single()
+          .then(({ data }) => data)
+      : Promise.resolve(null),
+    entry.qc_auditor_id
+      ? supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', entry.qc_auditor_id)
+          .single()
+          .then(({ data }) => data)
+      : Promise.resolve(null),
+  ]) as [{ full_name: string; aml_licence_number: string } | null, { full_name: string } | null]
   const canShowVerifyActions = isAmlHolder && !isOwner && entry.status === 'pending_verification'
   const canShowQcActions = !isOwner && entry.verifier_id !== user.id && entry.status === 'pending_qc'
 

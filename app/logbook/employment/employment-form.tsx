@@ -20,6 +20,7 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
   const [employer, setEmployer] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [isMilitary, setIsMilitary] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -39,6 +40,7 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
         employer,
         start_date: startDate,
         end_date: endDate || null,
+        is_military: isMilitary,
       })
 
     if (insertError) {
@@ -47,6 +49,7 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
       setEmployer('')
       setStartDate('')
       setEndDate('')
+      setIsMilitary(false)
       router.refresh()
     }
     setSaving(false)
@@ -68,10 +71,15 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
             <Card key={period.id}>
               <CardContent className="flex items-center justify-between py-4">
                 <div>
-                  <p className="font-medium text-gray-900">{period.employer}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900">{period.employer}</p>
+                    {period.is_military && (
+                      <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Military / Non-Civil</span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">
                     {new Date(period.start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                    {' - '}
+                    {' \u2013 '}
                     {period.end_date
                       ? new Date(period.end_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
                       : 'Present'}
@@ -126,6 +134,16 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
               />
             </div>
           </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isMilitary}
+              onChange={e => setIsMilitary(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Military or non-civil aviation employer</span>
+          </label>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
