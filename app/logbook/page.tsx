@@ -113,6 +113,7 @@ export default async function LogbookPage({
   const isAmlHolder = !!profile?.aml_licence_number
   const allStats = statsEntries ?? []
 
+
   // Default employer: most recent employment period with no end date
   const currentEmployer = (employmentPeriods ?? []).find(p => !p.end_date && !p.is_military)
   const defaultEmployer = currentEmployer?.employer ?? ''
