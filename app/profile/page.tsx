@@ -218,28 +218,45 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Action Required Banner */}
-        <div className={`rounded-xl p-6 mb-8 ${
-          allComplete
-            ? 'bg-green-500/20 border border-green-400/30'
-            : 'bg-amber-500/20 border border-amber-400/30'
-        }`}>
-          <div>
-            <p className="font-semibold text-white">
-              {allComplete
-                ? 'Profile Complete'
-                : 'Action Required'}
-            </p>
-            <p className="text-sm text-white/70 mt-0.5">
-              {!allTrainingCurrent && 'Some continuation training is expired. '}
-              {!recencyStatus.isCurrent && 'Recency requirement not met. '}
-              {allComplete && 'All checks passed.'}
-            </p>
+        <AdPlaceholder format="banner" className="my-4" />
+
+        {/* Recency - same format as logbook */}
+        <div className="bg-white rounded-xl p-5 mb-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Recency (6 Months / 2 Years)
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Tasks</span>
+                <span className="text-sm font-bold text-gray-900">{logbookCount} / 180</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div
+                  style={{ width: `${Math.min(100, (logbookCount / 180) * 100)}%`, backgroundColor: logbookCount >= 180 ? '#22c55e' : '#3b82f6' }}
+                  className="h-1.5 rounded-full"
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Days</span>
+                <span className="text-sm font-bold text-gray-900">{recencyStatus.totalDays} / {recencyStatus.requiredDays}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                <div
+                  style={{ width: `${Math.min(100, (recencyStatus.totalDays / recencyStatus.requiredDays) * 100)}%`, backgroundColor: recencyStatus.isCurrent ? '#22c55e' : '#3b82f6' }}
+                  className="h-1.5 rounded-full"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
+        <AdPlaceholder format="banner" className="my-4" />
+
         {/* Continuation Training */}
-        <Card className="mb-6 bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Continuation Training</CardTitle>
             <CardDescription>Required to be completed within the last 2 years.</CardDescription>
@@ -247,24 +264,22 @@ export default async function ProfilePage() {
           <CardContent>
             <div className="grid gap-3">
               {trainingStatuses.map(training => (
-                <div key={training.slug} className={`rounded-lg border p-4 ${!training.isCurrent ? 'opacity-60' : ''}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-base font-semibold">{training.label}</p>
-                      {training.certificateDate ? (
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
-                            day: 'numeric', month: 'long', year: 'numeric'
-                          })}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-400 mt-0.5">No certificate on record</p>
-                      )}
-                    </div>
+                <div key={training.slug} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-base font-semibold">{training.label}</p>
                     <Badge variant={training.isCurrent ? 'default' : 'destructive'}>
                       {training.isCurrent ? 'Current' : 'Expired'}
                     </Badge>
                   </div>
+                  {training.certificateDate ? (
+                    <p className="text-sm text-gray-500">
+                      Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'long', year: 'numeric'
+                      })}
+                    </p>
+                  ) : (
+                    <TrainingDateInput slug={training.slug} label={training.label} />
+                  )}
                 </div>
               ))}
             </div>
@@ -278,7 +293,7 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        <AdPlaceholder format="inline" className="my-6" />
+        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Aircraft Maintenance Licence */}
         <Card className="mb-6 bg-white">
@@ -299,47 +314,8 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Recency */}
-        <Card className="mb-6 bg-white">
-          <CardHeader>
-            <CardTitle>Maintenance Recency</CardTitle>
-            <CardDescription>
-              6 months of maintenance experience ({RECENCY_REQUIRED_DAYS} task days) in the preceding {RECENCY_PERIOD_YEARS} years.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-3xl font-bold text-gray-900">{recencyStatus.totalDays}</p>
-                <p className="text-sm text-gray-500">of {recencyStatus.requiredDays} task days required</p>
-              </div>
-              <Badge variant={recencyStatus.isCurrent ? 'default' : 'destructive'}>
-                {recencyStatus.isCurrent ? 'Recency Met' : 'Not Met'}
-              </Badge>
-            </div>
-
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className={`h-3 rounded-full transition-all ${
-                  recencyStatus.isCurrent ? 'bg-green-500' : 'bg-amber-500'
-                }`}
-                style={{ width: `${Math.min((recencyStatus.totalDays / recencyStatus.requiredDays) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Period: {new Date(recencyStatus.periodStart).toLocaleDateString('en-GB')} – {new Date(recencyStatus.periodEnd).toLocaleDateString('en-GB')}
-            </p>
-
-            {!recencyStatus.isCurrent && (
-              <p className="text-sm text-gray-500 mt-3">
-                Log your maintenance tasks to build up recency days.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Competency Assessment */}
-        <Card className="mb-6 bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Competency Assessment</CardTitle>
             <CardDescription>
@@ -372,8 +348,10 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
+        <AdPlaceholder format="banner" className="my-4" />
+
         {/* Task Logbook */}
-        <Card className="bg-white">
+        <Card className="mb-4 bg-white">
           <CardHeader>
             <CardTitle>Aircraft Maintenance Digital Logbook</CardTitle>
             <CardDescription>
@@ -393,6 +371,8 @@ export default async function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Delete Account */}
         <Card className="bg-white border-red-100">
@@ -415,3 +395,4 @@ export default async function ProfilePage() {
 // Client component for removing assessment
 import { RemoveAssessmentButton } from './remove-assessment-button'
 import { DeleteAccountButton } from './delete-account-button'
+import { TrainingDateInput } from './training-date-input'
