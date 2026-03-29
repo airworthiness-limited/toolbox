@@ -14,17 +14,18 @@ import {
 import {
   ENTRY_STATUSES,
   MAINTENANCE_CATEGORIES,
-  ATA_CHAPTERS,
   AIRCRAFT_CATEGORIES,
   RECENCY_TASK_THRESHOLD,
   RECENCY_DAY_THRESHOLD,
   EXPERIENCE_REQUIREMENTS,
   EXPERIENCE_VALIDITY_YEARS,
   CATEGORY_TO_AIRCRAFT,
+  getAtaLabel,
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
 import { MilitaryExperience } from './military-experience'
+import { MassInput } from './mass-input'
 
 const PAGE_SIZE = 25
 
@@ -38,10 +39,6 @@ const CATEGORY_GROUPS = [
 
 function getCategoryLabel(value: string) {
   return MAINTENANCE_CATEGORIES.find(c => c.value === value)?.label ?? value
-}
-
-function getAtaLabel(value: string) {
-  return ATA_CHAPTERS.find(c => c.value === value)?.label ?? `ATA ${value}`
 }
 
 function StatusBadge({ status }: { status: EntryStatus }) {
@@ -97,7 +94,7 @@ export default async function LogbookPage({
       .single(),
     supabase
       .from('logbook_entries')
-      .select('status, task_date, aircraft_category')
+      .select('status, task_date, aircraft_category, maintenance_type')
       .eq('user_id', user.id),
     supabase
       .from('logbook_entries')
@@ -107,12 +104,21 @@ export default async function LogbookPage({
       .gte('task_date', twoYearsAgoStr),
     supabase
       .from('employment_periods')
-      .select('start_date, end_date, is_military')
-      .eq('user_id', user.id),
+      .select('employer, start_date, end_date, is_military')
+      .eq('user_id', user.id)
+      .order('start_date', { ascending: false }),
   ])
 
   const isAmlHolder = !!profile?.aml_licence_number
   const allStats = statsEntries ?? []
+
+  // Default employer: most recent employment period with no end date
+  const currentEmployer = (employmentPeriods ?? []).find(p => !p.end_date && !p.is_military)
+  const defaultEmployer = currentEmployer?.employer ?? ''
+
+  // Last maintenance type used (from most recent entry)
+  const lastEntry = allStats[0] as { maintenance_type?: string } | undefined
+  const lastMaintenanceType = (lastEntry as any)?.maintenance_type
 
   // Filter stats by category if selected
   const filteredStats = selectedCategory && relevantAircraftCats.length > 0
@@ -193,9 +199,6 @@ export default async function LogbookPage({
             )}
             <Link href="/logbook/export">
               <Button variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10">Print / Export</Button>
-            </Link>
-            <Link href="/logbook/new">
-              <Button>New Entry</Button>
             </Link>
           </div>
         </div>
@@ -312,6 +315,13 @@ export default async function LogbookPage({
             />
           </div>
         )}
+
+        {/* Mass Input */}
+        <h2 className="text-lg font-bold text-white mb-3">New Entries</h2>
+        <MassInput
+          defaultEmployer={defaultEmployer}
+          lastMaintenanceType={lastMaintenanceType}
+        />
 
         <AdPlaceholder format="inline" className="my-6" />
 

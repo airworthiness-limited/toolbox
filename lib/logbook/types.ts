@@ -1,4 +1,4 @@
-import type { AircraftCategory, EntryStatus, MaintenanceCategory } from './constants'
+import type { AircraftCategory, EntryStatus, MaintenanceCategory, MaintenanceType } from './constants'
 
 export interface LogbookEntry {
   id: string
@@ -7,13 +7,16 @@ export interface LogbookEntry {
   aircraft_type: string
   aircraft_registration: string
   ata_chapter: string
+  ata_chapters: string[]
   description: string
   category: MaintenanceCategory
+  maintenance_type: MaintenanceType
   aircraft_category: AircraftCategory
   duration_hours: number
   employer: string
   supervised: boolean
   job_number: string | null
+  work_order_photo_path: string | null
   status: EntryStatus
   verifier_id: string | null
   verifier_comments: string | null
