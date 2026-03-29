@@ -126,58 +126,51 @@ export function AtaChart({ entries }: AtaChartProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="relative" style={{ paddingRight: 32 }}>
+        {/* Chart wrapper: bar area is 160px tall, labels 40px below */}
+        <div className="flex">
+          {/* Left: bars + x labels */}
+          <div className="flex-1 min-w-0">
+            {/* Bar area with grid lines inside */}
+            <div className="relative border-l border-b border-gray-300" style={{ height: 160 }}>
 
-          {/* Grid lines (positioned relative to bar area) */}
-          {yTicks.filter(t => t > 0).map(tick => (
-            <div
-              key={`grid-${tick}`}
-              className="absolute left-0 border-t border-gray-100"
-              style={{ bottom: `${(tick / maxCount) * 160 + 40}px`, right: 32 }}
-            />
-          ))}
+              {/* Grid lines inside bar area */}
+              {yTicks.filter(t => t > 0).map(tick => (
+                <div
+                  key={`grid-${tick}`}
+                  className="absolute left-0 right-0 border-t border-gray-100"
+                  style={{ bottom: `${(tick / maxCount) * 100}%` }}
+                />
+              ))}
 
-          {/* Target line */}
-          <div
-            className="absolute left-0 border-t-2 border-dashed border-green-400 z-10"
-            style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 160 + 40}px`, right: 32 }}
-          >
-            <span className="absolute -top-4 left-2 text-[10px] text-green-600 font-medium">Target: {ATA_SUB_CHAPTER_TARGET}</span>
-          </div>
+              {/* Target line inside bar area */}
+              <div
+                className="absolute left-0 right-0 border-t-2 border-dashed border-green-400 z-10"
+                style={{ bottom: `${(ATA_SUB_CHAPTER_TARGET / maxCount) * 100}%` }}
+              >
+                <span className="absolute -top-4 left-2 text-[10px] text-green-600 font-medium">Target: {ATA_SUB_CHAPTER_TARGET}</span>
+              </div>
 
-          {/* Y-axis labels on right, outside chart */}
-          {yTicks.map(tick => (
-            <div
-              key={tick}
-              className="absolute text-[10px] text-gray-400 -translate-y-1/2"
-              style={{ bottom: `${(tick / maxCount) * 160 + 40}px`, right: 0, width: 28, textAlign: 'right' }}
-            >
-              {tick}
-            </div>
-          ))}
-
-          {/* Bar area — bars sit directly on the X-axis line */}
-          <div className="border-l border-gray-200 relative" style={{ marginRight: 0 }}>
-            <div className="flex items-end gap-0 border-b border-gray-300" style={{ height: 160 }}>
-              {ataCounts.map(({ code, count }) => {
-                const barH = count > 0 ? Math.max(2, (count / maxCount) * 160) : 0
-                const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
-                return (
-                  <div key={code} className="flex-1 min-w-[1px] flex items-end group relative">
-                    <div
-                      className={`w-full ${count > 0 ? (meetsTarget ? 'bg-green-500' : 'bg-blue-400') : ''}`}
-                      style={{ height: barH }}
-                    />
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
-                      {code}: {count} task{count !== 1 ? 's' : ''}
+              {/* Bars */}
+              <div className="flex items-end gap-0 h-full">
+                {ataCounts.map(({ code, count }) => {
+                  const pct = count > 0 ? (count / maxCount) * 100 : 0
+                  const meetsTarget = count >= ATA_SUB_CHAPTER_TARGET
+                  return (
+                    <div key={code} className="flex-1 min-w-[1px] flex items-end group relative">
+                      <div
+                        className={`w-full ${count > 0 ? (meetsTarget ? 'bg-green-500' : 'bg-blue-400') : ''}`}
+                        style={{ height: count > 0 ? `${Math.max(1, pct)}%` : 0 }}
+                      />
+                      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+                        {code}: {count} task{count !== 1 ? 's' : ''}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
 
-            {/* X-axis labels below the line */}
+            {/* X-axis labels */}
             <div className="flex gap-0" style={{ height: 40 }}>
               {ataCounts.map(({ code }, i) => {
                 const showLabel = i % Math.max(1, Math.floor(ataCounts.length / 25)) === 0
@@ -192,6 +185,19 @@ export function AtaChart({ entries }: AtaChartProps) {
                 )
               })}
             </div>
+          </div>
+
+          {/* Right: Y-axis labels aligned to bar area */}
+          <div className="relative flex-shrink-0" style={{ width: 30, height: 160 }}>
+            {yTicks.map(tick => (
+              <div
+                key={tick}
+                className="absolute text-[10px] text-gray-400 -translate-y-1/2 text-right"
+                style={{ bottom: `${(tick / maxCount) * 100}%`, left: 4, right: 0 }}
+              >
+                {tick}
+              </div>
+            ))}
           </div>
         </div>
       </div>
