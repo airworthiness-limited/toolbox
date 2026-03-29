@@ -26,6 +26,7 @@ import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
 import { MilitaryExperience } from './military-experience'
 import { MassInput } from './mass-input'
+import { AtaChart } from './ata-chart'
 
 const PAGE_SIZE = 25
 
@@ -94,7 +95,7 @@ export default async function LogbookPage({
       .single(),
     supabase
       .from('logbook_entries')
-      .select('status, task_date, aircraft_category, maintenance_type')
+      .select('status, task_date, aircraft_category, maintenance_type, ata_chapters')
       .eq('user_id', user.id),
     supabase
       .from('logbook_entries')
@@ -202,6 +203,13 @@ export default async function LogbookPage({
             </Link>
           </div>
         </div>
+
+        {/* ATA Distribution Chart */}
+        <AtaChart entries={allStats.map(e => ({
+          maintenance_type: (e as any).maintenance_type ?? 'line_maintenance',
+          aircraft_category: e.aircraft_category,
+          ata_chapters: (e as any).ata_chapters ?? [],
+        }))} />
 
         {/* Category Selector */}
         <div className="bg-white rounded-xl p-5 mb-6">
