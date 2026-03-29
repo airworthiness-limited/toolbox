@@ -127,7 +127,7 @@ export function AtaChart({ entries }: AtaChartProps) {
 
       <div className="overflow-x-auto">
         {/* Chart wrapper: bar area is 160px tall, labels 40px below */}
-        <div className="flex">
+        <div className="flex" style={{ paddingTop: 12 }}>
           {/* Left: Y-axis labels */}
           <div className="relative flex-shrink-0" style={{ width: 24, height: 160 }}>
             {yTicks.map(tick => {
