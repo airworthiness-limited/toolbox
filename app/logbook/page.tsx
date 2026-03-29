@@ -72,7 +72,8 @@ export default async function LogbookPage({
   const page = Math.max(1, parseInt(params.page || '1', 10))
   const statusFilter = params.status || 'all'
   const selectedCategory = params.category || ''
-  const sortColumn = params.sort || 'task_date'
+  const allowedSorts = ['task_date', 'aircraft_type', 'ata_chapter', 'category', 'status'] as const
+  const sortColumn = allowedSorts.includes(params.sort as any) ? params.sort! : 'task_date'
   const sortDir = params.dir === 'asc'
   const offset = (page - 1) * PAGE_SIZE
 
