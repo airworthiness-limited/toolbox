@@ -205,6 +205,14 @@ export default async function LogbookPage({
           </div>
         </div>
 
+        {/* Debug: show raw data */}
+        <div className="bg-white rounded-xl p-4 mb-4 text-xs text-gray-700">
+          <p>Total entries from query: {allStats.length}</p>
+          <p>First entry ata_chapters: {JSON.stringify((allStats[0] as any)?.ata_chapters)}</p>
+          <p>First entry maintenance_type: {JSON.stringify((allStats[0] as any)?.maintenance_type)}</p>
+          <p>Entries with ata_chapters: {allStats.filter(e => (e as any).ata_chapters && (e as any).ata_chapters.length > 0).length}</p>
+        </div>
+
         {/* ATA Distribution Chart */}
         <AtaChart entries={allStats.map(e => ({
           maintenance_type: (e as any).maintenance_type ?? 'line_maintenance',
