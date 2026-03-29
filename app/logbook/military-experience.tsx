@@ -47,8 +47,9 @@ export function MilitaryExperience({
   const expReq = EXPERIENCE_REQUIREMENTS[selectedCategory]
   if (!expReq) return null
 
-  const civilRequired = militaryMonths > 0
-    ? Math.max(MIN_CIVIL_MONTHS, (expReq.years * 12) - militaryMonths)
+  const cappedMilitary = Math.min(militaryMonths, 48) // Max 4 years military
+  const civilRequired = cappedMilitary > 0
+    ? Math.max(MIN_CIVIL_MONTHS, (expReq.years * 12) - cappedMilitary)
     : expReq.years * 12
   const civilRemaining = Math.max(0, civilRequired - civilMonths)
 
@@ -152,10 +153,10 @@ export function MilitaryExperience({
             )}
           </div>
 
-          {militaryMonths > 0 && (
+          {cappedMilitary > 0 && (
             <div className="border border-gray-200 rounded-lg p-4">
               <p className="text-sm text-gray-900">
-                You have {formatDuration(militaryMonths)} military experience, therefore you need {formatDuration(civilRemaining)} more civil experience for {selectedCategory}.
+                You have {formatDuration(cappedMilitary)} military experience{militaryMonths > 48 ? ' (4 year maximum)' : ''}, therefore you need {formatDuration(civilRemaining)} more civil experience for {selectedCategory}.
               </p>
             </div>
           )}

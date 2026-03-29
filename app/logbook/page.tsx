@@ -104,7 +104,6 @@ export default async function LogbookPage({
       .from('logbook_entries')
       .select('aircraft_category, task_date')
       .eq('user_id', user.id)
-      .in('status', ['verified', 'qc_approved', 'pending_qc'])
       .gte('task_date', twoYearsAgoStr),
     supabase
       .from('employment_periods')
