@@ -14,18 +14,31 @@ import {
 } from '@/components/ui/select'
 import {
   MAINTENANCE_TYPES,
-  AIRCRAFT_CATEGORIES,
   NO_AIRCRAFT_REQUIRED,
 } from '@/lib/logbook/constants'
 import type { MaintenanceType, AircraftCategory } from '@/lib/logbook/constants'
 import { UK_TYPE_RATINGS } from '@/lib/profile/type-ratings'
 import { AtaSearch } from './ata-search'
 
+// Aircraft category options with AML category references
+const CATEGORY_OPTIONS: { value: AircraftCategory; label: string }[] = [
+  { value: 'aeroplane_turbine', label: 'Turbine Aeroplane (A1/B1.1)' },
+  { value: 'aeroplane_piston', label: 'Piston Aeroplane (A2/B1.2/B3)' },
+  { value: 'helicopter_turbine', label: 'Turbine Helicopter (A3/B1.3)' },
+  { value: 'helicopter_piston', label: 'Piston Helicopter (A4/B1.4)' },
+]
+
+// Avionics is a separate option since it applies to all aircraft
+const CATEGORY_OPTIONS_WITH_AVIONICS = [
+  ...CATEGORY_OPTIONS,
+  { value: 'avionics' as AircraftCategory, label: 'Avionics (B2)' },
+]
+
 interface DraftRow {
   id: string
   taskDate: string
   maintenanceType: MaintenanceType
-  aircraftCategory: AircraftCategory | ''
+  aircraftCategory: string
   aircraftRegistration: string
   aircraftType: string
   ataChapters: string[]
@@ -69,10 +82,9 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
   function updateRow(id: string, field: keyof DraftRow, value: unknown) {
     setRows(prev => {
       const updated = prev.map(r => r.id === id ? { ...r, [field]: value, saved: false } : r)
-      // If editing the last row, add a blank row below
       const lastRow = updated[updated.length - 1]
       if (lastRow.id === id && !lastRow.saved) {
-        const hasContent = lastRow.taskDate || lastRow.jobNumber || lastRow.taskDetail
+        const hasContent = lastRow.taskDate || lastRow.taskDetail
         if (hasContent && updated.filter(r => !r.saved).length === 1) {
           updated.push(newRow({
             employer: lastRow.employer,
@@ -91,9 +103,12 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
 
   async function saveRow(id: string) {
     const row = rows.find(r => r.id === id)
-    if (!row || !row.taskDate || !row.jobNumber) return
+    if (!row || !row.taskDate) return
 
-    const isNoAircraft = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
+    const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
+
+    // For Base/Line: need job number and aircraft reg
+    if (!isSimple && (!row.jobNumber || !row.aircraftRegistration)) return
 
     setRows(prev => prev.map(r => r.id === id ? { ...r, saving: true } : r))
 
@@ -105,14 +120,14 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
       user_id: user.id,
       task_date: row.taskDate,
       maintenance_type: row.maintenanceType,
-      aircraft_category: isNoAircraft ? 'aeroplane_turbine' : (row.aircraftCategory || 'aeroplane_turbine'),
-      aircraft_registration: isNoAircraft ? 'N/A' : row.aircraftRegistration.toUpperCase(),
-      aircraft_type: isNoAircraft ? 'N/A' : row.aircraftType,
+      aircraft_category: (row.aircraftCategory || 'aeroplane_turbine') as AircraftCategory,
+      aircraft_registration: isSimple ? 'N/A' : row.aircraftRegistration.toUpperCase(),
+      aircraft_type: isSimple ? 'N/A' : row.aircraftType,
       ata_chapter: row.ataChapters[0] ?? '',
       ata_chapters: row.ataChapters,
-      job_number: row.jobNumber,
+      job_number: isSimple ? 'N/A' : row.jobNumber,
       description: row.taskDetail,
-      employer: row.employer,
+      employer: isSimple ? row.maintenanceType === 'military_experience' ? 'Military Service' : 'Training Organisation' : row.employer,
       category: row.maintenanceType === 'base_maintenance' ? 'base_maintenance' : 'line_maintenance',
       duration_hours: 0,
       supervised: true,
@@ -122,7 +137,6 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
     if (!error) {
       setRows(prev => {
         const updated = prev.map(r => r.id === id ? { ...r, saving: false, saved: true } : r)
-        // Ensure there's always a blank row at the end
         const unsaved = updated.filter(r => !r.saved)
         if (unsaved.length === 0) {
           updated.push(newRow({
@@ -147,7 +161,6 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
     })
   }
 
-  // Aircraft type search filtered results
   function getTypeResults(rowId: string): typeof UK_TYPE_RATINGS {
     const q = (typeSearch[rowId] ?? '').toLowerCase()
     if (q.length < 2) return []
@@ -161,13 +174,13 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
   return (
     <div className="space-y-3">
       {rows.filter(r => !r.saved).map(row => {
-        const isNoAircraft = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
-        const canSave = row.taskDate && row.jobNumber && (isNoAircraft || row.aircraftRegistration)
+        const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
+        const canSave = row.taskDate && row.aircraftCategory && (isSimple || (row.jobNumber && row.aircraftRegistration))
 
         return (
           <div key={row.id} className="bg-white rounded-xl p-4 border border-gray-200">
-            {/* Row 1: Date, Maintenance Type, Category, Employer */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            {/* Row 1: Date, Maintenance Type, Aircraft Category */}
+            <div className={`grid gap-3 mb-3 ${isSimple ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
                 <Input
@@ -188,33 +201,33 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                   </SelectContent>
                 </Select>
               </div>
-              {!isNoAircraft && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Aircraft Category</label>
+                <Select value={row.aircraftCategory} onValueChange={v => updateRow(row.id, 'aircraftCategory', v)}>
+                  <SelectTrigger className="text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORY_OPTIONS_WITH_AVIONICS.map(ac => (
+                      <SelectItem key={ac.value} value={ac.value}>{ac.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {!isSimple && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-                  <Select value={row.aircraftCategory} onValueChange={v => updateRow(row.id, 'aircraftCategory', v)}>
-                    <SelectTrigger className="text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      {AIRCRAFT_CATEGORIES.map(ac => (
-                        <SelectItem key={ac.value} value={ac.value}>{ac.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Employer</label>
+                  <Input
+                    type="text"
+                    value={row.employer}
+                    onChange={e => updateRow(row.id, 'employer', e.target.value)}
+                    placeholder="Current employer"
+                    className="text-sm"
+                  />
                 </div>
               )}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Employer</label>
-                <Input
-                  type="text"
-                  value={row.employer}
-                  onChange={e => updateRow(row.id, 'employer', e.target.value)}
-                  placeholder="Current employer"
-                  className="text-sm"
-                />
-              </div>
             </div>
 
-            {/* Row 2: Aircraft Reg, Aircraft Type (if applicable) */}
-            {!isNoAircraft && (
+            {/* Row 2: Aircraft Reg, Aircraft Type (Base/Line only) */}
+            {!isSimple && (
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Aircraft Registration</label>
@@ -259,35 +272,45 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
               </div>
             )}
 
-            {/* Row 3: ATA Chapters, Job Number */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
+            {/* Row 3: ATA Chapters + Job Number (Base/Line only) */}
+            {!isSimple ? (
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">ATA Chapters</label>
+                  <AtaSearch
+                    selected={row.ataChapters}
+                    onChange={chapters => updateAtaChapters(row.id, chapters)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Job Number</label>
+                  <Input
+                    type="text"
+                    value={row.jobNumber}
+                    onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
+                    placeholder="Work order reference"
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-500 mb-1">ATA Chapters</label>
                 <AtaSearch
                   selected={row.ataChapters}
                   onChange={chapters => updateAtaChapters(row.id, chapters)}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Job Number</label>
-                <Input
-                  type="text"
-                  value={row.jobNumber}
-                  onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
-                  placeholder="Work order reference"
-                  className="text-sm"
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Row 4: Task Detail */}
+            {/* Task Detail */}
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-500 mb-1">Task Detail</label>
               <Input
                 type="text"
                 value={row.taskDetail}
                 onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
-                placeholder="Description of work carried out"
+                placeholder="e.g. Removed and replaced nose wheel assembly IAW AMM 32-45-11"
                 className="text-sm"
               />
             </div>
