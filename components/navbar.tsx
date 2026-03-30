@@ -62,7 +62,7 @@ function RemoveAdvertsButton({ className }: { className?: string }) {
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`bg-white text-[#1565C0] text-xs font-bold px-3 py-1.5 rounded-full hover:bg-white/90 transition-colors tracking-wide uppercase ${className ?? ''}`}
+      className={`bg-white text-[#1565C0] text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/90 transition-colors tracking-wide uppercase ${className ?? ''}`}
     >
       {loading ? 'REDIRECTING...' : 'REMOVE ADVERTS'}
     </button>
@@ -97,7 +97,7 @@ function Dropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`text-sm font-bold transition-colors tracking-wide flex items-center gap-1 ${
+        className={`text-sm font-bold transition-colors tracking-wide uppercase flex items-center gap-1 ${
           isActive ? 'text-white' : 'text-white/70 hover:text-white'
         }`}
       >
@@ -241,7 +241,7 @@ function MobileMenu({
             {loaded && user && (
               <Link href="/profile" onClick={onClose}>
                 <Button variant="outline" className="w-full bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold">
-                  Manage Profile
+                  ACCOUNT
                 </Button>
               </Link>
             )}
@@ -291,7 +291,7 @@ export function Navbar() {
             </Link>
             {loaded && !hasPremium && <RemoveAdvertsButton />}
             {loaded && hasPremium && (
-              <span className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide uppercase">
+              <span className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg tracking-wide uppercase">
                 SUBSCRIBED
               </span>
             )}
@@ -314,7 +314,7 @@ export function Navbar() {
             {loaded && user && (
               <Link href="/profile">
                 <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold">
-                  Manage Profile
+                  ACCOUNT
                 </Button>
               </Link>
             )}

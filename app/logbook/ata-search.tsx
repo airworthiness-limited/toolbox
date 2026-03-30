@@ -47,9 +47,9 @@ export function AtaSearch({ selected, onChange }: AtaSearchProps) {
       {selectedLabels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1">
           {selectedLabels.map(s => (
-            <span key={s.value} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">
-              {s.short}
-              <button type="button" onClick={() => remove(s.value)} className="text-gray-400 hover:text-gray-600">
+            <span key={s.value} className="inline-flex items-center gap-1 bg-[#1565C0] text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
+              {s.label}
+              <button type="button" onClick={() => remove(s.value)} className="text-white/70 hover:text-white">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -65,7 +65,7 @@ export function AtaSearch({ selected, onChange }: AtaSearchProps) {
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
-        placeholder="Type ATA code e.g. 21-20"
+        placeholder=""
         className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
       />
 

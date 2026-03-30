@@ -1,38 +1,103 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  MAINTENANCE_TYPES,
   NO_AIRCRAFT_REQUIRED,
 } from '@/lib/logbook/constants'
 import type { MaintenanceType, AircraftCategory } from '@/lib/logbook/constants'
 import { UK_TYPE_RATINGS } from '@/lib/profile/type-ratings'
 import { AtaSearch } from './ata-search'
 
-// Aircraft category options with AML category references
-const CATEGORY_OPTIONS: { value: AircraftCategory; label: string }[] = [
-  { value: 'aeroplane_turbine', label: 'Turbine Aeroplane (A1/B1.1)' },
-  { value: 'aeroplane_piston', label: 'Piston Aeroplane (A2/B1.2/B3)' },
-  { value: 'helicopter_turbine', label: 'Turbine Helicopter (A3/B1.3)' },
-  { value: 'helicopter_piston', label: 'Piston Helicopter (A4/B1.4)' },
+const TASK_TYPES = [
+  'Adjustment',
+  'Ground Handling',
+  'Inspect/Test',
+  'Modification',
+  'Other',
+  'Removal/Installation',
+  'Repair',
+  'Servicing',
+  'Troubleshooting',
+] as const
+
+const FACILITY_OPTIONS: { value: MaintenanceType; label: string }[] = [
+  { value: 'base_maintenance', label: 'Base Maintenance' },
+  { value: 'line_maintenance', label: 'Line Maintenance' },
+  { value: 'military_experience', label: 'Military Experience' },
+  { value: 'student_experience', label: 'Student Experience' },
 ]
 
-// Avionics is a separate option since it applies to all aircraft
-const CATEGORY_OPTIONS_WITH_AVIONICS = [
-  ...CATEGORY_OPTIONS,
-  { value: 'avionics' as AircraftCategory, label: 'Avionics (B2)' },
+const CATEGORY_OPTIONS: { value: AircraftCategory | 'avionics'; label: string }[] = [
+  { value: 'aeroplane_turbine', label: 'Aeroplane Turbine (A1/B1.1)' },
+  { value: 'aeroplane_piston', label: 'Aeroplane Piston (A2/B1.2/B3)' },
+  { value: 'helicopter_turbine', label: 'Helicopter Turbine (A3/B1.3)' },
+  { value: 'helicopter_piston', label: 'Helicopter Piston (A4/B1.4)' },
+  { value: 'avionics', label: 'Avionics (B2)' },
 ]
+
+function groupToCategory(group: string): string | null {
+  if (group === 'Turbine Aeroplane') return 'aeroplane_turbine'
+  if (group === 'Piston Aeroplane') return 'aeroplane_piston'
+  if (group === 'Turbine Helicopter') return 'helicopter_turbine'
+  if (group === 'Piston Helicopter') return 'helicopter_piston'
+  return null
+}
+
+function parseDateInput(ddmmyyyy: string): string {
+  const parts = ddmmyyyy.split('/')
+  if (parts.length === 3 && parts[2].length === 4) {
+    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+  }
+  return ddmmyyyy
+}
+
+function TagSelect({ options, selected, onChange, multi = false }: {
+  options: readonly string[] | { value: string; label: string }[]
+  selected: string | string[]
+  onChange: (val: string | string[]) => void
+  multi?: boolean
+}) {
+  const items = (options as any[]).map((o: any) =>
+    typeof o === 'string' ? { value: o, label: o } : o
+  )
+  const selectedArr = Array.isArray(selected) ? selected : [selected].filter(Boolean)
+
+  function toggle(val: string) {
+    if (multi) {
+      const next = selectedArr.includes(val)
+        ? selectedArr.filter(v => v !== val)
+        : [...selectedArr, val]
+      onChange(next)
+    } else {
+      onChange(val === selected ? '' : val)
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map(item => {
+        const isSelected = selectedArr.includes(item.value)
+        return (
+          <button
+            key={item.value}
+            type="button"
+            onClick={() => toggle(item.value)}
+            className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
+              isSelected
+                ? 'bg-[#1565C0] text-white'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {item.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 interface DraftRow {
   id: string
@@ -42,27 +107,38 @@ interface DraftRow {
   aircraftRegistration: string
   aircraftType: string
   ataChapters: string[]
+  taskTypes: string[]
   jobNumber: string
+  jobNumberPhotoPath: string | null
   taskDetail: string
   employer: string
   saving: boolean
   saved: boolean
+  saveError: string | null
 }
 
 function newRow(defaults: Partial<DraftRow> = {}): DraftRow {
+  let aircraftCategory = defaults.aircraftCategory ?? ''
+  if (defaults.aircraftType && !aircraftCategory) {
+    const found = UK_TYPE_RATINGS.find(t => t.rating === defaults.aircraftType)
+    if (found) aircraftCategory = groupToCategory(found.group) ?? ''
+  }
   return {
     id: crypto.randomUUID(),
-    taskDate: '',
+    taskDate: defaults.taskDate ?? '',
     maintenanceType: defaults.maintenanceType ?? 'line_maintenance',
-    aircraftCategory: defaults.aircraftCategory ?? '',
-    aircraftRegistration: '',
-    aircraftType: '',
+    aircraftCategory,
+    aircraftRegistration: defaults.aircraftRegistration ?? '',
+    aircraftType: defaults.aircraftType ?? '',
     ataChapters: [],
+    taskTypes: [],
     jobNumber: '',
+    jobNumberPhotoPath: null,
     taskDetail: '',
     employer: defaults.employer ?? '',
     saving: false,
     saved: false,
+    saveError: null,
   }
 }
 
@@ -76,8 +152,9 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
   const [rows, setRows] = useState<DraftRow[]>([
     newRow({ employer: defaultEmployer, maintenanceType: lastMaintenanceType }),
   ])
-
   const [typeSearch, setTypeSearch] = useState<Record<string, string>>({})
+  const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   function updateRow(id: string, field: keyof DraftRow, value: unknown) {
     setRows(prev => {
@@ -90,6 +167,9 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
             employer: lastRow.employer,
             maintenanceType: lastRow.maintenanceType,
             aircraftCategory: lastRow.aircraftCategory,
+            taskDate: lastRow.taskDate,
+            aircraftRegistration: lastRow.aircraftRegistration,
+            aircraftType: lastRow.aircraftType,
           }))
         }
       }
@@ -101,14 +181,36 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
     setRows(prev => prev.map(r => r.id === id ? { ...r, ataChapters: chapters, saved: false } : r))
   }
 
+  async function handleJobPhotoUpload(rowId: string, file: File) {
+    if (file.size > 5 * 1024 * 1024) return
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) return
+
+    setUploading(prev => ({ ...prev, [rowId]: true }))
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setUploading(prev => ({ ...prev, [rowId]: false })); return }
+
+    const ext = file.name.split('.').pop() || 'jpg'
+    const storagePath = `${user.id}/job-${Date.now()}.${ext}`
+
+    const { error } = await supabase.storage
+      .from('module-certificates')
+      .upload(storagePath, file, { contentType: file.type, upsert: false })
+
+    if (!error) {
+      updateRow(rowId, 'jobNumberPhotoPath', storagePath)
+    }
+    setUploading(prev => ({ ...prev, [rowId]: false }))
+  }
+
   async function saveRow(id: string) {
     const row = rows.find(r => r.id === id)
     if (!row || !row.taskDate) return
 
     const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
-
-    // For Base/Line: need job number and aircraft reg
-    if (!isSimple && (!row.jobNumber || !row.aircraftRegistration)) return
+    if (!isSimple && !row.aircraftRegistration) return
 
     setRows(prev => prev.map(r => r.id === id ? { ...r, saving: true } : r))
 
@@ -116,22 +218,34 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const descriptionParts = [
+      row.taskTypes.length > 0 ? `[${row.taskTypes.join(', ')}]` : '',
+      row.taskDetail,
+    ].filter(Boolean).join(' ')
+
     const { error } = await supabase.from('logbook_entries').insert({
       user_id: user.id,
-      task_date: row.taskDate,
+      task_date: parseDateInput(row.taskDate),
       maintenance_type: row.maintenanceType,
-      aircraft_category: (row.aircraftCategory || 'aeroplane_turbine') as AircraftCategory,
+      aircraft_category: (() => {
+        const cat = row.aircraftCategory
+        if (cat && cat !== 'avionics') return cat as AircraftCategory
+        // Avionics or unset: infer physical category from aircraft type
+        const found = UK_TYPE_RATINGS.find(t => t.rating === row.aircraftType)
+        return (found ? groupToCategory(found.group) : null) ?? 'aeroplane_turbine' as AircraftCategory
+      })(),
       aircraft_registration: isSimple ? 'N/A' : row.aircraftRegistration.toUpperCase(),
       aircraft_type: isSimple ? 'N/A' : row.aircraftType,
       ata_chapter: row.ataChapters[0] ?? '',
       ata_chapters: row.ataChapters,
       job_number: isSimple ? 'N/A' : row.jobNumber,
-      description: row.taskDetail,
-      employer: isSimple ? row.maintenanceType === 'military_experience' ? 'Military Service' : 'Training Organisation' : row.employer,
+      description: descriptionParts,
+      employer: row.employer || defaultEmployer || '',
       category: row.maintenanceType === 'base_maintenance' ? 'base_maintenance' : 'line_maintenance',
-      duration_hours: 0,
+      duration_hours: 1,
       supervised: true,
       status: 'draft',
+      work_order_photo_path: row.jobNumberPhotoPath,
     })
 
     if (!error) {
@@ -140,16 +254,19 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
         const unsaved = updated.filter(r => !r.saved)
         if (unsaved.length === 0) {
           updated.push(newRow({
-            employer: row.employer,
+            employer: row.employer || defaultEmployer,
             maintenanceType: row.maintenanceType,
             aircraftCategory: row.aircraftCategory,
+            taskDate: row.taskDate,
+            aircraftRegistration: row.aircraftRegistration,
+            aircraftType: row.aircraftType,
           }))
         }
         return updated
       })
       router.refresh()
     } else {
-      setRows(prev => prev.map(r => r.id === id ? { ...r, saving: false } : r))
+      setRows(prev => prev.map(r => r.id === id ? { ...r, saving: false, saveError: error?.message ?? error?.code ?? 'Save failed — check all fields' } : r))
     }
   }
 
@@ -171,172 +288,240 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
     ).slice(0, 10)
   }
 
+  const unsavedRows = rows.filter(r => !r.saved)
+
   return (
-    <div className="space-y-3">
-      {rows.filter(r => !r.saved).map(row => {
-        const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
-        const canSave = row.taskDate && row.aircraftCategory && (isSimple || (row.jobNumber && row.aircraftRegistration))
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="divide-y divide-gray-100">
+        {unsavedRows.map((row) => {
+          const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
+          const dateValid = /^\d{2}\/\d{2}\/\d{4}$/.test(row.taskDate)
+          const canSave = dateValid && row.aircraftCategory && (isSimple || row.aircraftRegistration)
 
-        return (
-          <div key={row.id} className="bg-white rounded-xl p-4 border border-gray-200">
-            {/* Row 1: Date, Maintenance Type, Aircraft Category */}
-            <div className={`grid gap-3 mb-3 ${isSimple ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
-                <Input
-                  type="date"
-                  value={row.taskDate}
-                  onChange={e => updateRow(row.id, 'taskDate', e.target.value)}
-                  className="text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Maintenance Type</label>
-                <Select value={row.maintenanceType} onValueChange={v => updateRow(row.id, 'maintenanceType', v)}>
-                  <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {MAINTENANCE_TYPES.map(mt => (
-                      <SelectItem key={mt.value} value={mt.value}>{mt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Aircraft Category</label>
-                <Select value={row.aircraftCategory} onValueChange={v => updateRow(row.id, 'aircraftCategory', v)}>
-                  <SelectTrigger className="text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORY_OPTIONS_WITH_AVIONICS.map(ac => (
-                      <SelectItem key={ac.value} value={ac.value}>{ac.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {!isSimple && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Employer</label>
-                  <Input
+          return (
+            <Fragment key={row.id}>
+              <div className="px-6 py-6">
+                {/* Date — full width */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Date</label>
+                  <input
                     type="text"
-                    value={row.employer}
-                    onChange={e => updateRow(row.id, 'employer', e.target.value)}
-                    placeholder="Current employer"
-                    className="text-sm"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Row 2: Aircraft Reg, Aircraft Type (Base/Line only) */}
-            {!isSimple && (
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Aircraft Registration</label>
-                  <Input
-                    type="text"
-                    value={row.aircraftRegistration}
-                    onChange={e => updateRow(row.id, 'aircraftRegistration', e.target.value.toUpperCase())}
-                    placeholder="e.g. G-ABCD"
-                    className="text-sm uppercase"
-                  />
-                </div>
-                <div className="relative">
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Aircraft Type</label>
-                  <Input
-                    type="text"
-                    value={typeSearch[row.id] ?? row.aircraftType}
+                    value={row.taskDate}
                     onChange={e => {
-                      setTypeSearch(prev => ({ ...prev, [row.id]: e.target.value }))
-                      updateRow(row.id, 'aircraftType', e.target.value)
+                      const raw = e.target.value.replace(/[^\d/]/g, '').slice(0, 10)
+                      updateRow(row.id, 'taskDate', raw)
                     }}
-                    placeholder="Search aircraft type..."
-                    className="text-sm"
+                    onKeyDown={e => {
+                      const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown']
+                      if (!allowed.includes(e.key) && !/^\d$/.test(e.key) && e.key !== '/') e.preventDefault()
+                    }}
+                    onPaste={e => {
+                      e.preventDefault()
+                      const pasted = e.clipboardData.getData('text').replace(/[^\d/]/g, '').slice(0, 10)
+                      updateRow(row.id, 'taskDate', pasted)
+                    }}
+                    placeholder="DD/MM/YYYY"
+                    maxLength={10}
+                    inputMode="numeric"
+                    className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {getTypeResults(row.id).length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                      {getTypeResults(row.id).map(t => (
-                        <button
-                          key={t.rating}
-                          type="button"
-                          onClick={() => {
-                            updateRow(row.id, 'aircraftType', t.rating)
-                            setTypeSearch(prev => ({ ...prev, [row.id]: '' }))
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          {t.rating}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-            )}
 
-            {/* Row 3: ATA Chapters + Job Number (Base/Line only) */}
-            {!isSimple ? (
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">ATA Chapters</label>
+                {/* Environment tags (was Facility) */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Experience Type</label>
+                  <TagSelect
+                    options={FACILITY_OPTIONS}
+                    selected={row.maintenanceType}
+                    onChange={v => updateRow(row.id, 'maintenanceType', v as MaintenanceType)}
+                  />
+                </div>
+
+                {/* Aircraft Registration — full width, only for Base/Line */}
+                {!isSimple && (
+                  <div className="mb-5">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Aircraft Registration</label>
+                    <input
+                      type="text"
+                      value={row.aircraftRegistration}
+                      onChange={e => updateRow(row.id, 'aircraftRegistration', e.target.value.toUpperCase())}
+                      className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                    />
+                  </div>
+                )}
+
+                {/* Aircraft Type — full width, only for Base/Line */}
+                {!isSimple && (
+                  <div className="mb-5 relative">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Aircraft Type</label>
+                    <input
+                      type="text"
+                      value={row.id in typeSearch ? typeSearch[row.id] : row.aircraftType}
+                      onChange={e => {
+                        setTypeSearch(prev => ({ ...prev, [row.id]: e.target.value }))
+                        updateRow(row.id, 'aircraftType', e.target.value)
+                      }}
+                      className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {getTypeResults(row.id).length > 0 && (
+                      <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {getTypeResults(row.id).map(t => (
+                          <button
+                            key={t.rating}
+                            type="button"
+                            onClick={() => {
+                              const category = groupToCategory(t.group)
+                              setRows(prev => prev.map(r => r.id === row.id ? {
+                                ...r,
+                                aircraftType: t.rating,
+                                ...(category ? { aircraftCategory: category } : {}),
+                                saved: false,
+                              } : r))
+                              setTypeSearch(prev => { const next = { ...prev }; delete next[row.id]; return next })
+                            }}
+                            className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            {t.rating}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Licence Category tags (was Aircraft Category) */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Licence Category</label>
+                  <TagSelect
+                    options={CATEGORY_OPTIONS}
+                    selected={row.aircraftCategory}
+                    onChange={v => updateRow(row.id, 'aircraftCategory', v as string)}
+                  />
+                </div>
+
+                {/* ATA Chapter(s) — full width */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">ATA Chapter(s)</label>
                   <AtaSearch
                     selected={row.ataChapters}
                     onChange={chapters => updateAtaChapters(row.id, chapters)}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Job Number</label>
-                  <Input
-                    type="text"
-                    value={row.jobNumber}
-                    onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
-                    placeholder="Work order reference"
-                    className="text-sm"
+
+                {/* Job Number — full width, only for Base/Line */}
+                {!isSimple && (
+                  <div className="mb-5">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Job Number</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRefs.current[row.id]?.click()}
+                        disabled={uploading[row.id]}
+                        className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-colors flex-shrink-0 ${
+                          row.jobNumberPhotoPath
+                            ? 'border-green-300 bg-green-50 text-green-600'
+                            : 'border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        }`}
+                        title={row.jobNumberPhotoPath ? 'Photo uploaded' : 'Upload job card photo'}
+                      >
+                        {uploading[row.id] ? (
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                          </svg>
+                        )}
+                      </button>
+                      <input
+                        type="text"
+                        value={row.jobNumber}
+                        onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
+                        className="flex-1 text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        ref={el => { fileInputRefs.current[row.id] = el }}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (file) handleJobPhotoUpload(row.id, file)
+                        }}
+                      />
+                    </div>
+                    {row.jobNumberPhotoPath && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-green-600">Photo attached</span>
+                        <button
+                          type="button"
+                          onClick={() => updateRow(row.id, 'jobNumberPhotoPath', null)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Task Type tags (multi-select) */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Task Type(s)</label>
+                  <TagSelect
+                    options={TASK_TYPES}
+                    selected={row.taskTypes}
+                    onChange={v => updateRow(row.id, 'taskTypes', v)}
+                    multi
                   />
                 </div>
-              </div>
-            ) : (
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-500 mb-1">ATA Chapters</label>
-                <AtaSearch
-                  selected={row.ataChapters}
-                  onChange={chapters => updateAtaChapters(row.id, chapters)}
-                />
-              </div>
-            )}
 
-            {/* Task Detail */}
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Task Detail</label>
-              <Input
-                type="text"
-                value={row.taskDetail}
-                onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
-                placeholder="e.g. Removed and replaced nose wheel assembly IAW AMM 32-45-11"
-                className="text-sm"
-              />
-            </div>
+                {/* Task Detail — full width textarea */}
+                <div className="mb-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Task Detail</label>
+                  <textarea
+                    value={row.taskDetail}
+                    onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
+                    rows={3}
+                    className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-              <Button
-                size="sm"
-                onClick={() => saveRow(row.id)}
-                disabled={row.saving || !canSave}
-              >
-                {row.saving ? 'Saving...' : 'Save as Draft'}
-              </Button>
-              {rows.filter(r => !r.saved).length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeRow(row.id)}
-                  className="text-xs text-red-500 hover:text-red-700"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        )
-      })}
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <Button
+                    size="sm"
+                    onClick={() => saveRow(row.id)}
+                    disabled={row.saving || !canSave}
+                  >
+                    {row.saving ? 'Saving...' : 'Save as Draft'}
+                  </Button>
+                  {unsavedRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRow(row.id)}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {!canSave && row.taskDate && (
+                    <span className="text-xs text-amber-600">
+                      {!dateValid ? 'Date must be DD/MM/YYYY' : !row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
+                    </span>
+                  )}
+                  {row.saving && (
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {row.saveError && (
+                    <span className="text-xs text-red-600">{row.saveError}</span>
+                  )}
+                </div>
+              </div>
+            </Fragment>
+          )
+        })}
+      </div>
     </div>
   )
 }
