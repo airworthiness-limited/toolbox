@@ -21,9 +21,41 @@ export default async function ExportPage() {
     .eq('user_id', user.id)
     .order('task_date', { ascending: true })
 
+  const fullName = profile?.full_name ?? 'Unknown'
+  const userId = user.id
+  const generatedDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
   return (
     <>
-      <style>{`@page { size: 297mm 210mm; margin: 10mm; }`}</style>
+      <style>{`
+        @page { size: 297mm 210mm; margin: 10mm 10mm 20mm 10mm; }
+        @media print {
+          .print-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #d1d5db;
+            padding: 4px 10mm;
+            font-size: 8px;
+            color: #6b7280;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+        }
+        @media screen {
+          .print-footer { display: none; }
+        }
+      `}</style>
+
+      {/* Fixed footer — repeats on every printed page */}
+      <div className="print-footer">
+        <span>Digitally signed by {fullName} &nbsp;|&nbsp; ID: {userId}</span>
+        <span>Airworthiness Limited Digital Logbook &nbsp;|&nbsp; Generated {generatedDate}</span>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 py-8 print:px-2 print:py-4">
         {/* Header */}
         <div className="mb-8 print:mb-4">
@@ -35,10 +67,10 @@ export default async function ExportPage() {
               <PrintButton />
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4 print:gap-2 print:mt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 print:gap-2 print:mt-2">
             <div>
               <p className="text-xs text-gray-400 uppercase">Name</p>
-              <p className="font-medium text-gray-900">{profile?.full_name ?? 'Unknown'}</p>
+              <p className="font-medium text-gray-900">{fullName}</p>
             </div>
             {profile?.aml_licence_number && (
               <div>
@@ -50,14 +82,18 @@ export default async function ExportPage() {
               <p className="text-xs text-gray-400 uppercase">Total Entries</p>
               <p className="font-medium text-gray-900">{(entries ?? []).length}</p>
             </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase">Logbook ID</p>
+              <p className="font-medium text-gray-900 text-xs break-all">{userId}</p>
+            </div>
           </div>
         </div>
 
         <ExportTable entries={entries ?? []} />
 
-        {/* Footer */}
-        <div className="mt-8 pt-4 border-t text-xs text-gray-400 print:mt-4">
-          <p>Generated {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, Airworthiness Limited Digital Logbook</p>
+        {/* Screen-only footer */}
+        <div className="mt-8 pt-4 border-t text-xs text-gray-400 print:hidden">
+          <p>Generated {generatedDate}, Airworthiness Limited Digital Logbook</p>
         </div>
       </div>
     </>
