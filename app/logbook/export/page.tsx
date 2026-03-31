@@ -17,7 +17,7 @@ export default async function ExportPage() {
 
   const { data: entries } = await supabase
     .from('logbook_entries')
-    .select('id, task_date, aircraft_type, aircraft_registration, job_number, description, ata_chapter, maintenance_type, aircraft_category')
+    .select('id, task_date, aircraft_type, aircraft_registration, job_number, description, ata_chapter, maintenance_type, aircraft_category, work_order_photo_path')
     .eq('user_id', user.id)
     .order('task_date', { ascending: true })
 

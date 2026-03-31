@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { getAtaLabel } from '@/lib/logbook/constants'
+import { createClient } from '@/lib/supabase/client'
 
 const CATEGORY_ORDER = [
   'aeroplane_turbine',
@@ -32,6 +33,7 @@ export interface ExportEntry {
   ata_chapter: string | null
   maintenance_type: string | null
   aircraft_category: string | null
+  work_order_photo_path: string | null
 }
 
 type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_number' | 'task_detail' | 'supervisor'
@@ -40,7 +42,7 @@ const DEFAULT_COLUMNS: { key: ColKey; label: string }[] = [
   { key: 'date', label: 'Date' },
   { key: 'facility', label: 'Base/Line' },
   { key: 'aircraft_type', label: 'Aircraft Type' },
-  { key: 'registration', label: 'Aircraft Registration' },
+  { key: 'registration', label: 'Aircraft Reg.' },
   { key: 'job_number', label: 'Job Number' },
   { key: 'task_detail', label: 'Task Detail' },
   { key: 'supervisor', label: 'Supervisor' },
@@ -65,6 +67,14 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
   const [hiddenCols, setHiddenCols] = useState<Set<ColKey>>(new Set())
   const [dragOver, setDragOver] = useState<ColKey | null>(null)
   const [dragging, setDragging] = useState<ColKey | null>(null)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+
+  async function loadSignedUrl(path: string) {
+    if (signedUrls[path]) return
+    const supabase = createClient()
+    const { data } = await supabase.storage.from('module-certificates').createSignedUrl(path, 3600)
+    if (data?.signedUrl) setSignedUrls(prev => ({ ...prev, [path]: data.signedUrl }))
+  }
 
   // Filters
   const allCategories = Array.from(new Set(entries.map(e => e.aircraft_category).filter(Boolean))) as string[]
@@ -320,7 +330,31 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                                   key={col.key}
                                   className={`px-3 py-2 print:px-1 text-center ${col.key === 'task_detail' ? 'max-w-xs' : 'whitespace-nowrap'} ${col.key === 'supervisor' ? 'w-32 min-w-[8rem]' : ''}`}
                                 >
-                                  {getCellValue(entry, col.key)}
+                                  {col.key === 'job_number' && entry.work_order_photo_path ? (
+                                    <span className="inline-flex items-center gap-1.5 justify-center">
+                                      <span>{getCellValue(entry, col.key)}</span>
+                                      <div className="relative group/photo print:hidden">
+                                        <button
+                                          type="button"
+                                          onMouseEnter={() => loadSignedUrl(entry.work_order_photo_path!)}
+                                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                                          title="View evidence"
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                          </svg>
+                                        </button>
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/photo:block z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5">
+                                          {signedUrls[entry.work_order_photo_path] ? (
+                                            <img src={signedUrls[entry.work_order_photo_path]} alt="Evidence" className="max-w-[220px] max-h-[220px] object-contain rounded" />
+                                          ) : (
+                                            <div className="w-24 h-24 flex items-center justify-center text-xs text-gray-400">Loading...</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </span>
+                                  ) : getCellValue(entry, col.key)}
                                 </td>
                               ))}
                             </tr>
