@@ -120,8 +120,8 @@ export default async function ExportPage() {
               { label: 'Name', value: fullName },
               ...(profile?.aml_licence_number ? [{ label: 'AML No.', value: profile.aml_licence_number }] : []),
               { label: 'Total Entries', value: String((entries ?? []).length) },
-              { label: 'Recency Tasks (2yr)', value: `${recencyTasks} / ${RECENCY_TASK_THRESHOLD}` },
-              { label: 'Recency Days (2yr)', value: `${recencyDays} / ${RECENCY_DAY_THRESHOLD}` },
+              { label: 'Recent Tasks', value: `${recencyTasks} / ${RECENCY_TASK_THRESHOLD}` },
+              { label: 'Recent Days', value: `${recencyDays} / ${RECENCY_DAY_THRESHOLD}` },
               { label: 'Experience', value: `${expYears}y ${expMonths}m` },
             ].map(({ label, value }) => (
               <div key={label} className="border border-gray-200 rounded-lg px-3 py-2 print:px-2 print:py-1">
