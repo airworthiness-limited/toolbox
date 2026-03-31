@@ -24,16 +24,17 @@ export default async function ExportPage() {
   return (
     <>
       <style>{`@media print { @page { size: landscape; } }`}</style>
-      <div className="print:hidden flex justify-end max-w-7xl mx-auto px-6 pt-6">
-        <PrintButton />
-      </div>
-
       <div className="max-w-7xl mx-auto px-6 py-8 print:px-2 print:py-4">
         {/* Header */}
         <div className="mb-8 print:mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 print:text-xl">
-            Digital Logbook (CAP 741)
-          </h1>
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 print:text-xl">
+              Digital Logbook (CAP 741)
+            </h1>
+            <div className="print:hidden">
+              <PrintButton />
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4 print:gap-2 print:mt-2">
             <div>
               <p className="text-xs text-gray-400 uppercase">Name</p>
