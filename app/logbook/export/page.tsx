@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PrintButton } from './print-button'
 import { ExportTable } from './export-table'
+import { PdfDownloadButton } from './pdf-download-button'
 import {
   RECENCY_TASK_THRESHOLD,
   RECENCY_DAY_THRESHOLD,
@@ -109,7 +110,22 @@ export default async function ExportPage() {
             <h1 className="text-2xl font-bold text-gray-900 print:text-xl">
               Digital Logbook (CAP 741)
             </h1>
-            <div className="print:hidden">
+            <div className="print:hidden flex items-center gap-2">
+              <PdfDownloadButton
+                entries={entries ?? []}
+                meta={{
+                  fullName,
+                  logbookNumber,
+                  amlNumber: profile?.aml_licence_number ?? undefined,
+                  totalEntries: (entries ?? []).length,
+                  recentTasks: recencyTasks,
+                  recentTaskThreshold: RECENCY_TASK_THRESHOLD,
+                  recentDays: recencyDays,
+                  recentDayThreshold: RECENCY_DAY_THRESHOLD,
+                  experience: `${expYears}y ${expMonths}m`,
+                  generatedDate,
+                }}
+              />
               <PrintButton />
             </div>
           </div>
