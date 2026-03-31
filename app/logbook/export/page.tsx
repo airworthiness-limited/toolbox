@@ -23,7 +23,7 @@ export default async function ExportPage() {
 
   return (
     <>
-      <style>{`@page { size: landscape; margin: 10mm; }`}</style>
+      <style>{`@page { size: 297mm 210mm; margin: 10mm; }`}</style>
       <div className="max-w-7xl mx-auto px-6 py-8 print:px-2 print:py-4">
         {/* Header */}
         <div className="mb-8 print:mb-4">
