@@ -304,7 +304,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                                 onDragOver={e => handleDragOver(e, col.key)}
                                 onDrop={() => handleDrop(col.key)}
                                 onDragEnd={() => { setDragging(null); setDragOver(null) }}
-                                className={`text-left px-3 py-2 text-xs font-semibold text-gray-600 whitespace-nowrap cursor-grab print:cursor-default print:px-1 select-none ${dragOver === col.key ? 'bg-blue-50' : ''} ${dragging === col.key ? 'opacity-50' : ''}`}
+                                className={`text-center px-3 py-2 text-xs font-semibold text-gray-600 whitespace-nowrap cursor-grab print:cursor-default print:px-1 select-none ${dragOver === col.key ? 'bg-blue-50' : ''} ${dragging === col.key ? 'opacity-50' : ''}`}
                               >
                                 <span className="print:hidden mr-1 text-gray-300">⠿</span>
                                 {col.label}
@@ -318,7 +318,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                               {visibleCols.map(col => (
                                 <td
                                   key={col.key}
-                                  className={`px-3 py-2 print:px-1 ${col.key === 'task_detail' ? 'max-w-xs' : 'whitespace-nowrap'} ${col.key === 'supervisor' ? 'border-l border-gray-200 print:border-black w-32 min-w-[8rem]' : ''}`}
+                                  className={`px-3 py-2 print:px-1 text-center ${col.key === 'task_detail' ? 'max-w-xs' : 'whitespace-nowrap'} ${col.key === 'supervisor' ? 'border-l border-gray-200 print:border-black w-32 min-w-[8rem]' : ''}`}
                                 >
                                   {getCellValue(entry, col.key)}
                                 </td>
