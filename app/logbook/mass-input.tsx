@@ -3,7 +3,6 @@
 import { useState, Fragment, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 import {
   NO_AIRCRAFT_REQUIRED,
 } from '@/lib/logbook/constants'
@@ -83,7 +82,7 @@ function TagSelect({ options, selected, onChange, multi = false }: {
             key={item.value}
             type="button"
             onClick={() => toggle(item.value)}
-            className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
+            className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
               isSelected
                 ? 'bg-[#1565C0] text-white'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -153,6 +152,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
   const [typeSearch, setTypeSearch] = useState<Record<string, string>>({})
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function updateRow(id: string, field: keyof DraftRow, value: unknown) {
     setRows(prev => {
@@ -228,7 +228,6 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
       aircraft_category: (() => {
         const cat = row.aircraftCategory
         if (cat && cat !== 'avionics') return cat as AircraftCategory
-        // Avionics or unset: infer physical category from aircraft type
         const found = UK_TYPE_RATINGS.find(t => t.rating === row.aircraftType)
         return (found ? groupToCategory(found.group) : null) ?? 'aeroplane_turbine' as AircraftCategory
       })(),
@@ -262,6 +261,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
         }
         return updated
       })
+      if (expandedId === id) setExpandedId(null)
       router.refresh()
     } else {
       setRows(prev => prev.map(r => r.id === id ? { ...r, saving: false, saveError: error?.message ?? error?.code ?? 'Save failed — check all fields' } : r))
@@ -274,6 +274,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
       if (updated.length === 0) updated.push(newRow({ employer: defaultEmployer }))
       return updated
     })
+    if (expandedId === id) setExpandedId(null)
   }
 
   function getTypeResults(rowId: string): typeof UK_TYPE_RATINGS {
@@ -290,53 +291,52 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="divide-y divide-gray-100">
-        {unsavedRows.map((row) => {
-          const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
-          const dateValid = !!row.taskDate
-          const canSave = dateValid && row.aircraftCategory && (isSimple || row.aircraftRegistration)
+      <table className="w-full">
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-200">
+            <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Date</th>
+            <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Reg</th>
+            <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-44">Aircraft Type</th>
+            <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">ATA</th>
+            <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Task Detail</th>
+            <th className="px-3 py-2.5 w-24"></th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {unsavedRows.map((row) => {
+            const isExpanded = expandedId === row.id
+            const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
+            const dateValid = !!row.taskDate
+            const canSave = dateValid && row.aircraftCategory && (isSimple || row.aircraftRegistration)
 
-          return (
-            <Fragment key={row.id}>
-              <div className="px-6 py-6">
-                {/* Date — full width */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Date</label>
-                  <input
-                    type="date"
-                    value={row.taskDate}
-                    onChange={e => updateRow(row.id, 'taskDate', e.target.value)}
-                    className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+            return (
+              <Fragment key={row.id}>
+                {/* Compact inline row */}
+                <tr className={`${isExpanded ? 'bg-blue-50/40' : 'hover:bg-gray-50/60'} transition-colors`}>
+                  {/* Date */}
+                  <td className="px-2 py-2">
+                    <input
+                      type="date"
+                      value={row.taskDate}
+                      onChange={e => updateRow(row.id, 'taskDate', e.target.value)}
+                      className="w-full text-sm h-8 px-2 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </td>
 
-                {/* Environment tags (was Facility) */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-2">Experience Type</label>
-                  <TagSelect
-                    options={FACILITY_OPTIONS}
-                    selected={row.maintenanceType}
-                    onChange={v => updateRow(row.id, 'maintenanceType', v as MaintenanceType)}
-                  />
-                </div>
-
-                {/* Aircraft Registration — full width, only for Base/Line */}
-                {!isSimple && (
-                  <div className="mb-5">
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Aircraft Registration</label>
+                  {/* Registration */}
+                  <td className="px-2 py-2">
                     <input
                       type="text"
                       value={row.aircraftRegistration}
                       onChange={e => updateRow(row.id, 'aircraftRegistration', e.target.value.toUpperCase())}
-                      className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                      placeholder={isSimple ? 'N/A' : 'G-ABCD'}
+                      disabled={isSimple}
+                      className="w-full text-sm h-8 px-2 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase disabled:bg-gray-50 disabled:text-gray-400"
                     />
-                  </div>
-                )}
+                  </td>
 
-                {/* Aircraft Type — full width, only for Base/Line */}
-                {!isSimple && (
-                  <div className="mb-5 relative">
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Aircraft Type</label>
+                  {/* Aircraft Type with autocomplete */}
+                  <td className="px-2 py-2 relative">
                     <input
                       type="text"
                       value={row.id in typeSearch ? typeSearch[row.id] : row.aircraftType}
@@ -344,7 +344,9 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                         setTypeSearch(prev => ({ ...prev, [row.id]: e.target.value }))
                         updateRow(row.id, 'aircraftType', e.target.value)
                       }}
-                      className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder={isSimple ? 'N/A' : 'Search type...'}
+                      disabled={isSimple}
+                      className="w-full text-sm h-8 px-2 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     {getTypeResults(row.id).length > 0 && (
                       <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -369,142 +371,226 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                         ))}
                       </div>
                     )}
-                  </div>
-                )}
+                  </td>
 
-                {/* Licence Category tags (was Aircraft Category) */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-2">Licence Category</label>
-                  <TagSelect
-                    options={CATEGORY_OPTIONS}
-                    selected={row.aircraftCategory}
-                    onChange={v => updateRow(row.id, 'aircraftCategory', v as string)}
-                  />
-                </div>
-
-                {/* ATA Chapter(s) — full width */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">ATA Chapter(s)</label>
-                  <AtaSearch
-                    selected={row.ataChapters}
-                    onChange={chapters => updateAtaChapters(row.id, chapters)}
-                  />
-                </div>
-
-                {/* Job Number — full width, only for Base/Line */}
-                {!isSimple && (
-                  <div className="mb-5">
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Job Number</label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs.current[row.id]?.click()}
-                        disabled={uploading[row.id]}
-                        className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-colors flex-shrink-0 ${
-                          row.jobNumberPhotoPath
-                            ? 'border-green-300 bg-green-50 text-green-600'
-                            : 'border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                        }`}
-                        title={row.jobNumberPhotoPath ? 'Photo uploaded' : 'Upload job card photo'}
-                      >
-                        {uploading[row.id] ? (
-                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                          </svg>
-                        )}
-                      </button>
-                      <input
-                        type="text"
-                        value={row.jobNumber}
-                        onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
-                        className="flex-1 text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <input
-                        ref={el => { fileInputRefs.current[row.id] = el }}
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        className="hidden"
-                        onChange={e => {
-                          const file = e.target.files?.[0]
-                          if (file) handleJobPhotoUpload(row.id, file)
-                        }}
-                      />
-                    </div>
-                    {row.jobNumberPhotoPath && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-green-600">Photo attached</span>
-                        <button
-                          type="button"
-                          onClick={() => updateRow(row.id, 'jobNumberPhotoPath', null)}
-                          className="text-xs text-red-500 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Task Type tags (multi-select) */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-2">Task Type(s)</label>
-                  <TagSelect
-                    options={TASK_TYPES}
-                    selected={row.taskTypes}
-                    onChange={v => updateRow(row.id, 'taskTypes', v)}
-                    multi
-                  />
-                </div>
-
-                {/* Task Detail — full width textarea */}
-                <div className="mb-5">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Task Detail</label>
-                  <textarea
-                    value={row.taskDetail}
-                    onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
-                    rows={3}
-                    className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  />
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                  <Button
-                    size="sm"
-                    onClick={() => saveRow(row.id)}
-                    disabled={row.saving || !canSave}
-                  >
-                    {row.saving ? 'Saving...' : 'Save as Draft'}
-                  </Button>
-                  {unsavedRows.length > 1 && (
+                  {/* ATA — click to expand */}
+                  <td className="px-2 py-2">
                     <button
                       type="button"
-                      onClick={() => removeRow(row.id)}
-                      className="text-xs text-red-500 hover:text-red-700"
+                      onClick={() => setExpandedId(isExpanded ? null : row.id)}
+                      className="w-full text-left min-h-8 flex items-center"
                     >
-                      Remove
+                      {row.ataChapters.length > 0 ? (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                          {row.ataChapters[0]}{row.ataChapters.length > 1 ? ` +${row.ataChapters.length - 1}` : ''}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">+ Add ATA</span>
+                      )}
                     </button>
-                  )}
-                  {!canSave && row.taskDate && (
-                    <span className="text-xs text-amber-600">
-                      {!row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
-                    </span>
-                  )}
-                  {row.saving && (
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {row.saveError && (
-                    <span className="text-xs text-red-600">{row.saveError}</span>
-                  )}
-                </div>
-              </div>
-            </Fragment>
-          )
-        })}
-      </div>
+                  </td>
+
+                  {/* Task Detail inline */}
+                  <td className="px-2 py-2">
+                    <input
+                      type="text"
+                      value={row.taskDetail}
+                      onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
+                      placeholder="Task description..."
+                      className="w-full text-sm h-8 px-2 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-2 py-2">
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => saveRow(row.id)}
+                        disabled={row.saving || !canSave}
+                        className="text-xs font-bold px-2.5 py-1 bg-[#1565C0] text-white rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1565C0]/90 transition-colors"
+                      >
+                        {row.saving ? '...' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isExpanded ? null : row.id)}
+                        className={`w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all ${isExpanded ? 'rotate-180 text-blue-500' : ''}`}
+                        title="Expand details"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* Expanded detail panel */}
+                {isExpanded && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-4 bg-gray-50/60 border-t border-blue-100">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        {/* Experience Type */}
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-2">Experience Type</p>
+                          <TagSelect
+                            options={FACILITY_OPTIONS}
+                            selected={row.maintenanceType}
+                            onChange={v => updateRow(row.id, 'maintenanceType', v as MaintenanceType)}
+                          />
+                        </div>
+
+                        {/* Licence Category */}
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-2">Licence Category</p>
+                          <TagSelect
+                            options={CATEGORY_OPTIONS}
+                            selected={row.aircraftCategory}
+                            onChange={v => updateRow(row.id, 'aircraftCategory', v as string)}
+                          />
+                        </div>
+
+                        {/* Employer */}
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-1.5">Employer</p>
+                          <input
+                            type="text"
+                            value={row.employer}
+                            onChange={e => updateRow(row.id, 'employer', e.target.value)}
+                            placeholder="Organisation / Employer"
+                            className="w-full text-sm h-9 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* Job Number */}
+                        {!isSimple && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 mb-1.5">Job Number</p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRefs.current[row.id]?.click()}
+                                disabled={uploading[row.id]}
+                                className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors flex-shrink-0 ${
+                                  row.jobNumberPhotoPath
+                                    ? 'border-green-300 bg-green-50 text-green-600'
+                                    : 'border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                }`}
+                                title={row.jobNumberPhotoPath ? 'Photo uploaded' : 'Upload job card photo'}
+                              >
+                                {uploading[row.id] ? (
+                                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                  </svg>
+                                )}
+                              </button>
+                              <input
+                                type="text"
+                                value={row.jobNumber}
+                                onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
+                                placeholder="Job card number"
+                                className="flex-1 text-sm h-9 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <input
+                                ref={el => { fileInputRefs.current[row.id] = el }}
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                className="hidden"
+                                onChange={e => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handleJobPhotoUpload(row.id, file)
+                                }}
+                              />
+                            </div>
+                            {row.jobNumberPhotoPath && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-green-600">Photo attached</span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateRow(row.id, 'jobNumberPhotoPath', null)}
+                                  className="text-xs text-red-500 hover:text-red-700"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Task Types */}
+                        <div className={!isSimple ? '' : 'sm:col-span-2'}>
+                          <p className="text-xs font-medium text-gray-500 mb-2">Task Type(s)</p>
+                          <TagSelect
+                            options={TASK_TYPES}
+                            selected={row.taskTypes}
+                            onChange={v => updateRow(row.id, 'taskTypes', v)}
+                            multi
+                          />
+                        </div>
+
+                        {/* ATA Chapters */}
+                        <div className="sm:col-span-2">
+                          <p className="text-xs font-medium text-gray-500 mb-1.5">ATA Chapter(s)</p>
+                          <AtaSearch
+                            selected={row.ataChapters}
+                            onChange={chapters => updateAtaChapters(row.id, chapters)}
+                          />
+                        </div>
+
+                        {/* Task Detail */}
+                        <div className="sm:col-span-2">
+                          <p className="text-xs font-medium text-gray-500 mb-1.5">Task Detail</p>
+                          <textarea
+                            value={row.taskDetail}
+                            onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
+                            rows={2}
+                            placeholder="Full task description..."
+                            className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Expanded actions */}
+                      <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => saveRow(row.id)}
+                          disabled={row.saving || !canSave}
+                          className="text-sm font-bold px-4 py-1.5 bg-[#1565C0] text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1565C0]/90 transition-colors"
+                        >
+                          {row.saving ? 'Saving...' : 'Save as Draft'}
+                        </button>
+                        {unsavedRows.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeRow(row.id)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        )}
+                        {!canSave && row.taskDate && (
+                          <span className="text-xs text-amber-600">
+                            {!row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
+                          </span>
+                        )}
+                        {row.saveError && (
+                          <span className="text-xs text-red-600">{row.saveError}</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

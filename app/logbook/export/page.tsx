@@ -28,7 +28,7 @@ export default async function ExportPage() {
   return (
     <>
       <style>{`
-        @page { size: 297mm 210mm; margin: 10mm 10mm 20mm 10mm; }
+        @page { size: A4 landscape; margin: 10mm 10mm 20mm 10mm; }
         @media print {
           .print-footer {
             position: fixed;
@@ -67,9 +67,6 @@ export default async function ExportPage() {
               <PrintButton />
             </div>
           </div>
-          <p className="text-xs text-amber-600 font-medium print:hidden mb-4">
-            ⚠ In the print dialog, set Paper Orientation to <strong>Landscape</strong> before saving.
-          </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 print:gap-2 print:mt-2">
             <div>
               <p className="text-xs text-gray-400 uppercase">Name</p>
