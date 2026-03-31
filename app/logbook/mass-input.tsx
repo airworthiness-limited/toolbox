@@ -26,8 +26,6 @@ const TASK_TYPES = [
 const FACILITY_OPTIONS: { value: MaintenanceType; label: string }[] = [
   { value: 'base_maintenance', label: 'Base Maintenance' },
   { value: 'line_maintenance', label: 'Line Maintenance' },
-  { value: 'military_experience', label: 'Military Experience' },
-  { value: 'student_experience', label: 'Student Experience' },
 ]
 
 const CATEGORY_OPTIONS: { value: AircraftCategory | 'avionics'; label: string }[] = [

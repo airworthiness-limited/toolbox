@@ -24,7 +24,6 @@ import {
 } from '@/lib/logbook/constants'
 import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
-import { MilitaryExperience } from './military-experience'
 import { MassInput } from './mass-input'
 import { AtaChart } from './ata-chart'
 import { BtcToggle } from '@/app/progress/btc-toggle'
@@ -324,21 +323,6 @@ export default async function LogbookPage({
             initialValue={hasBtc}
             selectedCategory={selectedCategory || 'B1.1'}
             userId={user.id}
-          />
-        </div>
-
-        <AdPlaceholder format="banner" className="my-4" />
-
-        {/* Military Experience */}
-        <div className="mb-6">
-          <MilitaryExperience
-            selectedCategory={selectedCategory || 'B1.1'}
-            hasMilitaryPeriod={militaryMonths > 0}
-            militaryStart={militaryPeriods[0]?.start_date ?? ''}
-            militaryEnd={militaryPeriods[0]?.end_date ?? null}
-            civilMonths={civilMonths}
-            militaryMonths={militaryMonths}
-            totalExpMonths={totalExpMonths}
           />
         </div>
 
