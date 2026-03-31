@@ -1,14 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { getAtaLabel, ATA_2200_CHAPTERS } from '@/lib/logbook/constants'
-
-function mainAtaLabel(mainCode: string): string {
-  const sub = ATA_2200_CHAPTERS.find(c => c.value.startsWith(mainCode + '-'))
-  if (!sub) return `ATA ${mainCode}`
-  const chapterName = sub.label.split(':')[0]
-  return `${mainCode}: ${chapterName}`
-}
+import { getAtaLabel } from '@/lib/logbook/constants'
 
 const CATEGORY_ORDER = [
   'aeroplane_turbine',
@@ -41,7 +34,7 @@ export interface ExportEntry {
   aircraft_category: string | null
 }
 
-type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_number' | 'ata_group' | 'task_detail' | 'supervisor'
+type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_number' | 'task_detail' | 'supervisor'
 
 const DEFAULT_COLUMNS: { key: ColKey; label: string }[] = [
   { key: 'date', label: 'Date' },
@@ -49,7 +42,6 @@ const DEFAULT_COLUMNS: { key: ColKey; label: string }[] = [
   { key: 'aircraft_type', label: 'Aircraft Type' },
   { key: 'registration', label: 'Aircraft Registration' },
   { key: 'job_number', label: 'Job Number' },
-  { key: 'ata_group', label: 'ATA Group' },
   { key: 'task_detail', label: 'Task Detail' },
   { key: 'supervisor', label: 'Supervisor' },
 ]
@@ -61,17 +53,11 @@ function getCellValue(entry: ExportEntry, key: ColKey): string {
     case 'aircraft_type': return entry.aircraft_type ?? '-'
     case 'registration': return entry.aircraft_registration ?? '-'
     case 'job_number': return entry.job_number ?? '-'
-    case 'ata_group': return entry.ata_chapter ? getAtaLabel(entry.ata_chapter) : '-'
     case 'task_detail': return entry.description ?? '-'
     case 'supervisor': return ''
   }
 }
 
-function mainAta(chapter: string | null): string {
-  if (!chapter) return 'Uncategorised'
-  const main = chapter.split('-')[0]
-  return `ATA ${main}`
-}
 
 export function ExportTable({ entries }: { entries: ExportEntry[] }) {
   const [columns, setColumns] = useState(DEFAULT_COLUMNS)
@@ -102,19 +88,19 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
     })
   }, [entries, selectedCategories, selectedFacilities, selectedAta, dateFrom, dateTo, allAta.length])
 
-  // Group: by category → by main ATA chapter
+  // Group: by category → by full sub-chapter (XX-XX)
   const grouped = useMemo(() => {
     const catOrder = CATEGORY_ORDER.filter(c => selectedCategories.has(c))
     return catOrder.map(cat => {
       const catEntries = filtered.filter(e => e.aircraft_category === cat)
       if (catEntries.length === 0) return null
-      const ataGroups = Array.from(new Set(catEntries.map(e => e.ata_chapter?.split('-')[0] ?? ''))).sort((a, b) => Number(a) - Number(b))
+      const subChapters = Array.from(new Set(catEntries.map(e => e.ata_chapter ?? ''))).sort()
       return {
         category: cat,
         label: CATEGORY_LABELS[cat] ?? cat,
-        ataGroups: ataGroups.map(ata => ({
-          ata,
-          entries: catEntries.filter(e => (e.ata_chapter?.split('-')[0] ?? '') === ata).sort((a, b) => a.task_date.localeCompare(b.task_date)),
+        ataGroups: subChapters.map(chapter => ({
+          ata: chapter,
+          entries: catEntries.filter(e => (e.ata_chapter ?? '') === chapter).sort((a, b) => a.task_date.localeCompare(b.task_date)),
         })),
       }
     }).filter(Boolean) as { category: string; label: string; ataGroups: { ata: string; entries: ExportEntry[] }[] }[]
@@ -239,7 +225,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                 onClick={() => toggleAta(ata)}
                 className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${selectedAta.has(ata) ? 'bg-[#1565C0] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >
-                {mainAtaLabel(ata)}
+                {ata}
               </button>
             ))}
           </div>
@@ -304,7 +290,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                   <div key={ata}>
                     {/* ATA subheading */}
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 print:text-[10px]">
-                      {mainAtaLabel(ata)}
+                      {ata ? getAtaLabel(ata) : 'Uncategorised'}
                     </h3>
                     <div className="border rounded-lg overflow-hidden print:border-black">
                       <table className="w-full text-sm print:text-xs">
