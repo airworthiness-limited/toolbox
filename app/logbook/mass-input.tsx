@@ -295,7 +295,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
       <div className="divide-y divide-gray-100">
         {unsavedRows.map((row) => {
           const isSimple = NO_AIRCRAFT_REQUIRED.includes(row.maintenanceType)
-          const dateValid = /^\d{2}\/\d{2}\/\d{4}$/.test(row.taskDate)
+          const dateValid = !!row.taskDate
           const canSave = dateValid && row.aircraftCategory && (isSimple || row.aircraftRegistration)
 
           return (
@@ -305,30 +305,9 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                 <div className="mb-5">
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Date</label>
                   <input
-                    type="text"
+                    type="date"
                     value={row.taskDate}
-                    onChange={e => {
-                      const digits = e.target.value.replace(/\D/g, '').slice(0, 8)
-                      let formatted = digits
-                      if (digits.length > 4) formatted = digits.slice(0,2) + '/' + digits.slice(2,4) + '/' + digits.slice(4)
-                      else if (digits.length > 2) formatted = digits.slice(0,2) + '/' + digits.slice(2)
-                      updateRow(row.id, 'taskDate', formatted)
-                    }}
-                    onKeyDown={e => {
-                      const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown']
-                      if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault()
-                    }}
-                    onPaste={e => {
-                      e.preventDefault()
-                      const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8)
-                      let formatted = digits
-                      if (digits.length > 4) formatted = digits.slice(0,2) + '/' + digits.slice(2,4) + '/' + digits.slice(4)
-                      else if (digits.length > 2) formatted = digits.slice(0,2) + '/' + digits.slice(2)
-                      updateRow(row.id, 'taskDate', formatted)
-                    }}
-                    placeholder="DD/MM/YYYY"
-                    maxLength={10}
-                    inputMode="numeric"
+                    onChange={e => updateRow(row.id, 'taskDate', e.target.value)}
                     className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -513,7 +492,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                   )}
                   {!canSave && row.taskDate && (
                     <span className="text-xs text-amber-600">
-                      {!dateValid ? 'Date must be DD/MM/YYYY' : !row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
+                      {!row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
                     </span>
                   )}
                   {row.saving && (
