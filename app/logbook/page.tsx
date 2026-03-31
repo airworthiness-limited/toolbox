@@ -235,9 +235,6 @@ export default async function LogbookPage({
             <Link href="/logbook/export">
               <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold tracking-wide uppercase">Export Tasks</Button>
             </Link>
-            <Link href="/logbook/export">
-              <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold tracking-wide uppercase">Print</Button>
-            </Link>
             {isAmlHolder && (
               <Link href="/logbook/verify">
                 <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Verification Queue</Button>
