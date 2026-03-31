@@ -59,7 +59,7 @@ export default async function ExportPage() {
       <div className="max-w-7xl mx-auto px-6 py-8 print:px-2 print:py-4">
         {/* Header */}
         <div className="mb-8 print:mb-4">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold text-gray-900 print:text-xl">
               Digital Logbook (CAP 741)
             </h1>
@@ -67,6 +67,9 @@ export default async function ExportPage() {
               <PrintButton />
             </div>
           </div>
+          <p className="text-xs text-amber-600 font-medium print:hidden mb-4">
+            ⚠ In the print dialog, set Paper Orientation to <strong>Landscape</strong> before saving.
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 print:gap-2 print:mt-2">
             <div>
               <p className="text-xs text-gray-400 uppercase">Name</p>
