@@ -23,9 +23,11 @@ const TASK_TYPES = [
   'Troubleshooting',
 ] as const
 
-const FACILITY_OPTIONS: { value: MaintenanceType; label: string }[] = [
+const FACILITY_OPTIONS: { value: string; label: string; comingSoon?: boolean }[] = [
   { value: 'base_maintenance', label: 'Base Maintenance' },
   { value: 'line_maintenance', label: 'Line Maintenance' },
+  { value: 'engine_maintenance', label: 'Engine Maintenance', comingSoon: true },
+  { value: 'component_maintenance', label: 'Component Maintenance', comingSoon: true },
 ]
 
 const CATEGORY_OPTIONS: { value: AircraftCategory | 'avionics'; label: string }[] = [
@@ -53,7 +55,7 @@ function parseDateInput(ddmmyyyy: string): string {
 }
 
 function TagSelect({ options, selected, onChange, multi = false }: {
-  options: readonly string[] | { value: string; label: string }[]
+  options: readonly string[] | { value: string; label: string; comingSoon?: boolean }[]
   selected: string | string[]
   onChange: (val: string | string[]) => void
   multi?: boolean
@@ -76,11 +78,27 @@ function TagSelect({ options, selected, onChange, multi = false }: {
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {items.map(item => {
+      {items.map((item: { value: string; label: string; comingSoon?: boolean }) => {
         const isSelected = selectedArr.includes(item.value)
+        if (item.comingSoon) {
+          return (
+            <div key={item.label} className="relative group">
+              <button
+                type="button"
+                disabled
+                className="text-xs font-semibold px-3 py-1 rounded-lg bg-gray-100 text-gray-300 cursor-not-allowed"
+              >
+                {item.label}
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                Coming Soon
+              </div>
+            </div>
+          )
+        }
         return (
           <button
-            key={item.value}
+            key={item.label}
             type="button"
             onClick={() => toggle(item.value)}
             className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
@@ -147,6 +165,15 @@ interface MassInputProps {
 
 export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputProps) {
   const router = useRouter()
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function showToast(msg: string) {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(null), 3500)
+  }
+
   const [rows, setRows] = useState<DraftRow[]>([
     newRow({ employer: defaultEmployer, maintenanceType: lastMaintenanceType }),
   ])
@@ -261,6 +288,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
         }
         return updated
       })
+      showToast('Task successfully added to logbook.')
       router.refresh()
     } else {
       setRows(prev => prev.map(r => r.id === id ? { ...r, saving: false, saveError: error?.message ?? error?.code ?? 'Save failed — check all fields' } : r))
@@ -288,6 +316,16 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
   const unsavedRows = rows.filter(r => !r.saved)
 
   return (
+    <Fragment>
+    {/* Success toast */}
+    {toast && (
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-gray-900 text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg animate-fade-in-up">
+        <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+        {toast}
+      </div>
+    )}
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="divide-y divide-gray-100">
         {unsavedRows.map((row) => {
@@ -490,7 +528,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                     onClick={() => saveRow(row.id)}
                     disabled={row.saving || !canSave}
                   >
-                    {row.saving ? 'Saving...' : 'Save as Draft'}
+                    {row.saving ? 'Saving...' : 'SAVE'}
                   </Button>
                   {unsavedRows.length > 1 && (
                     <button
@@ -519,5 +557,6 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
         })}
       </div>
     </div>
+    </Fragment>
   )
 }

@@ -73,6 +73,43 @@ export function PdfDownloadButton({ entries, meta }: Props) {
       const pageH = doc.internal.pageSize.getHeight()
       const margin = 10
 
+      // ── Watermark ────────────────────────────────────────────────────────
+      const watermarkedPages = new Set<number>()
+      function drawWatermark() {
+        const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber as number
+        if (watermarkedPages.has(currentPage)) return
+        watermarkedPages.add(currentPage)
+        doc.setFont('Alexandria', 'bold')
+        doc.setFontSize(10)
+        const testW = doc.getTextWidth('Airworthiness')
+        const targetFontSize = 10 * ((pageW * 0.97) / testW)
+        doc.setFontSize(targetFontSize)
+
+        // Font metrics in mm: 1 em = fontSize (pts) / scaleFactor (pts/mm)
+        const emMm = targetFontSize / (doc as any).internal.scaleFactor
+        // Alexandria cap height ≈ 0.72em; "Airworthiness" has no descenders
+        const capHeightMm = emMm * 0.72
+        const rows = 5
+        const spacing = emMm // 1em row spacing (tight, like the watermark image)
+
+        // Centre the visual block on the page:
+        // top of block  = firstBaseline - capHeightMm
+        // bottom of block = lastBaseline (no descenders)
+        // block height    = (rows-1)*spacing + capHeightMm
+        // firstBaseline   = (pageH - blockHeight) / 2 + capHeightMm
+        //                 = (pageH - (rows-1)*spacing + capHeightMm) / 2
+        const firstBaseline = (pageH - (rows - 1) * spacing + capHeightMm) / 2
+
+        doc.setTextColor(236, 236, 236)
+        for (let i = 0; i < rows; i++) {
+          doc.text('Airworthiness', pageW / 2, firstBaseline + i * spacing, { align: 'center' })
+        }
+        // Reset text color for subsequent content
+        doc.setTextColor(17, 24, 39)
+      }
+
+      drawWatermark()
+
       // ── Header ──────────────────────────────────────────────────────────
       doc.setFontSize(14)
       doc.setFont('Alexandria', 'bold')
@@ -122,7 +159,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
         const subChapters = Array.from(new Set(catEntries.map(e => e.ata_chapter ?? ''))).sort()
 
         // Category heading
-        if (cursorY > pageH - 30) { doc.addPage(); cursorY = margin }
+        if (cursorY > pageH - 30) { doc.addPage(); drawWatermark(); cursorY = margin }
         doc.setFontSize(9)
         doc.setFont('Alexandria', 'bold')
         doc.setTextColor(17, 24, 39)
@@ -138,34 +175,43 @@ export function PdfDownloadButton({ entries, meta }: Props) {
           if (chapterEntries.length === 0) continue
 
           // ATA subheading
-          if (cursorY > pageH - 25) { doc.addPage(); cursorY = margin }
+          if (cursorY > pageH - 25) { doc.addPage(); drawWatermark(); cursorY = margin }
           doc.setFontSize(7)
           doc.setFont('Alexandria', 'bold')
           doc.setTextColor(107, 114, 128)
           doc.text((chapter ? getAtaLabel(chapter) : 'Uncategorised').toUpperCase(), margin, cursorY)
           cursorY += 3
 
-          const tableRows = chapterEntries.map(e => [
-            new Date(e.task_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            FACILITY_LABELS[e.maintenance_type ?? ''] ?? e.maintenance_type ?? '-',
-            e.aircraft_type ?? '-',
-            e.aircraft_registration ?? '-',
-            e.job_number ?? '-',
-            e.description ?? '-',
-            '',
-          ])
+          const tableRows = chapterEntries.map(e => {
+            const taskTypeMatch = e.description?.match(/^\[([^\]]+)\]/)
+            const taskTypes = taskTypeMatch ? taskTypeMatch[1] : '-'
+            const taskDetail = e.description?.replace(/^\[[^\]]+\]\s*/, '') || '-'
+            return [
+              new Date(e.task_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+              e.aircraft_type ?? '-',
+              e.aircraft_registration ?? '-',
+              e.job_number ?? '-',
+              taskTypes,
+              taskDetail,
+              '',
+            ]
+          })
 
           autoTable(doc, {
             startY: cursorY,
-            head: [['Date', 'Base/Line', 'Aircraft Type', 'Aircraft Reg.', 'Job Number', 'Task Detail', 'Supervisor']],
+            head: [['Date', 'Aircraft Type', 'Registration', 'Job Number', 'Task Type', 'Task Detail', 'Supervisor']],
             body: tableRows,
             margin: { left: margin, right: margin },
             theme: 'grid',
             styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [17, 24, 39], font: 'Alexandria', fontStyle: 'normal' },
             headStyles: { fillColor: [249, 250, 251], textColor: [75, 85, 99], font: 'Alexandria', fontStyle: 'bold', fontSize: 6.5 },
             columnStyles: {
+              4: { halign: 'left', cellWidth: 32, overflow: 'linebreak' },
               5: { halign: 'left', cellWidth: 'auto' },
               6: { cellWidth: 28 },
+            },
+            willDrawPage: () => {
+              drawWatermark()
             },
             didDrawPage: (data) => {
               // Footer on every page

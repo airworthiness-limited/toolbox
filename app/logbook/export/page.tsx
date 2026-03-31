@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { PrintButton } from './print-button'
 import { ExportTable } from './export-table'
 import { PdfDownloadButton } from './pdf-download-button'
 import {
@@ -64,11 +63,34 @@ export default async function ExportPage() {
   const recencyTasks = (recencyEntries ?? []).length
   const recencyDays = new Set((recencyEntries ?? []).map(e => e.task_date)).size
 
-  const allPeriods = employmentPeriods ?? []
-  const civilMonths = calcMonths(allPeriods.filter(p => !p.is_military), tenYearsAgo)
-  const militaryMonths = calcMonths(allPeriods.filter(p => p.is_military), tenYearsAgo)
+  // Civil experience: calculated from actual task dates using continuous-period algorithm
+  // (matches main logbook page — gaps > 5 days break the chain)
+  const MAX_GAP_DAYS = 5
+  const sortedTaskDates = (entries ?? [])
+    .map(e => new Date(e.task_date).getTime())
+    .filter(t => t >= tenYearsAgo.getTime())
+    .sort((a, b) => a - b)
+
+  let civilExpDays = 0
+  if (sortedTaskDates.length > 0) {
+    let periodStart = sortedTaskDates[0]
+    let periodEnd = sortedTaskDates[0]
+    for (let i = 1; i < sortedTaskDates.length; i++) {
+      const gap = (sortedTaskDates[i] - periodEnd) / (1000 * 60 * 60 * 24)
+      if (gap <= MAX_GAP_DAYS) {
+        periodEnd = sortedTaskDates[i]
+      } else {
+        civilExpDays += Math.round((periodEnd - periodStart) / (1000 * 60 * 60 * 24))
+        periodStart = sortedTaskDates[i]
+        periodEnd = sortedTaskDates[i]
+      }
+    }
+    civilExpDays += Math.round((periodEnd - periodStart) / (1000 * 60 * 60 * 24))
+  }
+  const civilExpMonths = Math.round(civilExpDays / 30.44)
+  const militaryMonths = calcMonths((employmentPeriods ?? []).filter(p => p.is_military), tenYearsAgo)
   const cappedMilitaryMonths = Math.min(militaryMonths, 48)
-  const totalCombinedMonths = civilMonths + cappedMilitaryMonths
+  const totalCombinedMonths = civilExpMonths + cappedMilitaryMonths
   const expYears = Math.floor(totalCombinedMonths / 12)
   const expMonths = totalCombinedMonths % 12
 
@@ -126,7 +148,6 @@ export default async function ExportPage() {
                   generatedDate,
                 }}
               />
-              <PrintButton />
             </div>
           </div>
 

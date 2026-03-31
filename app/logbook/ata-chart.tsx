@@ -114,21 +114,6 @@ export function AtaChart({ entries }: AtaChartProps) {
         </div>
       </div>
 
-      {/* Tasks by Environment */}
-      <div className="mb-4">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tasks by Environment</p>
-        <div className="flex gap-2 flex-wrap">
-          {[
-            { value: 'all', label: 'All Tasks' },
-            { value: 'aircraft', label: 'Aircraft Maintenance' },
-            { value: 'military_student', label: 'Military / Student' },
-          ].map(f => (
-            <button key={f.value} onClick={() => setTypeFilter(f.value)} className={btnClass(typeFilter === f.value)}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Arrange */}
       <div className="mb-4">

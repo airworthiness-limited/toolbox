@@ -3,6 +3,15 @@
 import { useState, useMemo } from 'react'
 import { getAtaLabel } from '@/lib/logbook/constants'
 import { createClient } from '@/lib/supabase/client'
+import { AdPlaceholder } from '@/components/ad-placeholder'
+
+function parseDateFilter(ddmmyyyy: string): string {
+  const parts = ddmmyyyy.split('/')
+  if (parts.length === 3 && parts[2].length === 4) {
+    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+  }
+  return ''
+}
 
 const CATEGORY_ORDER = [
   'aeroplane_turbine',
@@ -23,6 +32,16 @@ const FACILITY_LABELS: Record<string, string> = {
   line_maintenance: 'Line',
 }
 
+function extractTaskTypes(description: string | null): string[] {
+  if (!description) return []
+  const match = description.match(/^\[([^\]]+)\]/)
+  return match ? match[1].split(',').map(t => t.trim()).filter(Boolean) : []
+}
+
+function stripTaskTypePrefix(description: string | null): string {
+  return description?.replace(/^\[[^\]]+\]\s*/, '') || '-'
+}
+
 export interface ExportEntry {
   id: string
   task_date: string
@@ -36,14 +55,14 @@ export interface ExportEntry {
   work_order_photo_path: string | null
 }
 
-type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_number' | 'task_detail' | 'supervisor'
+type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_number' | 'task_type' | 'task_detail' | 'supervisor'
 
 const DEFAULT_COLUMNS: { key: ColKey; label: string }[] = [
   { key: 'date', label: 'Date' },
-  { key: 'facility', label: 'Base/Line' },
   { key: 'aircraft_type', label: 'Aircraft Type' },
-  { key: 'registration', label: 'Aircraft Reg.' },
+  { key: 'registration', label: 'Registration' },
   { key: 'job_number', label: 'Job Number' },
+  { key: 'task_type', label: 'Task Type' },
   { key: 'task_detail', label: 'Task Detail' },
   { key: 'supervisor', label: 'Supervisor' },
 ]
@@ -55,7 +74,8 @@ function getCellValue(entry: ExportEntry, key: ColKey): string {
     case 'aircraft_type': return entry.aircraft_type ?? '-'
     case 'registration': return entry.aircraft_registration ?? '-'
     case 'job_number': return entry.job_number ?? '-'
-    case 'task_detail': return entry.description ?? '-'
+    case 'task_type': return extractTaskTypes(entry.description).join(', ') || '-'
+    case 'task_detail': return stripTaskTypePrefix(entry.description)
     case 'supervisor': return ''
   }
 }
@@ -85,6 +105,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
   const [selectedAta, setSelectedAta] = useState<Set<string>>(new Set(allAta))
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
     return entries.filter(e => {
@@ -92,11 +113,24 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
       if (!selectedFacilities.has(e.maintenance_type ?? '')) return false
       const main = e.ata_chapter?.split('-')[0] ?? ''
       if (selectedAta.size < allAta.length && !selectedAta.has(main)) return false
-      if (dateFrom && e.task_date < dateFrom) return false
-      if (dateTo && e.task_date > dateTo) return false
+      const fromIso = parseDateFilter(dateFrom)
+      const toIso = parseDateFilter(dateTo)
+      if (fromIso && e.task_date < fromIso) return false
+      if (toIso && e.task_date > toIso) return false
+      if (search.trim()) {
+        const q = search.trim().toLowerCase()
+        const haystack = [
+          e.description,
+          e.aircraft_type,
+          e.aircraft_registration,
+          e.job_number,
+          e.ata_chapter,
+        ].filter(Boolean).join(' ').toLowerCase()
+        if (!haystack.includes(q)) return false
+      }
       return true
     })
-  }, [entries, selectedCategories, selectedFacilities, selectedAta, dateFrom, dateTo, allAta.length])
+  }, [entries, selectedCategories, selectedFacilities, selectedAta, dateFrom, dateTo, search, allAta.length])
 
   // Group: by category → by full sub-chapter (XX-XX)
   const grouped = useMemo(() => {
@@ -245,11 +279,45 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
         <div>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Date Range</p>
           <div className="flex items-center gap-3">
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm h-9 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              type="text"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
+              placeholder="DD/MM/YYYY"
+              maxLength={10}
+              className="text-sm h-9 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+            />
             <span className="text-gray-400 text-sm">to</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm h-9 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              type="text"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
+              placeholder="DD/MM/YYYY"
+              maxLength={10}
+              className="text-sm h-9 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+            />
             {(dateFrom || dateTo) && (
               <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-gray-400 hover:text-gray-600">Clear</button>
+            )}
+          </div>
+        </div>
+
+        {/* Search */}
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Search</p>
+          <div className="relative max-w-sm">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder=""
+              className="w-full text-sm h-9 pl-8 pr-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
             )}
           </div>
         </div>
@@ -296,17 +364,17 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               </h2>
 
               <div className="space-y-4">
-                {group.ataGroups.map(({ ata, entries: ataEntries }) => (
+                {group.ataGroups.map(({ ata, entries: ataEntries }, ataIdx) => (
                   <div key={ata}>
                     {/* ATA subheading */}
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 print:text-[10px]">
                       {ata ? getAtaLabel(ata) : 'Uncategorised'}
                     </h3>
-                    <div className="border rounded-lg overflow-hidden print:border-black">
-                      <table className="w-full text-sm print:text-xs">
+                    <div className="border rounded-lg print:border-black">
+                      <table className="w-full text-sm print:text-xs border-separate border-spacing-0">
                         <thead>
                           <tr className="bg-gray-50 border-b divide-x divide-gray-200 print:divide-gray-800">
-                            {visibleCols.map(col => (
+                            {visibleCols.map((col, colIdx) => (
                               <th
                                 key={col.key}
                                 draggable
@@ -314,7 +382,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                                 onDragOver={e => handleDragOver(e, col.key)}
                                 onDrop={() => handleDrop(col.key)}
                                 onDragEnd={() => { setDragging(null); setDragOver(null) }}
-                                className={`text-center px-3 py-2 text-xs font-semibold text-gray-600 whitespace-nowrap cursor-grab print:cursor-default print:px-1 select-none ${dragOver === col.key ? 'bg-blue-50' : ''} ${dragging === col.key ? 'opacity-50' : ''}`}
+                                className={`text-center px-3 py-2 text-xs font-semibold text-gray-600 whitespace-nowrap cursor-grab print:cursor-default print:px-1 select-none ${colIdx === 0 ? 'rounded-tl-lg' : ''} ${colIdx === visibleCols.length - 1 ? 'rounded-tr-lg' : ''} ${dragOver === col.key ? 'bg-blue-50' : ''} ${dragging === col.key ? 'opacity-50' : ''}`}
                               >
                                 <span className="print:hidden mr-1 text-gray-300">⠿</span>
                                 {col.label}
@@ -328,16 +396,26 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                               {visibleCols.map(col => (
                                 <td
                                   key={col.key}
-                                  className={`px-3 py-2 print:px-1 text-center ${col.key === 'task_detail' ? 'max-w-xs' : 'whitespace-nowrap'} ${col.key === 'supervisor' ? 'w-32 min-w-[8rem]' : ''}`}
+                                  className={`px-3 py-2 print:px-1 text-center align-middle ${col.key === 'task_detail' ? 'max-w-xs' : col.key === 'task_type' ? 'max-w-[160px] w-[160px]' : 'whitespace-nowrap'} ${col.key === 'supervisor' ? 'w-32 min-w-[8rem]' : ''}`}
                                 >
-                                  {col.key === 'job_number' && entry.work_order_photo_path ? (
+                                  {col.key === 'task_type' ? (() => {
+                                    const types = extractTaskTypes(entry.description)
+                                    if (types.length === 0) return <span className="text-gray-300">—</span>
+                                    return (
+                                      <div className="flex flex-wrap gap-1 justify-center items-center mx-auto">
+                                        {types.map(t => (
+                                          <span key={t} className="inline-block text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded px-1.5 py-0.5 leading-tight">{t}</span>
+                                        ))}
+                                      </div>
+                                    )
+                                  })() : col.key === 'job_number' && entry.work_order_photo_path ? (
                                     <span className="inline-flex items-center gap-1.5 justify-center">
                                       <span>{getCellValue(entry, col.key)}</span>
-                                      <div className="relative group/photo print:hidden">
+                                      <div className="relative inline-flex items-center group/photo print:hidden">
                                         <button
                                           type="button"
                                           onMouseEnter={() => loadSignedUrl(entry.work_order_photo_path!)}
-                                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                                          className="inline-flex items-center text-gray-400 hover:text-blue-500 transition-colors"
                                           title="View evidence"
                                         >
                                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -362,6 +440,9 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                         </tbody>
                       </table>
                     </div>
+                    {ataIdx < group.ataGroups.length - 1 && (
+                      <AdPlaceholder format="banner" className="print:hidden mt-4" />
+                    )}
                   </div>
                 ))}
               </div>

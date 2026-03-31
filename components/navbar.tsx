@@ -234,7 +234,7 @@ function MobileMenu({
             {loaded && !user && (
               <Link href="/signup" onClick={onClose}>
                 <Button className="w-full bg-white text-[#1565C0] hover:bg-white/90 font-bold">
-                  Sign up
+                  SIGN UP
                 </Button>
               </Link>
             )}
@@ -306,7 +306,7 @@ export function Navbar() {
             {loaded && !user && (
               <Link href="/signup">
                 <Button size="sm" className="bg-white text-[#1565C0] hover:bg-white/90 font-bold">
-                  Sign up
+                  SIGN UP
                 </Button>
               </Link>
             )}

@@ -2,17 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  ENTRY_STATUSES,
   MAINTENANCE_CATEGORIES,
   AIRCRAFT_CATEGORIES,
   RECENCY_TASK_THRESHOLD,
@@ -22,7 +12,6 @@ import {
   CATEGORY_TO_AIRCRAFT,
   getAtaLabel,
 } from '@/lib/logbook/constants'
-import type { EntryStatus } from '@/lib/logbook/constants'
 import { AdPlaceholder } from '@/components/ad-placeholder'
 import { MassInput } from './mass-input'
 import { AtaChart } from './ata-chart'
@@ -233,7 +222,7 @@ export default async function LogbookPage({
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl text-white">Digital Logbook (CAP 741)</h1>
             <Link href="/logbook/export">
-              <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold tracking-wide uppercase">Export Tasks</Button>
+              <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold tracking-wide uppercase">View All Tasks</Button>
             </Link>
             {isAmlHolder && (
               <Link href="/logbook/verify">
@@ -332,128 +321,6 @@ export default async function LogbookPage({
           defaultEmployer={defaultEmployer}
           lastMaintenanceType={lastMaintenanceType}
         />
-
-        <AdPlaceholder format="banner" className="my-4" />
-
-        {/* Status filter tabs */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {[
-            { value: 'all', label: `All (${totalCount})` },
-            { value: 'draft', label: `Drafts (${draftCount})` },
-            { value: 'pending_verification', label: `Pending (${pendingCount})` },
-            { value: 'verified', label: `Verified (${verifiedCount})` },
-          ].map(tab => (
-            <Link
-              key={tab.value}
-              href={buildUrl({ status: tab.value, page: '1' })}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                statusFilter === tab.value
-                  ? 'bg-white text-gray-900'
-                  : 'bg-white/10 text-white/70 hover:bg-white/20'
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-
-        <AdPlaceholder format="banner" className="my-4" />
-
-        {/* Entries table */}
-        {pageEntries.length === 0 ? (
-          <div className="bg-white rounded-xl border p-8 text-center text-gray-500">
-            <p>No entries{statusFilter !== 'all' ? ` with status "${ENTRY_STATUSES[statusFilter as EntryStatus]?.label ?? statusFilter}"` : ''}.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border overflow-hidden bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
-                    <Link href={buildUrl({ sort: 'task_date', dir: params.sort === 'task_date' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
-                      Date {params.sort === 'task_date' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
-                    </Link>
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
-                    <Link href={buildUrl({ sort: 'aircraft_type', dir: params.sort === 'aircraft_type' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
-                      Aircraft {params.sort === 'aircraft_type' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
-                    </Link>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell cursor-pointer hover:bg-gray-50 select-none">
-                    <Link href={buildUrl({ sort: 'ata_chapter', dir: params.sort === 'ata_chapter' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
-                      ATA {params.sort === 'ata_chapter' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
-                    </Link>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell cursor-pointer hover:bg-gray-50 select-none">
-                    <Link href={buildUrl({ sort: 'category', dir: params.sort === 'category' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
-                      Category {params.sort === 'category' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
-                    </Link>
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-gray-50 select-none">
-                    <Link href={buildUrl({ sort: 'status', dir: params.sort === 'status' && params.dir !== 'asc' ? 'asc' : 'desc', page: '1' })} className="flex items-center gap-1">
-                      Status {params.sort === 'status' && <span>{params.dir === 'asc' ? '\u25B2' : '\u25BC'}</span>}
-                    </Link>
-                  </TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pageEntries.map(entry => {
-                  const isExpired = new Date(entry.task_date).getTime() < tenYearsAgoTime
-                  return (
-                    <TableRow key={entry.id} className={isExpired ? 'opacity-50' : ''}>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(entry.task_date).toLocaleDateString('en-GB', {
-                          day: '2-digit', month: 'short', year: 'numeric'
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{entry.aircraft_type}</div>
-                        <div className="text-xs text-gray-500">{entry.aircraft_registration}</div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                        {getAtaLabel(entry.ata_chapter)}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-gray-600">
-                        {getCategoryLabel(entry.category)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <StatusBadge status={entry.status} />
-                          {isExpired && <Badge variant="destructive">EXPIRED</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/logbook/${entry.id}`}>
-                          <Button variant="ghost" size="sm">View</Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {filteredTotal > PAGE_SIZE && (
-          <div className="flex items-center justify-between mt-6">
-            {page > 1 ? (
-              <Link href={buildUrl({ page: String(page - 1) })}>
-                <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Previous</Button>
-              </Link>
-            ) : <div />}
-            <span className="text-sm text-white/60">
-              Page {page} of {Math.ceil(filteredTotal / PAGE_SIZE)}
-            </span>
-            {hasNextPage ? (
-              <Link href={buildUrl({ page: String(page + 1) })}>
-                <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Next</Button>
-              </Link>
-            ) : <div />}
-          </div>
-        )}
 
       </div>
     </div>
