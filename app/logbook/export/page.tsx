@@ -8,6 +8,12 @@ import {
   EXPERIENCE_VALIDITY_YEARS,
 } from '@/lib/logbook/constants'
 
+function toLogbookNumber(uuid: string): string {
+  const hex = uuid.replace(/-/g, '')
+  const n = BigInt('0x' + hex)
+  return (n % BigInt(10 ** 12)).toString().padStart(12, '0')
+}
+
 function calcMonths(periods: { start_date: string; end_date: string | null }[], cutoff: Date): number {
   let totalDays = 0
   for (const p of periods) {
@@ -51,7 +57,7 @@ export default async function ExportPage() {
   ])
 
   const fullName = profile?.full_name ?? 'Unknown'
-  const userId = user.id
+  const logbookNumber = toLogbookNumber(user.id)
   const generatedDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const recencyTasks = (recencyEntries ?? []).length
@@ -92,7 +98,7 @@ export default async function ExportPage() {
 
       {/* Fixed footer — repeats on every printed page */}
       <div className="print-footer">
-        <span>Digitally signed by {fullName} &nbsp;|&nbsp; ID: {userId}</span>
+        <span>Digitally signed by {fullName} &nbsp;|&nbsp; ID: {logbookNumber}</span>
         <span>Airworthiness Limited Digital Logbook &nbsp;|&nbsp; Generated {generatedDate}</span>
       </div>
 
@@ -125,7 +131,7 @@ export default async function ExportPage() {
             ))}
             <div className="border border-gray-200 rounded-lg px-3 py-2 print:px-2 print:py-1 col-span-2 sm:col-span-2">
               <p className="text-xs text-gray-400 uppercase tracking-wider leading-none mb-1">Logbook ID</p>
-              <p className="text-sm font-semibold text-gray-900 font-mono break-all">{userId}</p>
+              <p className="text-sm font-semibold text-gray-900 font-mono break-all">{logbookNumber}</p>
             </div>
           </div>
         </div>
