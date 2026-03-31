@@ -24,7 +24,7 @@ export default async function ExportPage() {
 
   const { data: entries } = await supabase
     .from('logbook_entries')
-    .select('id, task_date, aircraft_type, aircraft_registration, job_number, description')
+    .select('id, task_date, aircraft_type, aircraft_registration, job_number, description, ata_chapter, maintenance_type')
     .eq('user_id', user.id)
     .order('task_date', { ascending: true })
 
@@ -69,9 +69,11 @@ export default async function ExportPage() {
               <TableHeader>
                 <TableRow className="print:text-xs">
                   <TableHead className="print:px-1 whitespace-nowrap">Date</TableHead>
+                  <TableHead className="print:px-1 whitespace-nowrap">Facility</TableHead>
                   <TableHead className="print:px-1 whitespace-nowrap">Aircraft Type</TableHead>
                   <TableHead className="print:px-1 whitespace-nowrap">Aircraft Registration</TableHead>
                   <TableHead className="print:px-1 whitespace-nowrap">Job Number</TableHead>
+                  <TableHead className="print:px-1 whitespace-nowrap">ATA Group</TableHead>
                   <TableHead className="print:px-1">Task Detail</TableHead>
                   <TableHead className="print:px-1 whitespace-nowrap w-32">Supervisor</TableHead>
                 </TableRow>
@@ -84,9 +86,13 @@ export default async function ExportPage() {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })}
                     </TableCell>
+                    <TableCell className="print:px-1 whitespace-nowrap">
+                      {entry.maintenance_type === 'base_maintenance' ? 'Base Maintenance' : 'Line Maintenance'}
+                    </TableCell>
                     <TableCell className="print:px-1">{entry.aircraft_type}</TableCell>
                     <TableCell className="print:px-1">{entry.aircraft_registration}</TableCell>
                     <TableCell className="print:px-1">{entry.job_number ?? '-'}</TableCell>
+                    <TableCell className="print:px-1">{entry.ata_chapter ?? '-'}</TableCell>
                     <TableCell className="print:px-1">{entry.description}</TableCell>
                     <TableCell className="print:px-1 border-l border-gray-200 print:border-black" />
                   </TableRow>
