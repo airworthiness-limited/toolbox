@@ -319,7 +319,6 @@ export function MassInput({ defaultEmployer, lastMaintenanceType }: MassInputPro
                     }}
                     placeholder="DD/MM/YYYY"
                     maxLength={10}
-                    inputMode="numeric"
                     className="w-full text-sm h-10 px-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
