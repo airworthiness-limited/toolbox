@@ -52,14 +52,17 @@ export function AdPlaceholder({ format = 'banner', className = '' }: AdPlacehold
       // AdSense not loaded yet or ad blocker active
     }
 
-    // Check if the ad actually filled after a delay
-    const timer = setTimeout(() => {
+    // Poll for actual ad fill via data-ad-status attribute
+    const interval = setInterval(() => {
       if (adRef.current) {
-        const height = adRef.current.offsetHeight
-        if (height > 10) setAdLoaded(true)
+        const status = adRef.current.getAttribute('data-ad-status')
+        if (status === 'filled') {
+          setAdLoaded(true)
+          clearInterval(interval)
+        }
       }
-    }, 2000)
-    return () => clearTimeout(timer)
+    }, 1000)
+    return () => clearInterval(interval)
   }, [hasPremium])
 
   // Hide ads for premium users, or while loading auth state
@@ -88,11 +91,11 @@ export function AdPlaceholder({ format = 'banner', className = '' }: AdPlacehold
           </div>
         </div>
       )}
-      {/* Real ad unit — overlays placeholder when it fills */}
+      {/* Real ad unit — hidden behind placeholder until it fills */}
       <ins
         ref={adRef}
-        className={`adsbygoogle ${adLoaded ? '' : 'absolute inset-0'}`}
-        style={adStyles[format]}
+        className={`adsbygoogle ${adLoaded ? '' : 'absolute inset-0 opacity-0 overflow-hidden'}`}
+        style={adLoaded ? adStyles[format] : { display: 'block', width: '0', height: '0' }}
         data-ad-client="ca-pub-7968073666840898"
         data-ad-format={format === 'banner' ? 'horizontal' : format === 'sidebar' ? 'rectangle' : 'auto'}
         data-full-width-responsive={format !== 'sidebar' ? 'true' : 'false'}
