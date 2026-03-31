@@ -18,8 +18,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const FACILITY_LABELS: Record<string, string> = {
-  base_maintenance: 'Base Maintenance',
-  line_maintenance: 'Line Maintenance',
+  base_maintenance: 'Base',
+  line_maintenance: 'Line',
 }
 
 export interface ExportEntry {
@@ -38,7 +38,7 @@ type ColKey = 'date' | 'facility' | 'aircraft_type' | 'registration' | 'job_numb
 
 const DEFAULT_COLUMNS: { key: ColKey; label: string }[] = [
   { key: 'date', label: 'Date' },
-  { key: 'facility', label: 'Facility' },
+  { key: 'facility', label: 'Base/Line' },
   { key: 'aircraft_type', label: 'Aircraft Type' },
   { key: 'registration', label: 'Aircraft Registration' },
   { key: 'job_number', label: 'Job Number' },
