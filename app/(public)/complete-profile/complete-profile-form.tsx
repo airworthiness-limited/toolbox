@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AML_CATEGORIES } from '@/lib/profile/constants'
+import { UK_TYPE_RATINGS } from '@/lib/profile/type-ratings'
+import type { TypeEndorsement } from '@/lib/profile/types'
 
 const IMPLIED_CATEGORIES: Record<string, string[]> = {
   'B1.1': ['A1'],
@@ -30,6 +32,23 @@ const APPROVAL_TYPES = [
 interface LicenceEntry {
   number: string
   categories: string[]
+  endorsements: TypeEndorsement[]
+  showTypeRatings: boolean
+  typeSearch: string
+  activeSearchRow: number | null
+}
+
+const EMPTY_ENDORSEMENT: TypeEndorsement = {
+  rating: '',
+  b1Date: null,
+  b2Date: null,
+  b3Date: null,
+  cDate: null,
+}
+
+function getCategoryForRating(rating: string): string | null {
+  const match = UK_TYPE_RATINGS.find(r => r.rating === rating)
+  return match?.category ?? null
 }
 
 interface Approval {
@@ -66,7 +85,7 @@ export function CompleteProfileForm() {
   const [middleNames, setMiddleNames] = useState('')
   const [lastName, setLastName] = useState('')
   const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>('')
-  const [licences, setLicences] = useState<LicenceEntry[]>([{ number: '', categories: [] }])
+  const [licences, setLicences] = useState<LicenceEntry[]>([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
   const [employer, setEmployer] = useState('')
   const [approvals, setApprovals] = useState<Approval[]>([{ type: '', reference: '' }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
@@ -90,7 +109,57 @@ export function CompleteProfileForm() {
   }
 
   function addLicence() {
-    setLicences(prev => [...prev, { number: '', categories: [] }])
+    setLicences(prev => [...prev, { number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
+  }
+
+  function toggleTypeRatings(index: number) {
+    setLicences(prev => prev.map((l, i) => i === index ? { ...l, showTypeRatings: !l.showTypeRatings } : l))
+  }
+
+  function setLicenceTypeSearch(index: number, value: string) {
+    setLicences(prev => prev.map((l, i) => i === index ? { ...l, typeSearch: value } : l))
+  }
+
+  function setLicenceActiveSearchRow(index: number, row: number | null) {
+    setLicences(prev => prev.map((l, i) => i === index ? { ...l, activeSearchRow: row } : l))
+  }
+
+  function selectAircraftType(licenceIndex: number, rowIndex: number, rating: string) {
+    setLicences(prev => prev.map((l, i) => {
+      if (i !== licenceIndex) return l
+      const updated = [...l.endorsements]
+      updated[rowIndex] = { ...updated[rowIndex], rating }
+      if (rowIndex === updated.length - 1) updated.push({ ...EMPTY_ENDORSEMENT })
+      return { ...l, endorsements: updated, typeSearch: '', activeSearchRow: null }
+    }))
+  }
+
+  function updateEndorsementDate(licenceIndex: number, rowIndex: number, field: 'b1Date' | 'b2Date' | 'b3Date' | 'cDate', value: string) {
+    setLicences(prev => prev.map((l, i) => {
+      if (i !== licenceIndex) return l
+      const updated = [...l.endorsements]
+      updated[rowIndex] = { ...updated[rowIndex], [field]: value || null }
+      return { ...l, endorsements: updated }
+    }))
+  }
+
+  function removeEndorsement(licenceIndex: number, rowIndex: number) {
+    setLicences(prev => prev.map((l, i) => {
+      if (i !== licenceIndex) return l
+      return { ...l, endorsements: l.endorsements.filter((_, j) => j !== rowIndex) }
+    }))
+  }
+
+  function getFilteredRatings(licence: LicenceEntry) {
+    if (!licence.typeSearch.trim()) return []
+    const query = licence.typeSearch.toLowerCase()
+    const selected = licence.endorsements.map(e => e.rating).filter(Boolean)
+    return UK_TYPE_RATINGS
+      .filter(r => {
+        const matches = r.rating.toLowerCase().includes(query) || r.make.toLowerCase().includes(query) || r.model.toLowerCase().includes(query)
+        return matches && !selected.includes(r.rating)
+      })
+      .slice(0, 20)
   }
 
   // Approval helpers
@@ -125,6 +194,9 @@ export function CompleteProfileForm() {
     const fullName = [firstName.trim(), middleNames.trim(), lastName.trim()].filter(Boolean).join(' ')
     const validLicences = licences.filter(l => l.number.trim())
     const allCategories = [...new Set(licences.flatMap(l => l.categories))]
+    const allEndorsements = licences
+      .flatMap(l => l.endorsements)
+      .filter(e => e.rating)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -141,6 +213,7 @@ export function CompleteProfileForm() {
           ? validLicences.map(l => l.number.trim()).join(', ')
           : null,
         aml_categories: hasLicence === 'yes' ? allCategories : [],
+        type_ratings: hasLicence === 'yes' ? allEndorsements : [],
         industry: approvals.filter(a => a.type).map(a => a.type).join(', ') || null,
       })
       .eq('id', user.id)
@@ -235,7 +308,7 @@ export function CompleteProfileForm() {
               </button>
               <button
                 type="button"
-                onClick={() => { setHasLicence('no'); setLicences([{ number: '', categories: [] }]) }}
+                onClick={() => { setHasLicence('no'); setLicences([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }]) }}
                 className={`flex-1 h-12 rounded-xl text-sm font-bold transition-colors ${
                   hasLicence === 'no'
                     ? 'bg-black text-white'
@@ -313,6 +386,115 @@ export function CompleteProfileForm() {
                         </p>
                       )}
                     </div>
+
+                    {/* Type Ratings toggle */}
+                    <label className="flex items-center gap-3 cursor-pointer mt-3">
+                      <input
+                        type="checkbox"
+                        checked={licence.showTypeRatings}
+                        onChange={() => toggleTypeRatings(index)}
+                        className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                      />
+                      <span className="text-xs text-gray-500">I have aircraft type ratings on this licence</span>
+                    </label>
+
+                    {/* Type Ratings table */}
+                    {licence.showTypeRatings && (
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-500 mb-2">Enter the date each type was endorsed on this licence.</p>
+                        <div className="overflow-x-auto border rounded-lg">
+                          <table className="w-full text-sm border-collapse">
+                            <thead>
+                              <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="text-left py-2 px-2 font-semibold text-gray-700 min-w-[200px] text-xs">Aircraft Type</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B1</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B2</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B3</th>
+                                <th className="w-[30px]"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {licence.endorsements.map((endorsement, rowIndex) => {
+                                const isEmptyRow = !endorsement.rating
+                                const b1Sub = endorsement.rating ? getCategoryForRating(endorsement.rating) : null
+                                const filtered = isEmptyRow && licence.activeSearchRow === rowIndex ? getFilteredRatings(licence) : []
+
+                                return (
+                                  <tr key={rowIndex} className="border-b border-gray-100">
+                                    <td className="py-2 px-2">
+                                      {isEmptyRow ? (
+                                        <div className="relative">
+                                          <Input
+                                            value={licence.activeSearchRow === rowIndex ? licence.typeSearch : ''}
+                                            onChange={e => {
+                                              setLicenceActiveSearchRow(index, rowIndex)
+                                              setLicenceTypeSearch(index, e.target.value)
+                                            }}
+                                            onFocus={() => setLicenceActiveSearchRow(index, rowIndex)}
+                                            placeholder="Search aircraft type..."
+                                            className="text-xs h-9"
+                                          />
+                                          {filtered.length > 0 && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                              {filtered.map(r => (
+                                                <button
+                                                  key={`${r.category}-${r.rating}`}
+                                                  type="button"
+                                                  onClick={() => selectAircraftType(index, rowIndex, r.rating)}
+                                                  className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 border-b last:border-0"
+                                                >
+                                                  <span className="font-medium">{r.rating}</span>
+                                                  <span className="text-gray-400 ml-2">{r.category}</span>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <span className="font-medium text-xs">{endorsement.rating}</span>
+                                          {b1Sub && <span className="text-[10px] text-gray-400 ml-1">({b1Sub})</span>}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      {isEmptyRow ? (
+                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                      ) : (
+                                        <input type="date" value={endorsement.b1Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b1Date', e.target.value)}
+                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b1Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      {isEmptyRow ? (
+                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                      ) : (
+                                        <input type="date" value={endorsement.b2Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b2Date', e.target.value)}
+                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b2Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      {isEmptyRow ? (
+                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                      ) : (
+                                        <input type="date" value={endorsement.b3Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b3Date', e.target.value)}
+                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b3Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-1">
+                                      {!isEmptyRow && (
+                                        <button type="button" onClick={() => removeEndorsement(index, rowIndex)}
+                                          className="text-gray-400 hover:text-red-500 text-sm">&times;</button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
                 <button
@@ -344,7 +526,7 @@ export function CompleteProfileForm() {
               </Label>
               <Input
                 id="employer"
-                placeholder="e.g. British Airways Engineering"
+                placeholder="e.g. British Airways"
                 value={employer}
                 onChange={e => setEmployer(e.target.value)}
                 className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
