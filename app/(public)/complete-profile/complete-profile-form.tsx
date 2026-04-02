@@ -46,38 +46,58 @@ const EMPTY_ENDORSEMENT: TypeEndorsement = {
   cDate: null,
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const CURRENT_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 50 }, (_, i) => CURRENT_YEAR - i)
+// Convert ISO date (yyyy-mm-dd) to UK format (dd/mm/yyyy)
+function isoToUk(iso: string | null): string {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
 
-function MonthYearPicker({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
-  const month = value ? parseInt(value.substring(5, 7), 10) : 0
-  const year = value ? parseInt(value.substring(0, 4), 10) : 0
+// Convert UK format (dd/mm/yyyy) to ISO date (yyyy-mm-dd)
+function ukToIso(uk: string): string {
+  const parts = uk.replace(/[^\d]/g, '')
+  if (parts.length === 8) {
+    const d = parts.substring(0, 2)
+    const m = parts.substring(2, 4)
+    const y = parts.substring(4, 8)
+    return `${y}-${m}-${d}`
+  }
+  return ''
+}
 
-  function handleChange(m: number, y: number) {
-    if (m && y) onChange(`${y}-${String(m).padStart(2, '0')}-01`)
-    else if (!m && !y) onChange('')
+// Auto-format as user types: dd/mm/yyyy
+function formatDateInput(raw: string, prev: string): string {
+  const digits = raw.replace(/[^\d]/g, '')
+  // If user is deleting a slash, remove the digit before it too
+  if (prev.length - raw.length === 1 && prev.endsWith('/')) {
+    return digits.slice(0, -1).replace(/(\d{2})(\d{0,2})/, (_, a, b) => b ? `${a}/${b}` : a)
+  }
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
+}
+
+function DateInput({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
+  const [display, setDisplay] = useState(isoToUk(value))
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const formatted = formatDateInput(e.target.value, display)
+    setDisplay(formatted)
+    const iso = ukToIso(formatted)
+    if (iso) onChange(iso)
+    else if (formatted === '') onChange('')
   }
 
   return (
-    <div className="flex gap-1">
-      <select
-        value={month || ''}
-        onChange={e => handleChange(parseInt(e.target.value) || 0, year)}
-        className={`flex-1 h-10 rounded-md border px-1 text-xs appearance-none ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
-      >
-        <option value="">Mon</option>
-        {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-      </select>
-      <select
-        value={year || ''}
-        onChange={e => handleChange(month, parseInt(e.target.value) || 0)}
-        className={`w-[70px] h-10 rounded-md border px-1 text-xs appearance-none ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
-      >
-        <option value="">Year</option>
-        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-      </select>
-    </div>
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="dd/mm/yyyy"
+      value={display}
+      onChange={handleChange}
+      maxLength={10}
+      className={`w-full h-10 rounded-md border px-1.5 text-xs text-center ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+    />
   )
 }
 
@@ -492,28 +512,28 @@ export function CompleteProfileForm() {
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <MonthYearPicker value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} />
+                                        <DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <MonthYearPicker value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} />
+                                        <DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <MonthYearPicker value={endorsement.b3Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b3Date', v)} filled={!!endorsement.b3Date} />
+                                        <DateInput value={endorsement.b3Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b3Date', v)} filled={!!endorsement.b3Date} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <MonthYearPicker value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} />
+                                        <DateInput value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
