@@ -27,9 +27,35 @@ const APPROVAL_TYPES = [
   'Other',
 ]
 
+interface LicenceEntry {
+  number: string
+  categories: string[]
+}
+
 interface Approval {
   type: string
   reference: string
+}
+
+function toggleCategoryInList(categories: string[], cat: string): string[] {
+  if (categories.includes(cat)) {
+    const implied = IMPLIED_CATEGORIES[cat] || []
+    const otherImplied = Object.entries(IMPLIED_CATEGORIES)
+      .filter(([k]) => k !== cat && categories.includes(k))
+      .flatMap(([, v]) => v)
+    return categories
+      .filter(c => c !== cat)
+      .filter(c => !implied.includes(c) || otherImplied.includes(c))
+  } else {
+    const implied = IMPLIED_CATEGORIES[cat] || []
+    return [...new Set([...categories, cat, ...implied])]
+  }
+}
+
+function isCategoryImpliedIn(categories: string[], cat: string): boolean {
+  return Object.entries(IMPLIED_CATEGORIES).some(
+    ([parent, children]) => children.includes(cat) && categories.includes(parent)
+  )
 }
 
 export function CompleteProfileForm() {
@@ -40,8 +66,7 @@ export function CompleteProfileForm() {
   const [middleNames, setMiddleNames] = useState('')
   const [lastName, setLastName] = useState('')
   const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>('')
-  const [licences, setLicences] = useState<string[]>([''])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [licences, setLicences] = useState<LicenceEntry[]>([{ number: '', categories: [] }])
   const [employer, setEmployer] = useState('')
   const [approvals, setApprovals] = useState<Approval[]>([{ type: '', reference: '' }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
@@ -50,8 +75,14 @@ export function CompleteProfileForm() {
   const [loading, setLoading] = useState(false)
 
   // Licence helpers
-  function updateLicence(index: number, value: string) {
-    setLicences(prev => prev.map((l, i) => i === index ? value : l))
+  function updateLicenceNumber(index: number, value: string) {
+    setLicences(prev => prev.map((l, i) => i === index ? { ...l, number: value } : l))
+  }
+
+  function toggleLicenceCategory(index: number, cat: string) {
+    setLicences(prev => prev.map((l, i) =>
+      i === index ? { ...l, categories: toggleCategoryInList(l.categories, cat) } : l
+    ))
   }
 
   function removeLicence(index: number) {
@@ -59,7 +90,7 @@ export function CompleteProfileForm() {
   }
 
   function addLicence() {
-    setLicences(prev => [...prev, ''])
+    setLicences(prev => [...prev, { number: '', categories: [] }])
   }
 
   // Approval helpers
@@ -73,30 +104,6 @@ export function CompleteProfileForm() {
 
   function addApproval() {
     setApprovals(prev => [...prev, { type: '', reference: '' }])
-  }
-
-  // Category helpers
-  function toggleCategory(cat: string) {
-    setSelectedCategories(prev => {
-      if (prev.includes(cat)) {
-        const implied = IMPLIED_CATEGORIES[cat] || []
-        const otherImplied = Object.entries(IMPLIED_CATEGORIES)
-          .filter(([k]) => k !== cat && prev.includes(k))
-          .flatMap(([, v]) => v)
-        return prev
-          .filter(c => c !== cat)
-          .filter(c => !implied.includes(c) || otherImplied.includes(c))
-      } else {
-        const implied = IMPLIED_CATEGORIES[cat] || []
-        return [...new Set([...prev, cat, ...implied])]
-      }
-    })
-  }
-
-  function isCategoryImplied(cat: string): boolean {
-    return Object.entries(IMPLIED_CATEGORIES).some(
-      ([parent, children]) => children.includes(cat) && selectedCategories.includes(parent)
-    )
   }
 
   async function handleSubmit() {
@@ -116,7 +123,8 @@ export function CompleteProfileForm() {
     }
 
     const fullName = [firstName.trim(), middleNames.trim(), lastName.trim()].filter(Boolean).join(' ')
-    const validLicences = licences.map(l => l.trim()).filter(Boolean)
+    const validLicences = licences.filter(l => l.number.trim())
+    const allCategories = [...new Set(licences.flatMap(l => l.categories))]
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -129,8 +137,10 @@ export function CompleteProfileForm() {
       .from('profiles')
       .update({
         full_name: fullName,
-        aml_licence_number: hasLicence === 'yes' && validLicences.length > 0 ? validLicences.join(', ') : null,
-        aml_categories: hasLicence === 'yes' ? selectedCategories : [],
+        aml_licence_number: hasLicence === 'yes' && validLicences.length > 0
+          ? validLicences.map(l => l.number.trim()).join(', ')
+          : null,
+        aml_categories: hasLicence === 'yes' ? allCategories : [],
         industry: approvals.filter(a => a.type).map(a => a.type).join(', ') || null,
       })
       .eq('id', user.id)
@@ -169,14 +179,13 @@ export function CompleteProfileForm() {
 
           {/* Name section */}
           <div>
-            <p className="text-xs font-bold text-black mb-3">Your full name</p>
+            <p className="text-xs font-bold text-black mb-3">Your Full Name</p>
             <p className="text-[11px] text-gray-400 mb-3">If you hold a Part 66 licence, this should match the name on your licence.</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName" className="text-xs text-gray-500">First name</Label>
+                <Label htmlFor="firstName" className="text-xs text-gray-500">First Name</Label>
                 <Input
                   id="firstName"
-                  placeholder="James"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
                   className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
@@ -184,10 +193,9 @@ export function CompleteProfileForm() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-xs text-gray-500">Last name</Label>
+                <Label htmlFor="lastName" className="text-xs text-gray-500">Last Name</Label>
                 <Input
                   id="lastName"
-                  placeholder="Smith"
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
                   className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
@@ -196,7 +204,7 @@ export function CompleteProfileForm() {
             </div>
             <div className="space-y-1.5 mt-3">
               <Label htmlFor="middleNames" className="text-xs text-gray-500">
-                Middle name(s) <span className="text-gray-300">optional</span>
+                Middle Name(s) <span className="text-gray-300">Optional</span>
               </Label>
               <Input
                 id="middleNames"
@@ -227,7 +235,7 @@ export function CompleteProfileForm() {
               </button>
               <button
                 type="button"
-                onClick={() => { setHasLicence('no'); setLicences(['']); setSelectedCategories([]) }}
+                onClick={() => { setHasLicence('no'); setLicences([{ number: '', categories: [] }]) }}
                 className={`flex-1 h-12 rounded-xl text-sm font-bold transition-colors ${
                   hasLicence === 'no'
                     ? 'bg-black text-white'
@@ -239,25 +247,24 @@ export function CompleteProfileForm() {
             </div>
           </div>
 
-          {/* Licence details — only shown if user holds a licence */}
+          {/* Licence details — each licence has its own number + categories */}
           {hasLicence === 'yes' && (
-            <>
-              <div>
-                <p className="text-xs font-bold text-black mb-3">Licence details</p>
-                <p className="text-[11px] text-gray-400 mb-3">Used to track your module exam progress and generate your continuation training record.</p>
-                <div className="space-y-3">
-                  {licences.map((licence, index) => (
-                    <div key={index} className="flex gap-2">
+            <div>
+              <p className="text-xs font-bold text-black mb-3">Licence Details</p>
+              <p className="text-[11px] text-gray-400 mb-3">Used to track your module exam progress and generate your continuation training record.</p>
+              <div className="space-y-4">
+                {licences.map((licence, index) => (
+                  <div key={index} className="space-y-3">
+                    {index > 0 && <div className="h-px bg-gray-200 my-1" />}
+                    <div className="flex gap-2">
                       <div className="flex-1 space-y-1.5">
-                        {index === 0 && (
-                          <Label className="text-xs text-gray-500">
-                            Licence number <span className="text-gray-300">optional</span>
-                          </Label>
-                        )}
+                        <Label className="text-xs text-gray-500">
+                          Licence Number {licences.length > 1 && `(${index + 1})`} <span className="text-gray-300">Optional</span>
+                        </Label>
                         <Input
                           placeholder="e.g. UK.66.12345"
-                          value={licence}
-                          onChange={e => updateLicence(index, e.target.value)}
+                          value={licence.number}
+                          onChange={e => updateLicenceNumber(index, e.target.value)}
                           className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
                         />
                       </div>
@@ -274,50 +281,49 @@ export function CompleteProfileForm() {
                         </button>
                       )}
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addLicence}
-                    className="text-xs font-bold text-black hover:underline"
-                  >
-                    + Add another licence
-                  </button>
-                </div>
-              </div>
 
-              <div>
-                <p className="text-xs font-bold text-black mb-1">Licence categories</p>
-                <p className="text-[11px] text-gray-400 mb-3">Select your current or target categories. This determines which modules appear in your tracker.</p>
-                <div className="flex flex-wrap gap-2">
-                  {AML_CATEGORIES.map(cat => {
-                    const isSelected = selectedCategories.includes(cat.value)
-                    const isImplied = isCategoryImplied(cat.value)
-                    return (
-                      <button
-                        key={cat.value}
-                        type="button"
-                        onClick={() => !isImplied && toggleCategory(cat.value)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                          isSelected
-                            ? isImplied
-                              ? 'bg-gray-700 text-white cursor-default'
-                              : 'bg-black text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                        title={isImplied ? `Automatically included with ${Object.entries(IMPLIED_CATEGORIES).find(([, v]) => v.includes(cat.value))?.[0]}` : cat.label}
-                      >
-                        {cat.value}
-                      </button>
-                    )
-                  })}
-                </div>
-                {selectedCategories.some(c => Object.values(IMPLIED_CATEGORIES).flat().includes(c)) && (
-                  <p className="text-[11px] text-gray-400 mt-2">
-                    Grey categories are automatically included with your selected B1 category.
-                  </p>
-                )}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2">Categories{licences.length > 1 ? ` (${index + 1})` : ''}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {AML_CATEGORIES.map(cat => {
+                          const isSelected = licence.categories.includes(cat.value)
+                          const isImplied = isCategoryImpliedIn(licence.categories, cat.value)
+                          return (
+                            <button
+                              key={cat.value}
+                              type="button"
+                              onClick={() => !isImplied && toggleLicenceCategory(index, cat.value)}
+                              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                                isSelected
+                                  ? isImplied
+                                    ? 'bg-gray-700 text-white cursor-default'
+                                    : 'bg-black text-white'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                              title={isImplied ? `Automatically included with ${Object.entries(IMPLIED_CATEGORIES).find(([, v]) => v.includes(cat.value))?.[0]}` : cat.label}
+                            >
+                              {cat.value}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {licence.categories.some(c => Object.values(IMPLIED_CATEGORIES).flat().includes(c)) && (
+                        <p className="text-[11px] text-gray-400 mt-2">
+                          Grey categories are automatically included with your selected B1 category.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addLicence}
+                  className="text-xs font-bold text-black hover:underline"
+                >
+                  + Add another licence
+                </button>
               </div>
-            </>
+            </div>
           )}
 
           {/* Unlicensed context */}
@@ -332,10 +338,9 @@ export function CompleteProfileForm() {
           {/* Organisation section */}
           <div>
             <p className="text-xs font-bold text-black mb-3">Organisation</p>
-            <p className="text-[11px] text-gray-400 mb-3">The organisation you currently work for. This appears on your logbook entries and training records.</p>
             <div className="space-y-1.5">
               <Label htmlFor="employer" className="text-xs text-gray-500">
-                Organisation <span className="text-gray-300">optional</span>
+                Organisation <span className="text-gray-300">Optional</span>
               </Label>
               <Input
                 id="employer"
@@ -349,15 +354,17 @@ export function CompleteProfileForm() {
 
           {/* Approvals — repeatable */}
           <div>
-            <p className="text-xs font-bold text-black mb-1">Organisation approval</p>
+            <p className="text-xs font-bold text-black mb-1">Organisation Approval</p>
             <p className="text-[11px] text-gray-400 mb-3">The type of approval and reference number held by your organisation.</p>
             <div className="space-y-3">
               {approvals.map((approval, index) => (
                 <div key={index} className="space-y-2">
-                  {index > 0 && <div className="h-px bg-gray-50 mt-1" />}
+                  {index > 0 && <div className="h-px bg-gray-200 mt-1" />}
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      {index === 0 && <Label className="text-xs text-gray-500 mb-1.5 block">Approval type <span className="text-gray-300">optional</span></Label>}
+                      <Label className="text-xs text-gray-500 mb-1.5 block">
+                        Approval Type {approvals.length > 1 && `(${index + 1})`} <span className="text-gray-300">Optional</span>
+                      </Label>
                       <select
                         value={approval.type}
                         onChange={e => updateApproval(index, 'type', e.target.value)}
@@ -383,7 +390,9 @@ export function CompleteProfileForm() {
                     )}
                   </div>
                   <div>
-                    {index === 0 && <Label className="text-xs text-gray-500 mb-1.5 block">Approval reference <span className="text-gray-300">optional</span></Label>}
+                    <Label className="text-xs text-gray-500 mb-1.5 block">
+                      Approval Reference {approvals.length > 1 && `(${index + 1})`} <span className="text-gray-300">Optional</span>
+                    </Label>
                     <Input
                       placeholder="e.g. UK.145.0000"
                       value={approval.reference}
