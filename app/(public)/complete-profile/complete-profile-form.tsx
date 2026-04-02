@@ -131,7 +131,7 @@ export function CompleteProfileForm() {
           {/* Name section */}
           <div>
             <p className="text-xs font-bold text-black mb-3">Your full name</p>
-            <p className="text-[11px] text-gray-400 mb-3">If you hold a Part-66 licence, this should match the name on your licence.</p>
+            <p className="text-[11px] text-gray-400 mb-3">If you hold a Part 66 licence, this should match the name on your licence.</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-xs text-gray-500">First name</Label>
@@ -172,7 +172,7 @@ export function CompleteProfileForm() {
 
           {/* Licence question */}
           <div>
-            <p className="text-xs font-bold text-black mb-1">Do you hold a Part-66 Aircraft Maintenance Licence?</p>
+            <p className="text-xs font-bold text-black mb-1">Do you hold a Part 66 Aircraft Maintenance Licence?</p>
             <p className="text-[11px] text-gray-400 mb-3">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
             <div className="flex gap-3">
               <button
