@@ -46,6 +46,41 @@ const EMPTY_ENDORSEMENT: TypeEndorsement = {
   cDate: null,
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const CURRENT_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: 50 }, (_, i) => CURRENT_YEAR - i)
+
+function MonthYearPicker({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
+  const month = value ? parseInt(value.substring(5, 7), 10) : 0
+  const year = value ? parseInt(value.substring(0, 4), 10) : 0
+
+  function handleChange(m: number, y: number) {
+    if (m && y) onChange(`${y}-${String(m).padStart(2, '0')}-01`)
+    else if (!m && !y) onChange('')
+  }
+
+  return (
+    <div className="flex gap-1">
+      <select
+        value={month || ''}
+        onChange={e => handleChange(parseInt(e.target.value) || 0, year)}
+        className={`flex-1 h-10 rounded-md border px-1 text-xs appearance-none ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+      >
+        <option value="">Mon</option>
+        {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+      </select>
+      <select
+        value={year || ''}
+        onChange={e => handleChange(month, parseInt(e.target.value) || 0)}
+        className={`w-[70px] h-10 rounded-md border px-1 text-xs appearance-none ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+      >
+        <option value="">Year</option>
+        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  )
+}
+
 function getCategoryForRating(rating: string): string | null {
   const match = UK_TYPE_RATINGS.find(r => r.rating === rating)
   return match?.category ?? null
@@ -401,10 +436,10 @@ export function CompleteProfileForm() {
                             <thead>
                               <tr className="border-b border-gray-200 bg-gray-50">
                                 <th className="text-left py-2 px-2 font-semibold text-gray-700 min-w-[320px] text-xs">Aircraft Type</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B1</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B2</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B3</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">C</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B1</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B2</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B3</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">C</th>
                                 <th className="w-[30px]"></th>
                               </tr>
                             </thead>
@@ -453,36 +488,32 @@ export function CompleteProfileForm() {
                                         </div>
                                       )}
                                     </td>
-                                    <td className="py-2 px-2">
+                                    <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <input type="month" value={endorsement.b1Date?.substring(0, 7) ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b1Date', e.target.value ? e.target.value + '-01' : '')}
-                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b1Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                        <MonthYearPicker value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} />
                                       )}
                                     </td>
-                                    <td className="py-2 px-2">
+                                    <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <input type="month" value={endorsement.b2Date?.substring(0, 7) ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b2Date', e.target.value ? e.target.value + '-01' : '')}
-                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b2Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                        <MonthYearPicker value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} />
                                       )}
                                     </td>
-                                    <td className="py-2 px-2">
+                                    <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <input type="month" value={endorsement.b3Date?.substring(0, 7) ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b3Date', e.target.value ? e.target.value + '-01' : '')}
-                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b3Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                        <MonthYearPicker value={endorsement.b3Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b3Date', v)} filled={!!endorsement.b3Date} />
                                       )}
                                     </td>
-                                    <td className="py-2 px-2">
+                                    <td className="py-2 px-1">
                                       {isEmptyRow ? (
                                         <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
-                                        <input type="month" value={(endorsement.cDate ?? cDateValue)?.substring(0, 7) ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'cDate', e.target.value ? e.target.value + '-01' : '')}
-                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${(endorsement.cDate ?? cDateValue) ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                        <MonthYearPicker value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
