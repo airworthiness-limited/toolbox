@@ -66,12 +66,8 @@ function ukToIso(uk: string): string {
 }
 
 // Auto-format as user types: dd/mm/yyyy
-function formatDateInput(raw: string, prev: string): string {
+function formatDateInput(raw: string): string {
   const digits = raw.replace(/[^\d]/g, '')
-  // If user is deleting a slash, remove the digit before it too
-  if (prev.length - raw.length === 1 && prev.endsWith('/')) {
-    return digits.slice(0, -1).replace(/(\d{2})(\d{0,2})/, (_, a, b) => b ? `${a}/${b}` : a)
-  }
   if (digits.length <= 2) return digits
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
@@ -81,7 +77,7 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
   const [display, setDisplay] = useState(isoToUk(value))
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatDateInput(e.target.value, display)
+    const formatted = formatDateInput(e.target.value)
     setDisplay(formatted)
     const iso = ukToIso(formatted)
     if (iso) onChange(iso)
@@ -96,7 +92,7 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
       value={display}
       onChange={handleChange}
       maxLength={10}
-      className={`w-full h-10 rounded-md border px-1.5 text-xs text-center ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+      className={`w-full h-10 rounded-md border px-1 text-[11px] text-center ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400 placeholder:text-gray-300'}`}
     />
   )
 }
@@ -456,10 +452,10 @@ export function CompleteProfileForm() {
                             <thead>
                               <tr className="border-b border-gray-200 bg-gray-50">
                                 <th className="text-left py-2 px-2 font-semibold text-gray-700 min-w-[320px] text-xs">Aircraft Type</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B1</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B2</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">B3</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[140px] text-xs">C</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[115px] text-xs">B1</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[115px] text-xs">B2</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[115px] text-xs">B3</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[115px] text-xs">C</th>
                                 <th className="w-[30px]"></th>
                               </tr>
                             </thead>
