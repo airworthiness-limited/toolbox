@@ -130,7 +130,7 @@ function AuthForm() {
           <div className="text-center mb-8">
             <h2 className="text-xl font-bold text-black mb-2">Enter your code</h2>
             <p className="text-sm text-gray-500">
-              We sent a 6-digit code to <span className="font-medium text-gray-700">{email}</span>.
+              We sent a verification code to <span className="font-medium text-gray-700">{email}</span>.
             </p>
           </div>
 
@@ -142,8 +142,8 @@ function AuthForm() {
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={6}
-                placeholder="000000"
+                maxLength={8}
+                placeholder="00000000"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 className="h-12 rounded-xl text-center text-lg tracking-widest border-gray-300 focus:border-black focus:ring-black"
@@ -160,7 +160,7 @@ function AuthForm() {
             <Button
               type="submit"
               className="w-full h-12 bg-black text-white hover:bg-gray-800 font-bold rounded-xl"
-              disabled={loading || code.length !== 6}
+              disabled={loading || code.length < 6}
             >
               {loading ? 'Verifying...' : 'Verify'}
             </Button>
