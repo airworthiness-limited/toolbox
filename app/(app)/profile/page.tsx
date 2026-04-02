@@ -201,31 +201,18 @@ export default async function ProfilePage() {
   const fullName = profile.full_name ?? 'User'
 
   return (
-    <div className="min-h-screen aw-gradient">
-      <div className="max-w-4xl mx-auto px-4 py-12">
-
+    <div>
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl text-white">
-              Welcome, {fullName}!
-            </h1>
-            <p className="text-white/60 mt-1">Your aircraft maintenance licence journey at a glance.</p>
-            {purchase && (
-              <span
-                className="inline-block mt-2 text-xs px-3 py-1 rounded-lg text-white"
-                style={{ fontWeight: 'bold', backgroundColor: '#000' }}
-              >
-                No Adverts
-              </span>
-            )}
-          </div>
-          <LogoutButton />
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            {fullName}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">Your aircraft maintenance licence at a glance.</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6">
+          <div className="rounded-xl border border-gray-100 p-6">
             <p className="text-sm text-gray-500">Module Exams ({selectedCategory})</p>
             <p className="text-3xl font-bold mt-1">{passedModules}/{totalModules}</p>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -236,15 +223,15 @@ export default async function ProfilePage() {
             </div>
             <p className="text-xs text-gray-400 mt-1">{progressPercent}% complete</p>
           </div>
-          <div className="bg-white rounded-xl p-6">
+          <div className="rounded-xl border border-gray-100 p-6">
             <p className="text-sm text-gray-500">Logbook Tasks</p>
             <p className="text-3xl font-bold mt-1">{logbookCount}</p>
           </div>
         </div>
 
         {/* Recency - same format as logbook */}
-        <div className="bg-white rounded-xl p-5 mb-4">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        <div className="rounded-xl border border-gray-100 p-5 mb-4">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
             Recency (6 Months / 2 Years)
           </p>
           <div className="grid grid-cols-2 gap-4">
@@ -277,7 +264,7 @@ export default async function ProfilePage() {
 
 
         {/* Continuation Training */}
-        <Card className="mb-4 bg-white">
+        <Card className="mb-4">
           <CardHeader>
             <CardTitle>Continuation Training</CardTitle>
             <CardDescription>Required to be completed within the last 2 years.</CardDescription>
@@ -330,7 +317,7 @@ export default async function ProfilePage() {
         </Card>
 
         {/* Aircraft Maintenance Licence */}
-        <Card className="mb-6 bg-white">
+        <Card className="mb-4">
           <CardHeader>
             <CardTitle>Aircraft Maintenance Licence</CardTitle>
             <CardDescription>Your licence categories and aircraft type ratings.</CardDescription>
@@ -349,7 +336,7 @@ export default async function ProfilePage() {
         </Card>
 
         {/* Competency Assessment */}
-        <Card className="mb-4 bg-white">
+        <Card className="mb-4">
           <CardHeader>
             <CardTitle>Competency Assessment</CardTitle>
             <CardDescription>
@@ -383,7 +370,7 @@ export default async function ProfilePage() {
         </Card>
 
         {/* Task Logbook */}
-        <Card className="mb-4 bg-white">
+        <Card className="mb-4">
           <CardHeader>
             <CardTitle>Aircraft Maintenance Digital Logbook</CardTitle>
             <CardDescription>
@@ -405,7 +392,7 @@ export default async function ProfilePage() {
         </Card>
 
         {/* Delete Account */}
-        <Card className="bg-white border-red-100">
+        <Card className="border-red-100">
           <CardHeader>
             <CardTitle className="text-base text-red-600">Delete Account</CardTitle>
             <CardDescription>
@@ -417,7 +404,6 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-      </div>
     </div>
   )
 }

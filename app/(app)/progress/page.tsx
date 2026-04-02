@@ -181,14 +181,12 @@ export default async function ProgressPage({
   ]
 
   return (
-    <div className="min-h-screen aw-gradient">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-
+    <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl text-white">Exam Progress</h1>
-          <p className="text-white/60 mt-1">
-            Track your Aircraft Maintenance Licence (Part 66) subject module examination progress.
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Module Tracker</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Track your Part 66 subject module examination progress.
           </p>
         </div>
 
@@ -196,7 +194,7 @@ export default async function ProgressPage({
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
 
           {/* Categories */}
-          <div className="bg-white rounded-xl p-5 space-y-3">
+          <div className="rounded-xl border border-gray-100 p-5 space-y-3">
             {categoryGroups.map(group => (
               <div key={group.label}>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">{group.label}</p>
@@ -220,7 +218,7 @@ export default async function ProgressPage({
           </div>
 
           {/* Progress */}
-          <div className="bg-white rounded-xl p-5 flex flex-col justify-center">
+          <div className="rounded-xl border border-gray-100 p-5 flex flex-col justify-center">
             <p className="text-4xl font-bold text-gray-900">{progressPercent}%</p>
             <p className="text-sm text-gray-500 mt-1 mb-3">
               {passedCount} of {totalExams} exams passed for {selectedCategory}
@@ -248,7 +246,7 @@ export default async function ProgressPage({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* MCQ Column */}
           <div>
-            <h2 className="text-lg font-bold text-white mb-4">Multiple-Choice Question Exams</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Multiple-Choice Question Exams</h2>
             <ProgressTracker
               examRows={mcqRows}
               selectedCategory={selectedCategory}
@@ -259,7 +257,7 @@ export default async function ProgressPage({
 
           {/* Essay Column */}
           <div>
-            <h2 className="text-lg font-bold text-white mb-4">Essay Exams</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Essay Exams</h2>
             {essayRows.length > 0 ? (
               <ProgressTracker
                 examRows={essayRows}
@@ -268,14 +266,13 @@ export default async function ProgressPage({
                 showAds
               />
             ) : (
-              <div className="bg-white/10 rounded-xl border border-white/20 p-6 text-center">
-                <p className="text-white/50 text-sm">No essay exams required for {selectedCategory}.</p>
+              <div className="rounded-xl border border-gray-100 p-6 text-center">
+                <p className="text-gray-400 text-sm">No essay exams required for {selectedCategory}.</p>
               </div>
             )}
           </div>
         </div>
 
-      </div>
     </div>
   )
 }

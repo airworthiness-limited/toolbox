@@ -2,11 +2,8 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Alexandria } from 'next/font/google'
 import './globals.css'
-import { Navbar } from '@/components/navbar'
-import { Footer } from '@/components/footer'
 import { CookieBanner } from '@/components/cookie-banner'
 import { ScrollToTop } from '@/components/scroll-to-top'
-
 
 const alexandria = Alexandria({
   subsets: ['latin'],
@@ -32,11 +29,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="beforeInteractive"
         />
-        <Navbar />
-        <main>
-          {children}
-        </main>
-        <Footer />
+        {children}
         <CookieBanner />
         <ScrollToTop />
       </body>

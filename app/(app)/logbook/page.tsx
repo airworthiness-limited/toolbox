@@ -15,7 +15,7 @@ import {
 import { AdPlaceholder } from '@/components/ad-placeholder'
 import { MassInput } from './mass-input'
 import { AtaChart } from './ata-chart'
-import { BtcToggle } from '@/app/progress/btc-toggle'
+import { BtcToggle } from '@/app/(app)/progress/btc-toggle'
 
 const PAGE_SIZE = 25
 
@@ -223,23 +223,21 @@ export default async function LogbookPage({
   }
 
   return (
-    <div className="min-h-screen aw-gradient">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-
+    <div>
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl text-white">Digital Logbook (CAP 741)</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Digital Logbook</h1>
             <Link href="/logbook/export">
-              <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white hover:text-[#1565C0] font-bold tracking-wide uppercase">View All Tasks</Button>
+              <Button variant="outline" size="sm">View All Tasks</Button>
             </Link>
             {isAmlHolder && (
               <Link href="/logbook/verify">
-                <Button variant="outline" size="sm" className="bg-transparent border-white/30 text-white hover:bg-white/10">Verification Queue</Button>
+                <Button variant="outline" size="sm">Verification Queue</Button>
               </Link>
             )}
           </div>
-          <p className="text-white/60 mt-1">Track your progress to demonstrate practical experience on a representative cross section of maintenance tasks.</p>
+          <p className="text-sm text-gray-500 mt-1">Track your practical experience on a representative cross section of maintenance tasks.</p>
         </div>
 
         {/* ATA Distribution Chart */}
@@ -253,25 +251,25 @@ export default async function LogbookPage({
 
         {/* Stats + Experience + Recency */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-            <p className="text-sm text-white/70">Tasks</p>
-            <p className="text-3xl font-bold mt-1 text-white">{totalCount}</p>
+          <div className="rounded-xl border border-gray-100 p-5">
+            <p className="text-sm text-gray-500">Tasks</p>
+            <p className="text-3xl font-bold mt-1 text-gray-900">{totalCount}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-            <p className="text-sm text-white/70">Drafts</p>
-            <p className="text-3xl font-bold mt-1 text-white">{draftCount}</p>
+          <div className="rounded-xl border border-gray-100 p-5">
+            <p className="text-sm text-gray-500">Drafts</p>
+            <p className="text-3xl font-bold mt-1 text-gray-900">{draftCount}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-5">
-            <p className="text-sm text-white/70">Verified</p>
-            <p className="text-3xl font-bold mt-1 text-white">{verifiedCount}</p>
+          <div className="rounded-xl border border-gray-100 p-5">
+            <p className="text-sm text-gray-500">Verified</p>
+            <p className="text-3xl font-bold mt-1 text-gray-900">{verifiedCount}</p>
           </div>
-          <div className="rounded-xl p-5" style={{ backgroundColor: meetsExpThreshold ? '#22c55e' : 'rgba(255,255,255,0.1)', borderWidth: meetsExpThreshold ? 0 : 1, borderColor: 'rgba(255,255,255,0.2)' }}>
-            <p className="text-sm" style={{ color: meetsExpThreshold ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.7)' }}>Experience</p>
-            <p className="text-3xl font-bold mt-1 text-white">
+          <div className={`rounded-xl border p-5 ${meetsExpThreshold ? 'border-green-200 bg-green-50' : 'border-gray-100'}`}>
+            <p className="text-sm text-gray-500">Experience</p>
+            <p className="text-3xl font-bold mt-1 text-gray-900">
               {Math.floor(totalCombinedMonths / 12)}y {totalCombinedMonths % 12}m
             </p>
             {cappedMilitaryMonths > 0 && (
-              <p className="text-[10px] mt-1" style={{ color: meetsExpThreshold ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)' }}>
+              <p className="text-[10px] text-gray-400 mt-1">
                 {Math.floor(civilExpMonths / 12)}y {civilExpMonths % 12}m civil + {Math.floor(cappedMilitaryMonths / 12)}y {cappedMilitaryMonths % 12}m military{militaryMonths > 48 ? ' (4yr max)' : ''}
               </p>
             )}
@@ -280,8 +278,8 @@ export default async function LogbookPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-6">
 
-          <div className="bg-white rounded-xl p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="rounded-xl border border-gray-100 p-5">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
               Recency (6 Months / 2 Years)
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -314,7 +312,7 @@ export default async function LogbookPage({
         </div>
 
         {/* Basic Training Course */}
-        <div className="bg-white rounded-xl px-5 py-3 mb-4">
+        <div className="rounded-xl border border-gray-100 px-5 py-3 mb-4">
           <BtcToggle
             initialValue={hasBtc}
             selectedCategory={selectedCategory || 'B1.1'}
@@ -325,14 +323,13 @@ export default async function LogbookPage({
         <AdPlaceholder format="banner" className="my-4" />
 
         {/* Mass Input */}
-        <h2 className="text-lg font-bold text-white mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
         <MassInput
           defaultEmployer={defaultEmployer}
           lastMaintenanceType={lastMaintenanceType}
           editingEntry={editingEntry}
         />
 
-      </div>
     </div>
   )
 }
