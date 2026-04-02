@@ -65,32 +65,40 @@ function ukToIso(uk: string): string {
   return ''
 }
 
-// Auto-format as user types: dd/mm/yyyy
-function formatDateInput(raw: string): string {
-  const digits = raw.replace(/[^\d]/g, '')
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
-}
-
 function DateInput({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
   const [display, setDisplay] = useState(isoToUk(value))
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatDateInput(e.target.value)
-    setDisplay(formatted)
-    const iso = ukToIso(formatted)
-    if (iso) onChange(iso)
-    else if (formatted === '') onChange('')
+    // Allow digits and slashes only, max 10 chars
+    const cleaned = e.target.value.replace(/[^\d/]/g, '').slice(0, 10)
+    setDisplay(cleaned)
+  }
+
+  function handleBlur() {
+    // On blur, try to parse and format
+    const digits = display.replace(/[^\d]/g, '')
+    if (digits.length === 0) {
+      setDisplay('')
+      onChange('')
+      return
+    }
+    if (digits.length >= 8) {
+      const d = digits.slice(0, 2)
+      const m = digits.slice(2, 4)
+      const y = digits.slice(4, 8)
+      const formatted = `${d}/${m}/${y}`
+      setDisplay(formatted)
+      onChange(`${y}-${m}-${d}`)
+    }
   }
 
   return (
     <input
       type="text"
-      inputMode="numeric"
       placeholder="dd/mm/yyyy"
       value={display}
       onChange={handleChange}
+      onBlur={handleBlur}
       maxLength={10}
       className={`w-full h-10 rounded-md border px-1 text-[11px] text-center ${filled ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400 placeholder:text-gray-300'}`}
     />
