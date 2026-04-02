@@ -16,6 +16,7 @@ export function CompleteProfileForm() {
   const [firstName, setFirstName] = useState('')
   const [middleNames, setMiddleNames] = useState('')
   const [lastName, setLastName] = useState('')
+  const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>('')
   const [licenceNumber, setLicenceNumber] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [employer, setEmployer] = useState('')
@@ -92,8 +93,8 @@ export function CompleteProfileForm() {
 
           {/* Name section */}
           <div>
-            <p className="text-xs font-bold text-black mb-3">Your legal name</p>
-            <p className="text-[11px] text-gray-400 mb-3">Must match your UK CAA Part-66 Aircraft Maintenance Licence.</p>
+            <p className="text-xs font-bold text-black mb-3">Your full name</p>
+            <p className="text-[11px] text-gray-400 mb-3">If you hold a Part-66 licence, this should match the name on your licence.</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-xs text-gray-500">First name</Label>
@@ -132,45 +133,85 @@ export function CompleteProfileForm() {
 
           <div className="h-px bg-gray-100" />
 
-          {/* Licence section */}
+          {/* Licence question */}
           <div>
-            <p className="text-xs font-bold text-black mb-3">Licence details</p>
-            <p className="text-[11px] text-gray-400 mb-3">Used to track your module exam progress and generate your continuation training record.</p>
-            <div className="space-y-1.5">
-              <Label htmlFor="licenceNumber" className="text-xs text-gray-500">
-                Part-66 licence number <span className="text-gray-300">optional</span>
-              </Label>
-              <Input
-                id="licenceNumber"
-                placeholder="UK.66.XXXXX"
-                value={licenceNumber}
-                onChange={e => setLicenceNumber(e.target.value)}
-                className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
-              />
+            <p className="text-xs font-bold text-black mb-1">Do you hold a Part-66 aircraft maintenance licence?</p>
+            <p className="text-[11px] text-gray-400 mb-3">This can be issued by any national aviation authority (e.g. UK CAA, EASA member state).</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setHasLicence('yes')}
+                className={`flex-1 h-12 rounded-xl text-sm font-bold transition-colors ${
+                  hasLicence === 'yes'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setHasLicence('no'); setLicenceNumber(''); setSelectedCategories([]) }}
+                className={`flex-1 h-12 rounded-xl text-sm font-bold transition-colors ${
+                  hasLicence === 'no'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                No
+              </button>
             </div>
           </div>
 
-          {/* Categories */}
-          <div>
-            <p className="text-xs font-bold text-black mb-1">Licence categories</p>
-            <p className="text-[11px] text-gray-400 mb-3">Select your current or target categories. This determines which modules appear in your tracker.</p>
-            <div className="flex flex-wrap gap-2">
-              {AML_CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggleCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                    selectedCategories.includes(cat)
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Licence details — only shown if user holds a licence */}
+          {hasLicence === 'yes' && (
+            <>
+              <div>
+                <p className="text-xs font-bold text-black mb-3">Licence details</p>
+                <p className="text-[11px] text-gray-400 mb-3">Used to track your module exam progress and generate your continuation training record.</p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="licenceNumber" className="text-xs text-gray-500">
+                    Licence number <span className="text-gray-300">optional</span>
+                  </Label>
+                  <Input
+                    id="licenceNumber"
+                    placeholder="e.g. UK.66.12345, ES.66.1234567, IE.66.1234567"
+                    value={licenceNumber}
+                    onChange={e => setLicenceNumber(e.target.value)}
+                    className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-black mb-1">Licence categories</p>
+                <p className="text-[11px] text-gray-400 mb-3">Select your current or target categories. This determines which modules appear in your tracker.</p>
+                <div className="flex flex-wrap gap-2">
+                  {AML_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => toggleCategory(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                        selectedCategories.includes(cat)
+                          ? 'bg-black text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Unlicensed context */}
+          {hasLicence === 'no' && (
+            <p className="text-[11px] text-gray-400 bg-gray-50 rounded-xl p-3">
+              No problem. You can still use the digital logbook, continuation training tracker, and all other tools. You can add licence details later from your profile if you obtain one.
+            </p>
+          )}
 
           <div className="h-px bg-gray-100" />
 
