@@ -382,7 +382,7 @@ export function CompleteProfileForm() {
                       </div>
                       {licence.categories.some(c => Object.values(IMPLIED_CATEGORIES).flat().includes(c)) && (
                         <p className="text-[11px] text-gray-400 mt-2">
-                          Grey categories are automatically included with your selected B1 category.
+                          Additional highlighted categories are automatically included with your selected category.
                         </p>
                       )}
                     </div>
@@ -399,17 +399,20 @@ export function CompleteProfileForm() {
                     </label>
 
                     {/* Type Ratings table */}
-                    {licence.showTypeRatings && (
+                    {licence.showTypeRatings && (() => {
+                      const hasCatC = licence.endorsements.some(e => e.cDate)
+                      return (
                       <div className="mt-3">
-                        <p className="text-xs text-gray-500 mb-2">Enter the date each type was endorsed on this licence.</p>
+                        <p className="text-xs text-gray-500 mb-2">Enter the date each type was endorsed on this licence. If Category C has been awarded for one type, it applies to all types.</p>
                         <div className="overflow-x-auto border rounded-lg">
                           <table className="w-full text-sm border-collapse">
                             <thead>
                               <tr className="border-b border-gray-200 bg-gray-50">
-                                <th className="text-left py-2 px-2 font-semibold text-gray-700 min-w-[200px] text-xs">Aircraft Type</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B1</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B2</th>
-                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[110px] text-xs">B3</th>
+                                <th className="text-left py-2 px-2 font-semibold text-gray-700 min-w-[240px] text-xs">Aircraft Type</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B1</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B2</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">B3</th>
+                                <th className="text-center py-2 px-2 font-semibold text-gray-700 w-[120px] text-xs">C</th>
                                 <th className="w-[30px]"></th>
                               </tr>
                             </thead>
@@ -432,19 +435,19 @@ export function CompleteProfileForm() {
                                             }}
                                             onFocus={() => setLicenceActiveSearchRow(index, rowIndex)}
                                             placeholder="Search aircraft type..."
-                                            className="text-xs h-9"
+                                            className="text-sm h-11"
                                           />
                                           {filtered.length > 0 && (
-                                            <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                            <div className="absolute z-10 mt-1 w-[320px] bg-white border rounded-lg shadow-lg max-h-72 overflow-y-auto">
                                               {filtered.map(r => (
                                                 <button
                                                   key={`${r.category}-${r.rating}`}
                                                   type="button"
                                                   onClick={() => selectAircraftType(index, rowIndex, r.rating)}
-                                                  className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 border-b last:border-0"
+                                                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 border-b last:border-0"
                                                 >
                                                   <span className="font-medium">{r.rating}</span>
-                                                  <span className="text-gray-400 ml-2">{r.category}</span>
+                                                  <span className="text-gray-400 ml-2 text-xs">{r.category} · {r.group}</span>
                                                 </button>
                                               ))}
                                             </div>
@@ -459,26 +462,36 @@ export function CompleteProfileForm() {
                                     </td>
                                     <td className="py-2 px-2">
                                       {isEmptyRow ? (
-                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                        <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
                                         <input type="date" value={endorsement.b1Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b1Date', e.target.value)}
-                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b1Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b1Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
                                       )}
                                     </td>
                                     <td className="py-2 px-2">
                                       {isEmptyRow ? (
-                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                        <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
                                         <input type="date" value={endorsement.b2Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b2Date', e.target.value)}
-                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b2Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b2Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
                                       )}
                                     </td>
                                     <td className="py-2 px-2">
                                       {isEmptyRow ? (
-                                        <div className="h-9 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                        <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
                                       ) : (
                                         <input type="date" value={endorsement.b3Date ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'b3Date', e.target.value)}
-                                          className={`w-full h-9 rounded-md border px-1.5 text-xs ${endorsement.b3Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.b3Date ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      {isEmptyRow ? (
+                                        <div className="h-10 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">-</div>
+                                      ) : hasCatC ? (
+                                        <div className="h-10 rounded-md bg-green-50 border border-green-300 flex items-center justify-center text-[10px] text-green-800 font-medium">Awarded</div>
+                                      ) : (
+                                        <input type="date" value={endorsement.cDate ?? ''} onChange={e => updateEndorsementDate(index, rowIndex, 'cDate', e.target.value)}
+                                          className={`w-full h-10 rounded-md border px-1.5 text-xs ${endorsement.cDate ? 'bg-green-50 border-green-300 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400'}`} />
                                       )}
                                     </td>
                                     <td className="py-2 px-1">
@@ -493,8 +506,12 @@ export function CompleteProfileForm() {
                             </tbody>
                           </table>
                         </div>
+                        {hasCatC && (
+                          <p className="text-[11px] text-green-700 mt-2">Category C has been awarded and applies to all type ratings on this licence.</p>
+                        )}
                       </div>
-                    )}
+                      )
+                    })()}
                   </div>
                 ))}
                 <button
