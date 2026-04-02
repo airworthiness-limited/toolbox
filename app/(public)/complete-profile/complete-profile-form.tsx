@@ -6,8 +6,25 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AML_CATEGORIES } from '@/lib/profile/constants'
 
-const AML_CATEGORIES = ['A', 'B1', 'B1.1', 'B1.2', 'B1.3', 'B1.4', 'B2', 'B2L', 'B3', 'C']
+const IMPLIED_CATEGORIES: Record<string, string[]> = {
+  'B1.1': ['A1'],
+  'B1.2': ['A2', 'B3'],
+  'B1.3': ['A3'],
+  'B1.4': ['A4'],
+}
+
+const APPROVAL_TYPES = [
+  'Part 145 (Aircraft Maintenance)',
+  'Part 145 (Engine Maintenance)',
+  'Part 145 (Component Maintenance)',
+  'Part CAMO (Continuing Airworthiness Management)',
+  'Part 147 (Aircraft Maintenance Training)',
+  'Part 21 Subpart G (Production)',
+  'Part 21 Subpart J (Design)',
+  'Other',
+]
 
 export function CompleteProfileForm() {
   const router = useRouter()
@@ -20,13 +37,33 @@ export function CompleteProfileForm() {
   const [licenceNumber, setLicenceNumber] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [employer, setEmployer] = useState('')
-  const [industry, setIndustry] = useState('')
+  const [approvalType, setApprovalType] = useState('')
+  const [approvalNumber, setApprovalNumber] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   function toggleCategory(cat: string) {
-    setSelectedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    setSelectedCategories(prev => {
+      if (prev.includes(cat)) {
+        // Removing — also remove any categories that are only implied by this one
+        const implied = IMPLIED_CATEGORIES[cat] || []
+        const otherImplied = Object.entries(IMPLIED_CATEGORIES)
+          .filter(([k]) => k !== cat && prev.includes(k))
+          .flatMap(([, v]) => v)
+        return prev
+          .filter(c => c !== cat)
+          .filter(c => !implied.includes(c) || otherImplied.includes(c))
+      } else {
+        // Adding — also add implied categories
+        const implied = IMPLIED_CATEGORIES[cat] || []
+        return [...new Set([...prev, cat, ...implied])]
+      }
+    })
+  }
+
+  function isCategoryImplied(cat: string): boolean {
+    return Object.entries(IMPLIED_CATEGORIES).some(
+      ([parent, children]) => children.includes(cat) && selectedCategories.includes(parent)
     )
   }
 
@@ -53,9 +90,9 @@ export function CompleteProfileForm() {
       .from('profiles')
       .update({
         full_name: fullName,
-        aml_licence_number: licenceNumber.trim() || null,
-        aml_categories: selectedCategories,
-        industry: industry.trim() || null,
+        aml_licence_number: hasLicence === 'yes' ? (licenceNumber.trim() || null) : null,
+        aml_categories: hasLicence === 'yes' ? selectedCategories : [],
+        industry: approvalType || null,
       })
       .eq('id', user.id)
 
@@ -85,7 +122,7 @@ export function CompleteProfileForm() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-black tracking-tight">Complete your profile</h1>
           <p className="text-sm text-gray-500 mt-2">
-            We need a few details to set up your digital logbook, module tracker, and continuation training record.
+            We need a few details to set up your profile.
           </p>
         </div>
 
@@ -135,8 +172,8 @@ export function CompleteProfileForm() {
 
           {/* Licence question */}
           <div>
-            <p className="text-xs font-bold text-black mb-1">Do you hold a Part-66 aircraft maintenance licence?</p>
-            <p className="text-[11px] text-gray-400 mb-3">This can be issued by any national aviation authority (e.g. UK CAA, EASA member state).</p>
+            <p className="text-xs font-bold text-black mb-1">Do you hold a Part-66 Aircraft Maintenance Licence?</p>
+            <p className="text-[11px] text-gray-400 mb-3">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -187,21 +224,33 @@ export function CompleteProfileForm() {
                 <p className="text-xs font-bold text-black mb-1">Licence categories</p>
                 <p className="text-[11px] text-gray-400 mb-3">Select your current or target categories. This determines which modules appear in your tracker.</p>
                 <div className="flex flex-wrap gap-2">
-                  {AML_CATEGORIES.map(cat => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => toggleCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                        selectedCategories.includes(cat)
-                          ? 'bg-black text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                  {AML_CATEGORIES.map(cat => {
+                    const isSelected = selectedCategories.includes(cat.value)
+                    const isImplied = isCategoryImplied(cat.value)
+                    return (
+                      <button
+                        key={cat.value}
+                        type="button"
+                        onClick={() => !isImplied && toggleCategory(cat.value)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                          isSelected
+                            ? isImplied
+                              ? 'bg-gray-700 text-white cursor-default'
+                              : 'bg-black text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        title={isImplied ? `Automatically included with ${Object.entries(IMPLIED_CATEGORIES).find(([, v]) => v.includes(cat.value))?.[0]}` : cat.label}
+                      >
+                        {cat.value}
+                      </button>
+                    )
+                  })}
                 </div>
+                {selectedCategories.some(c => Object.values(IMPLIED_CATEGORIES).flat().includes(c)) && (
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    Grey categories are automatically included with your selected B1 category.
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -215,13 +264,13 @@ export function CompleteProfileForm() {
 
           <div className="h-px bg-gray-100" />
 
-          {/* Employment section */}
+          {/* Organisation section */}
           <div>
-            <p className="text-xs font-bold text-black mb-3">Employment</p>
-            <p className="text-[11px] text-gray-400 mb-3">Your current employer appears on logbook entries and is required for continuation training records under Part-66.</p>
+            <p className="text-xs font-bold text-black mb-3">Organisation</p>
+            <p className="text-[11px] text-gray-400 mb-3">The organisation you currently work for. This appears on your logbook entries and training records.</p>
             <div className="space-y-1.5">
               <Label htmlFor="employer" className="text-xs text-gray-500">
-                Current employer <span className="text-gray-300">optional</span>
+                Organisation <span className="text-gray-300">optional</span>
               </Label>
               <Input
                 id="employer"
@@ -233,29 +282,37 @@ export function CompleteProfileForm() {
             </div>
           </div>
 
-          {/* Industry */}
+          {/* Approval Type */}
           <div className="space-y-1.5">
-            <Label htmlFor="industry" className="text-xs font-bold text-black">
-              Sector <span className="text-gray-300 font-normal">optional</span>
+            <Label htmlFor="approvalType" className="text-xs font-bold text-black">
+              Approval type <span className="text-gray-300 font-normal">optional</span>
             </Label>
-            <p className="text-[11px] text-gray-400 mb-2">Helps us tailor training content and resources to your working environment.</p>
+            <p className="text-[11px] text-gray-400 mb-2">The type of approval held by your organisation.</p>
             <select
-              id="industry"
-              value={industry}
-              onChange={e => setIndustry(e.target.value)}
+              id="approvalType"
+              value={approvalType}
+              onChange={e => setApprovalType(e.target.value)}
               className="w-full h-12 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:border-black focus:ring-black focus:outline-none"
             >
-              <option value="">Select your sector</option>
-              <option value="Part 145 - Line Maintenance">Part 145 - Line Maintenance</option>
-              <option value="Part 145 - Base Maintenance">Part 145 - Base Maintenance</option>
-              <option value="Part 145 - Component Maintenance">Part 145 - Component Maintenance</option>
-              <option value="CAMO / Part M">CAMO / Part M</option>
-              <option value="Part 147 - Training Organisation">Part 147 - Training Organisation</option>
-              <option value="Military">Military</option>
-              <option value="General Aviation">General Aviation</option>
-              <option value="Student">Student</option>
-              <option value="Other">Other</option>
+              <option value="">Select approval type</option>
+              {APPROVAL_TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
             </select>
+          </div>
+
+          {/* Approval Number */}
+          <div className="space-y-1.5">
+            <Label htmlFor="approvalNumber" className="text-xs font-bold text-black">
+              Approval number <span className="text-gray-300 font-normal">optional</span>
+            </Label>
+            <Input
+              id="approvalNumber"
+              placeholder="e.g. UK.145.0000"
+              value={approvalNumber}
+              onChange={e => setApprovalNumber(e.target.value)}
+              className="h-12 rounded-xl border-gray-300 focus:border-black focus:ring-black"
+            />
           </div>
 
           {error && (
