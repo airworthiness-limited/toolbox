@@ -43,9 +43,7 @@ export function PublicToggle({ isPublic, canGoPublic }: PublicToggleProps) {
         <p className="text-sm text-gray-500 mt-0.5">
           {checked
             ? 'Recruiters on the platform can view your qualifications and contact you.'
-            : canGoPublic
-              ? 'Toggle on to appear in recruiter searches.'
-              : 'Complete the competency assessment to unlock this.'}
+            : 'Toggle on to appear in recruiter searches.'}
         </p>
       </div>
       <button

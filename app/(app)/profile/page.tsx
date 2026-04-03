@@ -193,8 +193,7 @@ export default async function ProfilePage() {
   const totalModules = requiredModuleIds.length
   const progressPercent = totalModules > 0 ? Math.round((passedModules / totalModules) * 100) : 0
 
-  // Check competency assessment status
-  const competencyPassed = !!profile.competency_completed_at
+  // Competency assessment — coming soon (feature disabled)
   const allTrainingCurrent = trainingStatuses.every(t => t.isCurrent)
   const allComplete = allTrainingCurrent && recencyStatus.isCurrent
 
@@ -335,38 +334,17 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Competency Assessment */}
-        <Card className="mb-4">
+        {/* Competency Assessment — Coming Soon */}
+        <Card className="mb-4 opacity-50">
           <CardHeader>
-            <CardTitle>Competency Assessment</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Competency Assessment
+              <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2.5 py-1 rounded-lg">Coming Soon</span>
+            </CardTitle>
             <CardDescription>
               A basic competency check covering core maintenance knowledge.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {competencyPassed ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Badge>Passed</Badge>
-                  <p className="text-sm text-gray-500">
-                    Completed {new Date(profile.competency_completed_at!).toLocaleDateString('en-GB', {
-                      day: 'numeric', month: 'long', year: 'numeric'
-                    })}
-                  </p>
-                </div>
-                <RemoveAssessmentButton />
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-gray-500 mb-4">
-                  10 multiple-choice questions covering core maintenance knowledge. You need 80% to pass.
-                </p>
-                <Link href="/profile/assessment">
-                  <Button>Take Assessment</Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
         </Card>
 
         {/* Task Logbook */}
@@ -408,6 +386,4 @@ export default async function ProfilePage() {
   )
 }
 
-// Client component for removing assessment
-import { RemoveAssessmentButton } from './remove-assessment-button'
 import { DeleteAccountButton } from './delete-account-button'

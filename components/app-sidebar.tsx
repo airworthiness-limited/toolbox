@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { label: 'Digital Logbook', href: '/logbook', icon: BookOpen },
   { label: 'Module Tracker', href: '/progress', icon: ClipboardList },
   { label: 'Continuation Training', href: '/courses', icon: GraduationCap },
-  { label: 'Competency Assessment', href: '/profile/assessment', icon: ShieldCheck },
+  { label: 'Competency Assessment', href: '', icon: ShieldCheck, comingSoon: true },
 ]
 
 function useUser() {
@@ -88,7 +88,23 @@ export function AppSidebar() {
         <ul className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
-            const active = isActive(item.href)
+            const active = !item.comingSoon && isActive(item.href)
+
+            if (item.comingSoon) {
+              return (
+                <li key={item.label}>
+                  <span
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/20 cursor-default group relative"
+                    title="Coming soon..."
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+                    {item.label}
+                    <span className="ml-auto text-[10px] text-white/30 bg-white/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">Coming Soon</span>
+                  </span>
+                </li>
+              )
+            }
+
             return (
               <li key={item.href}>
                 <Link
