@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AdPlaceholder } from '@/components/ad-placeholder'
 
 export default async function CoursesPage() {
   const supabase = await createClient()
@@ -45,7 +44,6 @@ export default async function CoursesPage() {
         </div>
       )}
 
-      <AdPlaceholder format="inline" className="my-6" />
 
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 tracking-tight">In Development</h2>

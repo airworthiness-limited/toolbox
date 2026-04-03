@@ -13,7 +13,6 @@ import {
 } from '@/lib/progress/constants'
 import type { ModuleExamProgress, ExamRow } from '@/lib/progress/types'
 import { ProgressTracker } from './progress-tracker'
-import { AdPlaceholder } from '@/components/ad-placeholder'
 
 export default async function ProgressPage({
   searchParams,
@@ -240,7 +239,6 @@ export default async function ProgressPage({
 
         </div>
 
-        <AdPlaceholder format="banner" className="my-6" />
 
         {/* Exam Progress - Two Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -251,7 +249,6 @@ export default async function ProgressPage({
               examRows={mcqRows}
               selectedCategory={selectedCategory}
               userId={user.id}
-              showAds
             />
           </div>
 
@@ -263,7 +260,6 @@ export default async function ProgressPage({
                 examRows={essayRows}
                 selectedCategory={selectedCategory}
                 userId={user.id}
-                showAds
               />
             ) : (
               <div className="rounded-xl border border-gray-100 p-6 text-center">
