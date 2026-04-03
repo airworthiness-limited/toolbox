@@ -12,13 +12,11 @@ import {
   VERIFICATION_STATUSES,
 } from '@/lib/progress/constants'
 import type { ExamRow } from '@/lib/progress/types'
-import { AdPlaceholder } from '@/components/ad-placeholder'
 
 interface ProgressTrackerProps {
   examRows: ExamRow[]
   selectedCategory: string
   userId: string
-  showAds?: boolean
 }
 
 // MCQ form state
@@ -67,7 +65,7 @@ function initEssayForm(row: ExamRow): EssayFormState {
   }
 }
 
-export function ProgressTracker({ examRows, selectedCategory, userId, showAds }: ProgressTrackerProps) {
+export function ProgressTracker({ examRows, selectedCategory, userId }: ProgressTrackerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -381,9 +379,6 @@ export function ProgressTracker({ examRows, selectedCategory, userId, showAds }:
               />
             )}
           </Card>
-          {showAds && index < examRows.length - 1 && (
-            <AdPlaceholder format="banner" className="my-2" />
-          )}
         </React.Fragment>
         )
       })}

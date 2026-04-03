@@ -12,7 +12,6 @@ import {
   CATEGORY_TO_AIRCRAFT,
   getAtaLabel,
 } from '@/lib/logbook/constants'
-import { AdPlaceholder } from '@/components/ad-placeholder'
 import { MassInput } from './mass-input'
 import { AtaChart } from './ata-chart'
 import { BtcToggle } from '@/app/(app)/progress/btc-toggle'
@@ -247,7 +246,6 @@ export default async function LogbookPage({
           ata_chapters: (e as any).ata_chapters ?? [],
         }))} />
 
-        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Stats + Experience + Recency */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -320,7 +318,6 @@ export default async function LogbookPage({
           />
         </div>
 
-        <AdPlaceholder format="banner" className="my-4" />
 
         {/* Mass Input */}
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>

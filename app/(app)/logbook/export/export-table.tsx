@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAtaLabel } from '@/lib/logbook/constants'
 import { createClient } from '@/lib/supabase/client'
-import { AdPlaceholder } from '@/components/ad-placeholder'
 
 function parseDateFilter(ddmmyyyy: string): string {
   const parts = ddmmyyyy.split('/')
@@ -456,7 +455,6 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                       </table>
                     </div>
                     {ataIdx < group.ataGroups.length - 1 && (
-                      <AdPlaceholder format="banner" className="print:hidden mt-4" />
                     )}
                   </div>
                 ))}
