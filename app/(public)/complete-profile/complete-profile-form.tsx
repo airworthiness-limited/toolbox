@@ -148,6 +148,7 @@ export function CompleteProfileForm() {
   const [employer, setEmployer] = useState('')
   const [approvals, setApprovals] = useState<Approval[]>([{ type: '', reference: '' }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
+  const [recruitmentOptIn, setRecruitmentOptIn] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -679,6 +680,18 @@ export function CompleteProfileForm() {
               />
               <span className="text-xs text-gray-500">
                 Keep me updated with product news, regulatory changes, and training resources. You can unsubscribe at any time.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={recruitmentOptIn}
+                onChange={e => setRecruitmentOptIn(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+              />
+              <span className="text-xs text-gray-500">
+                Share my profile with approved recruitment partners to receive relevant job opportunities and salary insights. See our <Link href="/privacy" className="text-black font-bold hover:underline">Privacy Policy</Link> for details.
               </span>
             </label>
           </div>
