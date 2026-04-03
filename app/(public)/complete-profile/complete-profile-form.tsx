@@ -149,7 +149,6 @@ export function CompleteProfileForm() {
   const [approvals, setApprovals] = useState<Approval[]>([{ type: '', reference: '' }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [recruitmentOptIn, setRecruitmentOptIn] = useState(false)
-  const [termsAccepted, setTermsAccepted] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -241,12 +240,6 @@ export function CompleteProfileForm() {
 
     if (!firstName.trim() || !lastName.trim()) {
       setError('First name and last name are required.')
-      setLoading(false)
-      return
-    }
-
-    if (!termsAccepted) {
-      setError('You must accept the Terms and Privacy Policy to continue.')
       setLoading(false)
       return
     }
@@ -657,19 +650,11 @@ export function CompleteProfileForm() {
 
           <div className="h-px bg-gray-100" />
 
-          {/* Consent checkboxes */}
+          {/* Consent */}
           <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={e => setTermsAccepted(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-              />
-              <span className="text-xs text-gray-500">
-                I agree to the <Link href="/terms" className="text-black font-bold hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-black font-bold hover:underline">Privacy Policy</Link>.
-              </span>
-            </label>
+            <p className="text-xs text-gray-500">
+              By continuing you agree to our <Link href="/terms" className="text-black font-bold hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-black font-bold hover:underline">Privacy Policy</Link>.
+            </p>
 
             <label className="flex items-start gap-3 cursor-pointer">
               <input
