@@ -228,27 +228,24 @@ export function AppSidebar() {
         )}
       </aside>
 
-      {/* Mobile header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-base text-sidebar-foreground font-black tracking-tight">
-          Airworthiness
-        </Link>
+      {/* Mobile hamburger button */}
+      {!mobileOpen && (
         <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-sidebar-foreground/60 hover:text-sidebar-foreground p-1"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden fixed top-4 left-4 z-50 text-foreground/60 hover:text-foreground p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label="Open menu"
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <Menu className="w-5 h-5" />
         </button>
-      </header>
+      )}
 
-      {/* Mobile menu overlay */}
+      {/* Mobile sidebar overlay */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40">
+        <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute top-0 left-0 w-60 h-full bg-sidebar flex flex-col pt-14">
+          <aside className="absolute top-0 left-0 w-60 h-full bg-sidebar flex flex-col">
             {/* Brand */}
-            <div className="px-5 pt-2 pb-4 text-center">
+            <div className="px-5 pt-6 pb-4 text-center">
               <Link href="/" className="text-xl text-sidebar-foreground font-black tracking-tight">
                 Airworthiness
               </Link>
