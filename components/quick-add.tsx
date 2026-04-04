@@ -191,9 +191,9 @@ export function QuickAdd() {
               ref={inputRef}
               value={taskDetail}
               onChange={e => setTaskDetail(e.target.value)}
-              placeholder="e.g. I performed [Task Type] on [Part or System] in accordance with [Maintenance Data]."
+              placeholder="I performed [Task Type] on [Part or System] in accordance with [Maintenance Data]."
               rows={3}
-              className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none placeholder:text-muted-foreground/40 placeholder:text-xs"
+              className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none placeholder:text-muted-foreground/40 placeholder:text-xs text-center"
             />
 
             {/* Date */}
@@ -224,8 +224,8 @@ export function QuickAdd() {
                     setAircraftSearch(e.target.value)
                     if (aircraftType) setAircraftType('')
                   }}
-                  placeholder="Aircraft type"
-                  className="w-full text-xs px-3 py-2 pr-8 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="Aircraft Type"
+                  className="w-full text-xs px-3 py-2 pr-8 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring text-center"
                 />
                 {(aircraftType || aircraftSearch) && (
                   <button
@@ -261,8 +261,8 @@ export function QuickAdd() {
               type="text"
               value={registration}
               onChange={e => setRegistration(e.target.value)}
-              placeholder="e.g. G-ABCD"
-              className="w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase"
+              placeholder="Aircraft Registration"
+              className="w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase text-center"
             />
 
             {/* Save */}
