@@ -466,7 +466,6 @@ export function CompleteProfileForm() {
 
                     {/* Type Ratings cards */}
                     {licence.showTypeRatings && (() => {
-                      const firstCDate = licence.endorsements.find(e => e.cDate)?.cDate ?? null
                       const filledEndorsements = licence.endorsements.filter(e => e.rating)
                       const emptyRow = licence.endorsements.find(e => !e.rating)
                       const emptyRowIndex = licence.endorsements.indexOf(emptyRow!)
@@ -477,8 +476,6 @@ export function CompleteProfileForm() {
                         {/* Filled endorsement cards */}
                         {filledEndorsements.map((endorsement, i) => {
                           const rowIndex = licence.endorsements.indexOf(endorsement)
-                          const b1Sub = getCategoryForRating(endorsement.rating)
-                          const cDateValue = endorsement.cDate ?? firstCDate
                           return (
                             <div key={rowIndex} className="border rounded-xl p-4 relative">
                               <button
@@ -512,8 +509,8 @@ export function CompleteProfileForm() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">C</span>
-                                  <div className="flex-1"><DateInput value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} /></div>
-                                  {(endorsement.cDate ?? cDateValue) && (
+                                  <div className="flex-1"><DateInput value={endorsement.cDate} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!endorsement.cDate} /></div>
+                                  {endorsement.cDate && (
                                     <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'cDate', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
                                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
@@ -546,7 +543,7 @@ export function CompleteProfileForm() {
                                   className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-0"
                                 >
                                   <span className="font-medium">{r.rating}</span>
-                                  <span className="text-muted-foreground ml-2 text-xs">{r.category} · {r.group}</span>
+                                  <span className="text-muted-foreground ml-2 text-xs">{r.group}</span>
                                 </button>
                               ))}
                             </div>
