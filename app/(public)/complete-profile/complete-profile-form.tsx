@@ -63,27 +63,39 @@ function ukToIso(uk: string): string {
   return ''
 }
 
-function DateInput({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
+function DateInput({ value, onChange, filled, onError }: { value: string | null, onChange: (v: string) => void, filled: boolean, onError?: (hasError: boolean) => void }) {
   const [display, setDisplay] = useState(isoToUk(value))
   const [error, setError] = useState('')
+
+  function setValidationError(msg: string) {
+    setError(msg)
+    onError?.(true)
+    onChange('')
+  }
+
+  function clearError() {
+    setError('')
+    onError?.(false)
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     // Allow digits and slashes only, max 10 chars
     const cleaned = e.target.value.replace(/[^\d/]/g, '').slice(0, 10)
     setDisplay(cleaned)
+    if (error) clearError()
   }
 
   function handleBlur() {
-    setError('')
     // On blur, try to parse and format
     const digits = display.replace(/[^\d]/g, '')
     if (digits.length === 0) {
+      clearError()
       setDisplay('')
       onChange('')
       return
     }
     if (digits.length < 8) {
-      setError('Enter a full date as DD/MM/YYYY')
+      setValidationError('Enter a full date as DD/MM/YYYY')
       return
     }
     const d = parseInt(digits.slice(0, 2), 10)
@@ -92,9 +104,7 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
 
     // Validate day/month ranges
     if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900) {
-      setError('Invalid date')
-      setDisplay('')
-      onChange('')
+      setValidationError('Invalid date')
       return
     }
 
@@ -106,9 +116,7 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
       parsed.getMonth() !== m - 1 ||
       parsed.getDate() !== d
     ) {
-      setError('Invalid date')
-      setDisplay('')
-      onChange('')
+      setValidationError('Invalid date')
       return
     }
 
@@ -116,12 +124,11 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
     const now = new Date()
     const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     if (parsed > todayDate) {
-      setError('Date cannot be in the future')
-      setDisplay('')
-      onChange('')
+      setValidationError('Date cannot be in the future')
       return
     }
 
+    clearError()
     const dd = String(d).padStart(2, '0')
     const mm = String(m).padStart(2, '0')
     const iso = `${y}-${mm}-${dd}`
@@ -137,10 +144,9 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
         placeholder="DD/MM/YYYY"
         value={display}
         onChange={handleChange}
-        onFocus={() => setError('')}
         onBlur={handleBlur}
         maxLength={10}
-        className={`w-full h-10 rounded-md border px-1 text-xs text-center ${error ? 'border-red-400 bg-red-50 text-red-700' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-muted border-border text-muted-foreground placeholder:text-muted-foreground/60'}`}
+        className={`w-full h-10 rounded-md border px-1 text-xs text-center ${error ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-300' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-muted border-border text-muted-foreground placeholder:text-muted-foreground/60'}`}
       />
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
@@ -226,6 +232,11 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [dateErrorCount, setDateErrorCount] = useState(0)
+
+  function handleDateError(hasError: boolean) {
+    setDateErrorCount(prev => hasError ? prev + 1 : Math.max(0, prev - 1))
+  }
 
   // Licence helpers
   function updateLicenceNumber(index: number, value: string) {
@@ -342,6 +353,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
   }
 
   async function handleSubmit() {
+    if (dateErrorCount > 0) return
     setLoading(true)
     setError('')
     setSaved(false)
@@ -511,6 +523,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                 value={dateOfBirth || null}
                 onChange={v => setDateOfBirth(v)}
                 filled={!!dateOfBirth}
+                onError={handleDateError}
               />
             </div>
           </div>
@@ -694,21 +707,21 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                               <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B1</span>
-                                  <div className="flex-1"><DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} /></div>
+                                  <div className="flex-1"><DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} onError={handleDateError} /></div>
                                   <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b1Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B2</span>
-                                  <div className="flex-1"><DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} /></div>
+                                  <div className="flex-1"><DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} onError={handleDateError} /></div>
                                   <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b2Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">C</span>
-                                  <div className="flex-1"><DateInput value={endorsement.cDate} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!endorsement.cDate} /></div>
+                                  <div className="flex-1"><DateInput value={endorsement.cDate} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!endorsement.cDate} onError={handleDateError} /></div>
                                   <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'cDate', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
@@ -804,6 +817,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                           value={emp.startDate || null}
                           onChange={v => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, startDate: v } : p))}
                           filled={!!emp.startDate}
+                          onError={handleDateError}
                         />
                       </div>
                       {emp.startDate && (
@@ -828,6 +842,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                           value={emp.endDate || null}
                           onChange={v => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, endDate: v } : p))}
                           filled={!!emp.endDate}
+                          onError={handleDateError}
                         />
                       </div>
                       {emp.endDate && (
@@ -1003,9 +1018,9 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
           <Button
             type="submit"
             className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-xl"
-            disabled={loading}
+            disabled={loading || dateErrorCount > 0}
           >
-            {loading ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Continue'}
+            {loading ? 'Saving...' : dateErrorCount > 0 ? 'Fix date errors to continue' : mode === 'edit' ? 'Save Changes' : 'Continue'}
           </Button>
 
           {mode === 'create' && (
