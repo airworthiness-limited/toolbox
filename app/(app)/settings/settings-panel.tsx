@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import { useTheme } from 'next-themes'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sun, Moon, Monitor, Download, KeyRound, Shield } from 'lucide-react'
+import { Sun, Moon, Monitor, Download, Mail, Shield } from 'lucide-react'
 import { DeleteAccountButton } from '@/app/(app)/dashboard/delete-account-button'
 
 interface SettingsPanelProps {
@@ -16,44 +15,42 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ userEmail }: SettingsPanelProps) {
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
 
-  // Password change
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordError, setPasswordError] = useState('')
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
-  const [passwordLoading, setPasswordLoading] = useState(false)
+  // Change email
+  const [newEmail, setNewEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [emailSuccess, setEmailSuccess] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
 
   // Data export
   const [exporting, setExporting] = useState(false)
   const [exportDone, setExportDone] = useState(false)
 
-  async function handleChangePassword() {
-    setPasswordError('')
-    setPasswordSuccess(false)
+  async function handleChangeEmail() {
+    setEmailError('')
+    setEmailSuccess(false)
 
-    if (newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters.')
+    const trimmed = newEmail.trim().toLowerCase()
+    if (!trimmed || !trimmed.includes('@')) {
+      setEmailError('Please enter a valid email address.')
       return
     }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match.')
+    if (trimmed === userEmail.toLowerCase()) {
+      setEmailError('This is already your current email.')
       return
     }
 
-    setPasswordLoading(true)
+    setEmailLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    const { error } = await supabase.auth.updateUser({ email: trimmed })
 
     if (error) {
-      setPasswordError(error.message)
+      setEmailError(error.message)
     } else {
-      setPasswordSuccess(true)
-      setNewPassword('')
-      setConfirmPassword('')
+      setEmailSuccess(true)
+      setNewEmail('')
     }
-    setPasswordLoading(false)
+    setEmailLoading(false)
   }
 
   async function handleExportData() {
@@ -127,43 +124,41 @@ export function SettingsPanel({ userEmail }: SettingsPanelProps) {
         </div>
       </section>
 
-      {/* Change Password */}
+      {/* Change Email */}
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <KeyRound className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-          <h2 className="text-lg font-semibold text-foreground">Change Password</h2>
+          <Mail className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+          <h2 className="text-lg font-semibold text-foreground">Change Email</h2>
         </div>
         <div className="rounded-xl border border-border p-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            A confirmation link will be sent to both your current and new email address. You must confirm both to complete the change.
+          </p>
           <div className="space-y-1.5">
-            <Label htmlFor="new-password" className="text-sm text-muted-foreground">New Password</Label>
+            <Label htmlFor="new-email" className="text-sm text-muted-foreground">New Email Address</Label>
             <Input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              onChange={e => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSuccess(false) }}
-              placeholder="Minimum 8 characters"
+              id="new-email"
+              type="email"
+              value={newEmail}
+              onChange={e => { setNewEmail(e.target.value); setEmailError(''); setEmailSuccess(false) }}
+              placeholder="new@example.com"
               className="h-11 rounded-xl"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="confirm-password" className="text-sm text-muted-foreground">Confirm Password</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={e => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSuccess(false) }}
-              placeholder="Re-enter password"
-              className="h-11 rounded-xl"
-            />
-          </div>
-          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
-          {passwordSuccess && <p className="text-sm text-green-600">Password updated.</p>}
+          {emailError && <p className="text-sm text-red-600">{emailError}</p>}
+          {emailSuccess && (
+            <div className="rounded-xl bg-green-50 border border-green-100 p-3 text-center">
+              <p className="text-sm font-medium text-green-600">
+                Confirmation links sent. Check both your current and new email inbox.
+              </p>
+            </div>
+          )}
           <Button
-            onClick={handleChangePassword}
-            disabled={passwordLoading || !newPassword || !confirmPassword}
+            onClick={handleChangeEmail}
+            disabled={emailLoading || !newEmail.trim()}
             size="sm"
           >
-            {passwordLoading ? 'Updating...' : 'Update Password'}
+            {emailLoading ? 'Sending...' : 'Change Email'}
           </Button>
         </div>
       </section>
