@@ -181,7 +181,7 @@ export function AppSidebar() {
       <aside className="hidden md:flex flex-col w-60 bg-sidebar min-h-screen fixed left-0 top-0 z-40">
         {/* Brand */}
         <div className="px-5 pt-6 pb-4 text-center">
-          <Link href="/" className="text-xl text-sidebar-foreground font-extrabold">
+          <Link href="/" className="text-xl text-sidebar-foreground font-black tracking-tight">
             Airworthiness
           </Link>
         </div>
@@ -224,7 +224,7 @@ export function AppSidebar() {
 
       {/* Mobile header */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-base text-sidebar-foreground font-semibold">
+        <Link href="/" className="text-base text-sidebar-foreground font-black tracking-tight">
           Airworthiness
         </Link>
         <button
@@ -243,7 +243,7 @@ export function AppSidebar() {
           <aside className="absolute top-0 left-0 w-60 h-full bg-sidebar flex flex-col pt-14">
             {/* Brand */}
             <div className="px-5 pt-2 pb-4 text-center">
-              <Link href="/" className="text-xl text-sidebar-foreground font-extrabold">
+              <Link href="/" className="text-xl text-sidebar-foreground font-black tracking-tight">
                 Airworthiness
               </Link>
             </div>

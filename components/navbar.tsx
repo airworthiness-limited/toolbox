@@ -206,7 +206,7 @@ export function Navbar() {
     <>
       <nav className="bg-background sticky top-0 z-50 border-b">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="text-xl text-foreground font-extrabold">
+          <Link href="/" className="text-xl text-foreground font-black tracking-tight">
             Airworthiness
           </Link>
 
