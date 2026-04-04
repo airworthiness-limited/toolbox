@@ -81,20 +81,43 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
       return
     }
     if (digits.length >= 8) {
-      const d = digits.slice(0, 2)
-      const m = digits.slice(2, 4)
-      const y = digits.slice(4, 8)
-      const iso = `${y}-${m}-${d}`
-      // Reject future dates
-      const parsed = new Date(iso)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (!isNaN(parsed.getTime()) && parsed > today) {
+      const d = parseInt(digits.slice(0, 2), 10)
+      const m = parseInt(digits.slice(2, 4), 10)
+      const y = parseInt(digits.slice(4, 8), 10)
+
+      // Validate day/month ranges
+      if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900) {
         setDisplay('')
         onChange('')
         return
       }
-      const formatted = `${d}/${m}/${y}`
+
+      // Validate the date is real (e.g. no 31 Feb)
+      const parsed = new Date(y, m - 1, d)
+      if (
+        isNaN(parsed.getTime()) ||
+        parsed.getFullYear() !== y ||
+        parsed.getMonth() !== m - 1 ||
+        parsed.getDate() !== d
+      ) {
+        setDisplay('')
+        onChange('')
+        return
+      }
+
+      // Reject future dates (allow today)
+      const now = new Date()
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      if (parsed > todayDate) {
+        setDisplay('')
+        onChange('')
+        return
+      }
+
+      const dd = String(d).padStart(2, '0')
+      const mm = String(m).padStart(2, '0')
+      const iso = `${y}-${mm}-${dd}`
+      const formatted = `${dd}/${mm}/${y}`
       setDisplay(formatted)
       onChange(iso)
     }
@@ -449,9 +472,9 @@ export function CompleteProfileForm() {
                   <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Front</Label>
                   {licenceFrontPath ? (
                     <div className="flex items-center justify-center h-24 rounded-xl border-2 border-dashed border-green-300 dark:border-green-700">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-green-600 font-medium block">Uploaded</span>
-                        <button type="button" onClick={() => handleDeleteLicencePhoto('front')} className="text-xs text-red-500 hover:text-red-700 block mt-1">Delete</button>
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs text-green-600 font-medium">Uploaded</span>
+                        <button type="button" onClick={() => handleDeleteLicencePhoto('front')} className="text-xs text-red-500 hover:text-red-700 mt-1">Delete</button>
                       </div>
                     </div>
                   ) : (
@@ -473,9 +496,9 @@ export function CompleteProfileForm() {
                   <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">Back</Label>
                   {licenceBackPath ? (
                     <div className="flex items-center justify-center h-24 rounded-xl border-2 border-dashed border-green-300 dark:border-green-700">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-green-600 font-medium block">Uploaded</span>
-                        <button type="button" onClick={() => handleDeleteLicencePhoto('back')} className="text-xs text-red-500 hover:text-red-700 block mt-1">Delete</button>
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs text-green-600 font-medium">Uploaded</span>
+                        <button type="button" onClick={() => handleDeleteLicencePhoto('back')} className="text-xs text-red-500 hover:text-red-700 mt-1">Delete</button>
                       </div>
                     </div>
                   ) : (
@@ -579,18 +602,20 @@ export function CompleteProfileForm() {
                         {filledEndorsements.map((endorsement, i) => {
                           const rowIndex = licence.endorsements.indexOf(endorsement)
                           return (
-                            <div key={rowIndex} className="border rounded-xl p-4 relative">
-                              <button
-                                type="button"
-                                onClick={() => removeEndorsement(index, rowIndex)}
-                                className="absolute top-3 right-3 text-muted-foreground hover:text-red-500 transition-colors"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                              <p className="text-sm font-semibold text-foreground">{endorsement.rating}</p>
-                              <div className="space-y-2 mt-3">
+                            <div key={rowIndex} className="border rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-sm font-semibold text-foreground">{endorsement.rating}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => removeEndorsement(index, rowIndex)}
+                                  className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B1</span>
                                   <div className="flex-1"><DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} /></div>
@@ -753,7 +778,7 @@ export function CompleteProfileForm() {
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                                Approval Type {emp.approvals.length > 1 && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Required</span>
+                                Approval Type {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Required</span>
                               </Label>
                               <select
                                 value={approval.type}
@@ -781,7 +806,7 @@ export function CompleteProfileForm() {
                           </div>
                           <div>
                             <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                              Approval Reference {emp.approvals.length > 1 && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Optional</span>
+                              Approval Reference {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Optional</span>
                             </Label>
                             <Input
                               placeholder="e.g. UK.145.0000"

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'Dashboard', href: '/profile', icon: User },
   { label: 'Digital Logbook', href: '/logbook', icon: BookOpen },
   { label: 'Module Tracker', href: '/progress', icon: ClipboardList },
   { label: 'Continuation Training', href: '/courses', icon: GraduationCap },
