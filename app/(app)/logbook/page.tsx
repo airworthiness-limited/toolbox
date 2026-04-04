@@ -229,7 +229,7 @@ export default async function LogbookPage({
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Digital Logbook</h1>
+            <h1 className="text-2xl font-bold text-foreground">Digital Logbook</h1>
             <Link href="/logbook/export">
               <Button variant="outline" size="sm">View All Tasks</Button>
             </Link>
@@ -323,7 +323,7 @@ export default async function LogbookPage({
 
 
         {/* Mass Input */}
-        <h2 className="text-lg font-semibold text-foreground mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
+        <h2 className="text-lg font-bold text-foreground mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
         <MassInput
           defaultEmployer={defaultEmployer}
           lastMaintenanceType={lastMaintenanceType}

@@ -73,7 +73,7 @@ export function AssessmentForm() {
     return (
       <div className="text-center py-8">
         <div className="text-5xl mb-4">{passed ? '🎉' : '😞'}</div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
+        <h2 className="text-lg font-bold text-foreground mb-2">
           {passed ? 'Assessment Passed!' : 'Not quite there'}
         </h2>
         <p className="text-muted-foreground mb-2">

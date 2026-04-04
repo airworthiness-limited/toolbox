@@ -52,23 +52,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
 
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
-      // Embed Alexandria font
-      async function loadFont(path: string): Promise<string> {
-        const res = await fetch(path)
-        const buf = await res.arrayBuffer()
-        const bytes = new Uint8Array(buf)
-        let binary = ''
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
-        return btoa(binary)
-      }
-      const [regularB64, boldB64] = await Promise.all([
-        loadFont('/fonts/Alexandria-Regular.ttf'),
-        loadFont('/fonts/Alexandria-Bold.ttf'),
-      ])
-      doc.addFileToVFS('Alexandria-Regular.ttf', regularB64)
-      doc.addFont('Alexandria-Regular.ttf', 'Alexandria', 'normal')
-      doc.addFileToVFS('Alexandria-Bold.ttf', boldB64)
-      doc.addFont('Alexandria-Bold.ttf', 'Alexandria', 'bold')
+      // Use built-in Helvetica (visually identical to Arial)
       const pageW = doc.internal.pageSize.getWidth()
       const pageH = doc.internal.pageSize.getHeight()
       const margin = 10
@@ -79,7 +63,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
         const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber as number
         if (watermarkedPages.has(currentPage)) return
         watermarkedPages.add(currentPage)
-        doc.setFont('Alexandria', 'bold')
+        doc.setFont('helvetica', 'bold')
         doc.setFontSize(10)
         const testW = doc.getTextWidth('Airworthiness')
         const targetFontSize = 10 * ((pageW * 0.97) / testW)
@@ -87,7 +71,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
 
         // Font metrics in mm: 1 em = fontSize (pts) / scaleFactor (pts/mm)
         const emMm = targetFontSize / (doc as any).internal.scaleFactor
-        // Alexandria cap height ≈ 0.72em; "Airworthiness" has no descenders
+        // Helvetica cap height ≈ 0.72em; "Airworthiness" has no descenders
         const capHeightMm = emMm * 0.72
         const rows = 5
         const spacing = emMm // 1em row spacing (tight, like the watermark image)
@@ -112,7 +96,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
 
       // ── Header ──────────────────────────────────────────────────────────
       doc.setFontSize(14)
-      doc.setFont('Alexandria', 'bold')
+      doc.setFont('helvetica', 'bold')
       doc.text('Digital Logbook (CAP 741)', margin, 14)
 
       // Stat boxes
@@ -136,11 +120,11 @@ export function PdfDownloadButton({ entries, meta }: Props) {
         doc.setFillColor(255, 255, 255)
         doc.roundedRect(x, boxY, boxW - 1, boxH, 1, 1, 'FD')
         doc.setFontSize(5.5)
-        doc.setFont('Alexandria', 'normal')
+        doc.setFont('helvetica', 'normal')
         doc.setTextColor(156, 163, 175)
         doc.text(s.label.toUpperCase(), x + 2, boxY + 3.5)
         doc.setFontSize(7)
-        doc.setFont('Alexandria', 'bold')
+        doc.setFont('helvetica', 'bold')
         doc.setTextColor(17, 24, 39)
         doc.text(s.value, x + 2, boxY + 8, { maxWidth: boxW - 4 })
       })
@@ -161,7 +145,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
         // Category heading
         if (cursorY > pageH - 30) { doc.addPage(); drawWatermark(); cursorY = margin }
         doc.setFontSize(9)
-        doc.setFont('Alexandria', 'bold')
+        doc.setFont('helvetica', 'bold')
         doc.setTextColor(17, 24, 39)
         doc.text(CATEGORY_LABELS[cat] ?? cat, margin, cursorY)
         doc.setDrawColor(209, 213, 219)
@@ -177,7 +161,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
           // ATA subheading
           if (cursorY > pageH - 25) { doc.addPage(); drawWatermark(); cursorY = margin }
           doc.setFontSize(7)
-          doc.setFont('Alexandria', 'bold')
+          doc.setFont('helvetica', 'bold')
           doc.setTextColor(107, 114, 128)
           doc.text((chapter ? getAtaLabel(chapter) : 'Uncategorised').toUpperCase(), margin, cursorY)
           cursorY += 3
@@ -203,8 +187,8 @@ export function PdfDownloadButton({ entries, meta }: Props) {
             body: tableRows,
             margin: { left: margin, right: margin },
             theme: 'grid',
-            styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [17, 24, 39], font: 'Alexandria', fontStyle: 'normal' },
-            headStyles: { fillColor: [249, 250, 251], textColor: [75, 85, 99], font: 'Alexandria', fontStyle: 'bold', fontSize: 6.5 },
+            styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [17, 24, 39], font: 'helvetica', fontStyle: 'normal' },
+            headStyles: { fillColor: [249, 250, 251], textColor: [75, 85, 99], font: 'helvetica', fontStyle: 'bold', fontSize: 6.5 },
             columnStyles: {
               4: { halign: 'left', cellWidth: 32, overflow: 'linebreak' },
               5: { halign: 'left', cellWidth: 'auto' },
@@ -216,7 +200,7 @@ export function PdfDownloadButton({ entries, meta }: Props) {
             didDrawPage: (data) => {
               // Footer on every page
               doc.setFontSize(6.5)
-              doc.setFont('Alexandria', 'normal')
+              doc.setFont('helvetica', 'normal')
               doc.setTextColor(107, 114, 128)
               doc.text(
                 `Digitally signed by ${meta.fullName}  |  ID: ${meta.logbookNumber}`,

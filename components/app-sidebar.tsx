@@ -80,7 +80,7 @@ export function AppSidebar() {
     <>
       {/* Brand */}
       <div className="px-5 pt-6 pb-4 text-center">
-        <Link href="/" className="text-xl text-sidebar-foreground font-extrabold tracking-tight">
+        <Link href="/" className="text-xl text-sidebar-foreground font-extrabold">
           Airworthiness
         </Link>
       </div>
@@ -152,7 +152,7 @@ export function AppSidebar() {
 
       {/* Mobile header */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-base text-sidebar-foreground font-semibold tracking-tight">
+        <Link href="/" className="text-base text-sidebar-foreground font-semibold">
           Airworthiness
         </Link>
         <button

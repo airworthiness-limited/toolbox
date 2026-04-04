@@ -21,7 +21,7 @@ export default async function HomePage() {
       {/* Hero with sign-up form */}
       <section className="py-20 lg:py-32">
         <div className="max-w-2xl mx-auto px-6 text-center">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground leading-tight">
             Your experience,<br />
             organised.
           </h1>
@@ -37,7 +37,7 @@ export default async function HomePage() {
       {/* Features */}
       <section className="border-t border-border py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-lg font-semibold text-foreground tracking-tight text-center mb-12">
+          <h2 className="text-lg font-bold text-foreground text-center mb-12">
             Everything an aviation engineer needs. Free.
           </h2>
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
       {/* Consultancy */}
       <section className="border-t border-border py-16 lg:py-24 bg-muted">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-lg font-semibold text-foreground tracking-tight mb-3">
+          <h2 className="text-lg font-bold text-foreground mb-3">
             Consultancy for organisations
           </h2>
           <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">

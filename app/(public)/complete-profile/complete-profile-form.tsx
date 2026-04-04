@@ -467,7 +467,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
     <>
         {mode === 'create' && (
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Complete your profile</h1>
+            <h1 className="text-2xl font-bold text-foreground">Complete your profile</h1>
             <p className="text-sm text-muted-foreground mt-2">
               We need a few details to set up your profile.
             </p>
@@ -482,7 +482,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
             <p className="text-xs text-muted-foreground mb-3">These details should match your Aircraft Maintenance Licence and/or Organisation Authorisation.</p>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First Name <span className="text-muted-foreground/60">Required</span></Label>
+                <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First Name <span className="text-muted-foreground/50 text-xs italic">Required</span></Label>
                 <Input
                   id="firstName"
                   value={firstName}
@@ -493,7 +493,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="middleNames" className="text-sm font-medium text-muted-foreground">
-                  Middle Name(s) <span className="text-muted-foreground/60">Optional</span>
+                  Middle Name(s) <span className="text-muted-foreground/50 text-xs italic">Optional</span>
                 </Label>
                 <Input
                   id="middleNames"
@@ -503,7 +503,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last Name <span className="text-muted-foreground/60">Required</span></Label>
+                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last Name <span className="text-muted-foreground/50 text-xs italic">Required</span></Label>
                 <Input
                   id="lastName"
                   value={lastName}
@@ -516,7 +516,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
           {/* Date of Birth */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Date of Birth <span className="text-muted-foreground/60 font-normal">Required</span></p>
+            <p className="text-sm font-semibold text-foreground mb-3">Date of Birth <span className="text-muted-foreground/50 text-xs italic font-normal">Required</span></p>
             <div>
               <DateInput
                 value={dateOfBirth || null}
@@ -618,7 +618,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                     <div className="flex gap-2">
                       <div className="flex-1 space-y-1.5">
                         <Label className="text-sm font-medium text-muted-foreground">
-                          Licence Number {licences.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/60">Required</span>
+                          Licence Number {licences.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/50 text-xs italic">Required</span>
                         </Label>
                         <Input
                           placeholder="e.g. UK.66.123456A"
@@ -642,7 +642,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Categories{licences.length > 1 ? ` (${index + 1})` : ''} <span className="text-muted-foreground/60">Required</span></p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Categories{licences.length > 1 ? ` (${index + 1})` : ''} <span className="text-muted-foreground/50 text-xs italic">Required</span></p>
                       <div className="flex flex-wrap gap-2">
                         {AML_CATEGORIES.map(cat => {
                           const isSelected = licence.categories.includes(cat.value)
@@ -777,7 +777,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
           {/* Employer section */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Employer(s) <span className="text-muted-foreground/60 font-normal">Required</span></p>
+            <p className="text-sm font-semibold text-foreground mb-3">Employer(s) <span className="text-muted-foreground/50 text-xs italic font-normal">Required</span></p>
             <div className="space-y-4">
               {employers.map((emp, i) => (
                 <div key={i} className="space-y-3">
@@ -808,7 +808,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-muted-foreground">Start Date <span className="text-muted-foreground/60">Required</span></Label>
+                    <Label className="text-sm font-medium text-muted-foreground">Start Date <span className="text-muted-foreground/50 text-xs italic">Required</span></Label>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <DateInput
@@ -833,7 +833,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-muted-foreground">End Date <span className="text-muted-foreground/60">Optional</span></Label>
+                    <Label className="text-sm font-medium text-muted-foreground">End Date <span className="text-muted-foreground/50 text-xs italic">Optional</span></Label>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <DateInput
@@ -867,7 +867,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                                Approval Type {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Required</span>
+                                Approval Type {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/50 text-xs italic">Required</span>
                               </Label>
                               <select
                                 value={approval.type}
@@ -895,7 +895,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                           </div>
                           <div>
                             <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                              Approval Reference {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Optional</span>
+                              Approval Reference {(emp.approvals.length > 1 || employers.length > 1) && `(${aIdx + 1})`} <span className="text-muted-foreground/50 text-xs italic">Optional</span>
                             </Label>
                             <Input
                               placeholder="e.g. UK.145.0000"

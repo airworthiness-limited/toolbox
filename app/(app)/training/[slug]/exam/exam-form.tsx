@@ -108,7 +108,7 @@ if (passed && attempt) {
         result.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
       }`}>
         <div className="text-5xl mb-4">{result.passed ? '🎉' : '😔'}</div>
-        <h2 className={`text-2xl font-bold mb-2 ${
+        <h2 className={`text-lg font-bold mb-2 ${
           result.passed ? 'text-green-800' : 'text-red-800'
         }`}>
           {result.passed ? 'You passed!' : 'Not quite'}

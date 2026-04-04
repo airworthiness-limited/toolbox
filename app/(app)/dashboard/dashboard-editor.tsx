@@ -211,7 +211,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
     <div>
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground">
           {props.fullName}
         </h1>
         <button

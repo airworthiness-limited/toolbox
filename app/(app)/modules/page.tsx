@@ -186,7 +186,7 @@ export default async function ProgressPage({
     <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Module Tracker</h1>
+          <h1 className="text-2xl font-bold text-foreground">Module Tracker</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track your Part 66 subject module examination progress.
           </p>
@@ -247,7 +247,7 @@ export default async function ProgressPage({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* MCQ Column */}
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-4">Multiple-Choice Question Exams</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">Multiple-Choice Question Exams</h2>
             <ProgressTracker
               examRows={mcqRows}
               selectedCategory={selectedCategory}
@@ -257,7 +257,7 @@ export default async function ProgressPage({
 
           {/* Essay Column */}
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-4">Essay Exams</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">Essay Exams</h2>
             {essayRows.length > 0 ? (
               <ProgressTracker
                 examRows={essayRows}
