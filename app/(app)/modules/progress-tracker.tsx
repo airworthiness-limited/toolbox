@@ -298,7 +298,7 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
                 : examPassed
                   ? 'border-green-200 bg-green-50/30 dark:border-green-800 dark:bg-green-950/30'
                   : isEquivalent
-                    ? 'border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-950/30'
+                    ? 'border-border bg-muted/30 dark:border-border dark:bg-muted/30'
                     : ''
             }`}
           >
@@ -314,7 +314,7 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
                   <Badge variant="default" className="bg-green-600">Passed</Badge>
                 )}
                 {isEquivalent && !row.isExpired && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                  <Badge variant="secondary" className="bg-muted text-foreground border-border">
                     Equivalent
                   </Badge>
                 )}
@@ -325,7 +325,7 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
                 )}
               </div>
               {isEquivalent && row.equivalentFrom && (
-                <p className={`text-xs mt-1 ${row.isExpired ? 'text-red-600' : 'text-blue-600'}`}>
+                <p className={`text-xs mt-1 ${row.isExpired ? 'text-red-600' : 'text-foreground'}`}>
                   {row.equivalentFrom.description}
                 </p>
               )}

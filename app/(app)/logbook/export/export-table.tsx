@@ -286,7 +286,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               onChange={e => setDateFrom(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
               placeholder="DD/MM/YYYY"
               maxLength={10}
-              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring w-32"
             />
             <span className="text-muted-foreground text-sm">to</span>
             <input
@@ -295,7 +295,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               onChange={e => setDateTo(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
               placeholder="DD/MM/YYYY"
               maxLength={10}
-              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring w-32"
             />
             {(dateFrom || dateTo) && (
               <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
@@ -315,7 +315,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder=""
-              className="w-full text-sm h-9 pl-8 pr-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm h-9 pl-8 pr-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             />
             {search && (
               <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs">✕</button>
@@ -399,7 +399,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                                 <button
                                   type="button"
                                   onClick={() => router.push('/logbook?edit=' + entry.id)}
-                                  className="text-muted-foreground/40 hover:text-blue-600 transition-colors"
+                                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                                   title="Edit entry"
                                 >
                                   <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -418,7 +418,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                                     return (
                                       <div className="flex flex-wrap gap-1 justify-center items-center mx-auto">
                                         {types.map(t => (
-                                          <span key={t} className="inline-block text-xs bg-blue-50 text-blue-700 border border-blue-100 rounded px-1.5 py-0.5 leading-tight">{t}</span>
+                                          <span key={t} className="inline-block text-xs bg-muted text-foreground border border-border rounded px-1.5 py-0.5 leading-tight">{t}</span>
                                         ))}
                                       </div>
                                     )

@@ -403,7 +403,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                     }}
                     placeholder="DD/MM/YYYY"
                     maxLength={10}
-                    className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
@@ -425,7 +425,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                       type="text"
                       value={row.aircraftRegistration}
                       onChange={e => updateRow(row.id, 'aircraftRegistration', e.target.value.toUpperCase())}
-                      className="w-full text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                      className="w-full text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring uppercase"
                     />
                   </div>
                 )}
@@ -441,7 +441,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                         setTypeSearch(prev => ({ ...prev, [row.id]: e.target.value }))
                         updateRow(row.id, 'aircraftType', e.target.value)
                       }}
-                      className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {getTypeResults(row.id).length > 0 && (
                       <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -505,7 +505,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                         title={row.jobNumberPhotoPath ? 'Photo uploaded' : 'Upload job card photo'}
                       >
                         {uploading[row.id] ? (
-                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
@@ -517,7 +517,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                         type="text"
                         value={row.jobNumber}
                         onChange={e => updateRow(row.id, 'jobNumber', e.target.value)}
-                        className="flex-1 text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                       <input
                         ref={el => { fileInputRefs.current[row.id] = el }}
@@ -563,7 +563,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                     value={row.taskDetail}
                     onChange={e => updateRow(row.id, 'taskDetail', e.target.value)}
                     rows={3}
-                    className="w-full text-sm px-3 py-2.5 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full text-sm px-3 py-2.5 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                   />
                 </div>
 
@@ -591,7 +591,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                     </span>
                   )}
                   {row.saving && (
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                   )}
                   {row.saveError && (
                     <span className="text-xs text-red-600">{row.saveError}</span>

@@ -54,7 +54,7 @@ export default async function ExamPage({ params }: Props) {
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-xl font-semibold text-foreground">No exam available yet</h1>
-          <Link href={`/training/${slug}`} className="text-blue-600 hover:underline mt-2 block">
+          <Link href={`/training/${slug}`} className="text-foreground hover:underline mt-2 block">
             ← Back to course
           </Link>
         </div>
@@ -85,7 +85,7 @@ export default async function ExamPage({ params }: Props) {
     <div className="min-h-screen aw-gradient">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <Link href={`/training/${slug}`}
-          className="text-sm text-blue-600 hover:underline mb-6 block">
+          className="text-sm text-foreground hover:underline mb-6 block">
           ← Back to course
         </Link>
 

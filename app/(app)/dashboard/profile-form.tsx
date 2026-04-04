@@ -113,7 +113,7 @@ export function ProfileForm({ fullName: initialName, amlLicenceNumber: initialLi
                     key={cat.value}
                     className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-sm transition-colors ${
                       amlCategories.includes(cat.value)
-                        ? 'border-blue-500 bg-blue-50 text-blue-900'
+                        ? 'border-foreground bg-muted text-foreground'
                         : 'border-border hover:bg-muted text-foreground'
                     }`}
                   >
@@ -121,7 +121,7 @@ export function ProfileForm({ fullName: initialName, amlLicenceNumber: initialLi
                       type="checkbox"
                       checked={amlCategories.includes(cat.value)}
                       onChange={() => toggleCategory(cat.value)}
-                      className="accent-blue-600"
+                      className="accent-foreground"
                     />
                     {cat.value}
                   </label>

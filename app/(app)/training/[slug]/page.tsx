@@ -66,7 +66,7 @@ export default async function CoursePage({ params }: Props) {
       <div className="max-w-3xl mx-auto px-4 py-12">
 
         {/* Back */}
-        <Link href="/training" className="text-sm text-blue-600 hover:underline mb-6 block">
+        <Link href="/training" className="text-sm text-foreground hover:underline mb-6 block">
           ← Back to courses
         </Link>
 
@@ -87,7 +87,7 @@ export default async function CoursePage({ params }: Props) {
               </div>
               <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full"
+                  className="bg-foreground h-2 rounded-full"
                   style={{ width: `${(completedCount / totalModules) * 100}%` }}
                 />
               </div>
@@ -140,13 +140,13 @@ export default async function CoursePage({ params }: Props) {
 
             {/* EXAM / CERT CTA */}
             {completedCount === totalModules && totalModules > 0 && (
-              <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+              <div className="mt-8 bg-muted border border-border rounded-xl p-6 text-center">
                 {certificate ? (
                   <>
-                    <h2 className="text-lg font-semibold text-blue-900">
+                    <h2 className="text-lg font-semibold text-foreground">
                       🏆 You've earned a certificate!
                     </h2>
-                    <p className="text-blue-700 mt-1 mb-4">
+                    <p className="text-foreground mt-1 mb-4">
                       You passed this course. View or share your certificate.
                     </p>
                     <Link href={`/certificates/${certificate.token}`}>
@@ -155,10 +155,10 @@ export default async function CoursePage({ params }: Props) {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-lg font-semibold text-blue-900">
+                    <h2 className="text-lg font-semibold text-foreground">
                       You've completed all modules!
                     </h2>
-                    <p className="text-blue-700 mt-1 mb-4">
+                    <p className="text-foreground mt-1 mb-4">
                       Ready to take the exam and earn your certificate?
                     </p>
                     <Link href={`/training/${slug}/exam`}>

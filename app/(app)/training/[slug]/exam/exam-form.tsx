@@ -157,7 +157,7 @@ if (passed && attempt) {
                 key={answer.id}
                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
                   ${selected[question.id] === answer.id
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-foreground bg-muted'
                     : 'border-border hover:bg-muted'
                   }`}
               >
@@ -170,7 +170,7 @@ if (passed && attempt) {
                     ...prev,
                     [question.id]: answer.id
                   }))}
-                  className="accent-blue-600"
+                  className="accent-foreground"
                 />
                 <span className="text-foreground">{answer.answer_text}</span>
               </label>
