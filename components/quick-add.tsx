@@ -195,9 +195,9 @@ export function QuickAdd() {
   const inputClass = "w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring text-center"
 
   return (
-    <div ref={panelRef} className="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-3rem)]">
+    <div ref={panelRef} className="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-3rem)] pointer-events-none">
       {/* Expanded form */}
-      <div className={`transition-all duration-200 ease-out origin-bottom-right ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'}`}>
+      <div className={`transition-all duration-200 ease-out origin-bottom-right ${open ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'}`}>
         <div className="w-full max-w-md bg-popover border border-border/50 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-visible mb-3">
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
@@ -358,7 +358,7 @@ export function QuickAdd() {
       {/* FAB button */}
       <button
         onClick={() => open ? setOpen(false) : handleOpen()}
-        className={`flex items-center gap-2 shadow-lg transition-all duration-200 ml-auto ${
+        className={`pointer-events-auto flex items-center gap-2 shadow-lg transition-all duration-200 ml-auto ${
           open
             ? 'bg-muted text-muted-foreground rounded-full w-12 h-12 justify-center rotate-45'
             : 'bg-foreground text-background hover:bg-foreground/90 rounded-full px-5 h-12'
