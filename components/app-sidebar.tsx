@@ -79,7 +79,7 @@ export function AppSidebar() {
   const navContent = (
     <>
       {/* Brand */}
-      <div className="px-5 pt-6 pb-8 text-center">
+      <div className="px-5 pt-6 pb-4 text-center">
         <Link href="/" className="text-xl text-sidebar-foreground font-extrabold tracking-tight">
           Airworthiness
         </Link>
