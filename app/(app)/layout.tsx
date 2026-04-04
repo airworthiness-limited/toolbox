@@ -23,7 +23,7 @@ export default async function AppLayout({
   return (
     <>
       <AppSidebar />
-      <main className="min-h-screen bg-background transition-all duration-200 md:ml-[var(--sidebar-width,15rem)]">
+      <main className="md:ml-60 min-h-screen bg-background">
         {/* Mobile top padding for the mobile header */}
         <div className="md:hidden h-12" />
         <div className="max-w-4xl mx-auto px-6 pt-4 pb-8">
