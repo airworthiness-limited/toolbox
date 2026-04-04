@@ -100,14 +100,12 @@ function MobileMenu({
   user,
   loaded,
   professionalsItems,
-  organisationsItems,
 }: {
   open: boolean
   onClose: () => void
   user: any
   loaded: boolean
   professionalsItems: { label: string; href: string | null }[]
-  organisationsItems: { label: string; href: string | null }[]
 }) {
   const pathname = usePathname()
 
@@ -160,28 +158,6 @@ function MobileMenu({
             ))}
           </div>
 
-          <div className="border-t mt-4 pt-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Organisations</p>
-            {organisationsItems.map(item => (
-              item.href ? (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`block py-2.5 text-sm font-medium ${
-                    pathname === item.href ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <span key={item.label} className="block py-2.5 text-sm font-medium text-muted-foreground/60">
-                  {item.label}
-                </span>
-              )
-            ))}
-          </div>
-
           <div className="border-t mt-4 pt-4 space-y-3">
             {loaded && !user && (
               <Link href="/signup" onClick={onClose}>
@@ -214,20 +190,13 @@ export function Navbar() {
         { label: 'Module Tracker', href: '/progress' },
         { label: 'Digital Logbook', href: '/logbook' },
         { label: 'Continuation Training', href: '/courses' },
-        { label: 'Profile', href: '/profile' },
+        { label: 'Dashboard', href: '/profile' },
       ]
     : [
         { label: 'Module Tracker', href: '/progress' },
         { label: 'Digital Logbook', href: '/logbook' },
         { label: 'Continuation Training', href: '/courses' },
       ]
-
-  const organisationsItems = [
-    { label: 'Independent Audit', href: null },
-    { label: 'Crisis Management', href: null },
-    { label: 'Nominated Personnel Interviews', href: null },
-    { label: 'Safety Review Boards', href: null },
-  ]
 
   const professionalsActive = ['/progress', '/logbook', '/courses', '/profile'].some(
     p => pathname === p || pathname.startsWith(p + '/')
@@ -267,17 +236,19 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="md:hidden text-muted-foreground hover:text-foreground p-1"
-            aria-label="Open menu"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* Mobile hamburger — only show when logged in */}
+          {loaded && user && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="md:hidden text-muted-foreground hover:text-foreground p-1"
+              aria-label="Open menu"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -287,7 +258,6 @@ export function Navbar() {
         user={user}
         loaded={loaded}
         professionalsItems={professionalsItems}
-        organisationsItems={organisationsItems}
       />
     </>
   )

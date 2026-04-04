@@ -209,7 +209,6 @@ export default async function ProfilePage() {
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             {fullName}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Your aircraft maintenance licence at a glance.</p>
         </div>
 
         {/* Stats */}
