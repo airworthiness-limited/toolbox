@@ -184,7 +184,7 @@ export function AppSidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-60 bg-sidebar min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden md:flex flex-col w-60 bg-background border-r border-border/50 min-h-screen fixed left-0 top-0 z-40 shadow-[1px_0_3px_rgba(0,0,0,0.04)]">
         {/* Brand */}
         <div className="px-5 pt-6 pb-4 text-center">
           <Link href="/" className="text-xl text-sidebar-foreground font-black tracking-tight">
@@ -232,7 +232,7 @@ export function AppSidebar() {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="md:hidden fixed top-6 left-4 z-50 text-foreground/60 hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
+          className="md:hidden fixed top-[1.85rem] left-4 z-50 text-foreground/60 hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
           aria-label="Open menu"
         >
           <Menu className="w-5 h-5" />
@@ -243,7 +243,7 @@ export function AppSidebar() {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute top-0 left-0 w-60 h-full bg-sidebar flex flex-col">
+          <aside className="absolute top-0 left-0 w-60 h-full bg-background border-r border-border/50 shadow-lg flex flex-col">
             {/* Brand */}
             <div className="px-5 pt-6 pb-4 text-center">
               <Link href="/" className="text-xl text-sidebar-foreground font-black tracking-tight">
