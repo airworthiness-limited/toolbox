@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sun, Moon, Monitor, Download, KeyRound, Shield } from 'lucide-react'
+import { DeleteAccountButton } from '@/app/(app)/dashboard/delete-account-button'
 
 interface SettingsPanelProps {
   userEmail: string
@@ -217,6 +218,20 @@ export function SettingsPanel({ userEmail }: SettingsPanelProps) {
             {exporting ? 'Preparing download...' : exportDone ? 'Downloaded' : 'Download My Data'}
           </Button>
           {exportDone && <p className="text-sm text-green-600 mt-2">Your data has been downloaded.</p>}
+        </div>
+      </section>
+
+      {/* Delete Account */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="w-4 h-4 text-red-500" strokeWidth={1.5} />
+          <h2 className="text-lg font-semibold text-red-600">Delete Account</h2>
+        </div>
+        <div className="rounded-xl border border-red-100 p-5">
+          <p className="text-sm text-muted-foreground mb-4">
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+          <DeleteAccountButton />
         </div>
       </section>
 
