@@ -204,10 +204,12 @@ export function AppSidebar() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-60 bg-background border-r border-border/50 min-h-screen fixed left-0 top-0 z-40 shadow-[1px_0_3px_rgba(0,0,0,0.04)]">
         {/* Brand */}
-        <div className="px-5 pt-6 pb-4 text-center">
-          <Link href="/" className="text-xl text-sidebar-foreground font-bold tracking-tight">
-            Airworthiness
-          </Link>
+        <div className="px-3 pt-6 pb-4">
+          <div className="px-3">
+            <Link href="/" className="text-xl text-sidebar-foreground font-bold tracking-tight">
+              Airworthiness
+            </Link>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -246,57 +248,65 @@ export function AppSidebar() {
         )}
       </aside>
 
-
-      {/* Mobile sidebar overlay */}
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute top-0 left-0 w-60 h-full bg-background border-r border-border/50 shadow-lg flex flex-col">
-            {/* Brand */}
-            <div className="px-5 pt-6 pb-4 text-center">
+      {/* Mobile sidebar overlay + slide animation */}
+      <div
+        className={`md:hidden fixed inset-0 z-50 transition-opacity duration-200 ${mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+        <aside className={`absolute top-0 left-0 w-60 h-full bg-background border-r border-border/50 shadow-lg flex flex-col transition-transform duration-200 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {/* Brand + close */}
+          <div className="px-3 pt-6 pb-4 flex items-center justify-between">
+            <div className="px-3">
               <Link href="/" className="text-xl text-sidebar-foreground font-bold tracking-tight">
                 Airworthiness
               </Link>
             </div>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="text-sidebar-foreground/40 hover:text-sidebar-foreground p-1 rounded-lg hover:bg-sidebar-accent/50 transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" strokeWidth={1.5} />
+            </button>
+          </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 px-3">
-              <ul className="space-y-1">
-                {NAV_ITEMS.map((item) => {
-                  const Icon = item.icon
-                  const active = isActive(item.href)
+          {/* Navigation */}
+          <nav className="flex-1 px-3">
+            <ul className="space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
 
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          active
-                            ? 'bg-sidebar-accent text-sidebar-foreground'
-                            : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                        {item.label}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </nav>
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-sidebar-accent text-sidebar-foreground'
+                          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
 
-            {/* User menu */}
-            {loaded && user && (
-              <div className="px-3 pb-4 mt-auto">
-                <div className="border-t border-sidebar-border pt-3">
-                  <UserMenu fullName={fullName} onLogout={handleLogout} onClose={() => setMobileOpen(false)} />
-                </div>
+          {/* User menu */}
+          {loaded && user && (
+            <div className="px-3 pb-4 mt-auto">
+              <div className="border-t border-sidebar-border pt-3">
+                <UserMenu fullName={fullName} onLogout={handleLogout} onClose={() => setMobileOpen(false)} />
               </div>
-            )}
-          </aside>
-        </div>
-      )}
+            </div>
+          )}
+        </aside>
+      </div>
     </>
   )
 }
