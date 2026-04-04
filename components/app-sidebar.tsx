@@ -232,7 +232,7 @@ export function AppSidebar() {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="md:hidden fixed top-4 left-4 z-50 text-foreground/60 hover:text-foreground p-2 rounded-lg hover:bg-muted transition-colors"
+          className="md:hidden fixed top-6 left-4 z-50 text-foreground/60 hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
           aria-label="Open menu"
         >
           <Menu className="w-5 h-5" />
