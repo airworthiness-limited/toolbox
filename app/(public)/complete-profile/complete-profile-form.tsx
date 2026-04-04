@@ -306,7 +306,7 @@ export function CompleteProfileForm() {
           {/* Name section */}
           <div>
             <p className="text-sm font-semibold text-foreground mb-3">Your Full Name</p>
-            <p className="text-xs text-muted-foreground mb-3">If you hold a Part 66 licence, this should match the name on your licence.</p>
+            <p className="text-xs text-muted-foreground mb-3">If you hold an Aircraft Maintenance Licence, this should match.</p>
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First Name</Label>
@@ -345,7 +345,7 @@ export function CompleteProfileForm() {
 
           {/* Licence question */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-1">Do you hold a Part 66 Aircraft Maintenance Licence?</p>
+            <p className="text-sm font-semibold text-foreground mb-1">Do you hold an Aircraft Maintenance Licence?</p>
             <p className="text-xs text-muted-foreground mb-3">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
             <div className="flex gap-3">
               <button
@@ -443,108 +443,83 @@ export function CompleteProfileForm() {
                       <span className="text-sm font-medium text-muted-foreground">I have aircraft type ratings on this licence</span>
                     </label>
 
-                    {/* Type Ratings table */}
+                    {/* Type Ratings cards */}
                     {licence.showTypeRatings && (() => {
                       const firstCDate = licence.endorsements.find(e => e.cDate)?.cDate ?? null
-                      return (
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Enter the date each type was endorsed on this licence.</p>
-                        <div className="overflow-x-auto border rounded-lg">
-                          <table className="w-full text-sm border-collapse">
-                            <thead>
-                              <tr className="border-b border-border bg-muted">
-                                <th className="text-left py-2 px-2 font-semibold text-foreground min-w-[320px] text-xs">Aircraft Type</th>
-                                <th className="text-center py-2 px-2 font-semibold text-foreground w-[115px] text-xs">B1</th>
-                                <th className="text-center py-2 px-2 font-semibold text-foreground w-[115px] text-xs">B2</th>
-                                <th className="text-center py-2 px-2 font-semibold text-foreground w-[115px] text-xs">B3</th>
-                                <th className="text-center py-2 px-2 font-semibold text-foreground w-[115px] text-xs">C</th>
-                                <th className="w-[30px]"></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {licence.endorsements.map((endorsement, rowIndex) => {
-                                const isEmptyRow = !endorsement.rating
-                                const b1Sub = endorsement.rating ? getCategoryForRating(endorsement.rating) : null
-                                const filtered = isEmptyRow && licence.activeSearchRow === rowIndex ? getFilteredRatings(licence) : []
-                                const cDateValue = endorsement.cDate ?? (firstCDate && !isEmptyRow ? firstCDate : null)
+                      const filledEndorsements = licence.endorsements.filter(e => e.rating)
+                      const emptyRow = licence.endorsements.find(e => !e.rating)
+                      const emptyRowIndex = licence.endorsements.indexOf(emptyRow!)
+                      const filtered = emptyRow && licence.activeSearchRow === emptyRowIndex ? getFilteredRatings(licence) : []
 
-                                return (
-                                  <tr key={rowIndex} className="border-b border-border">
-                                    <td className="py-2 px-2">
-                                      {isEmptyRow ? (
-                                        <div className="relative">
-                                          <Input
-                                            value={licence.activeSearchRow === rowIndex ? licence.typeSearch : ''}
-                                            onChange={e => {
-                                              setLicenceActiveSearchRow(index, rowIndex)
-                                              setLicenceTypeSearch(index, e.target.value)
-                                            }}
-                                            onFocus={() => setLicenceActiveSearchRow(index, rowIndex)}
-                                            placeholder="Search aircraft type..."
-                                            className="text-sm h-12"
-                                          />
-                                          {filtered.length > 0 && (
-                                            <div className="absolute z-10 mt-1 w-full min-w-[360px] bg-background border rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                                              {filtered.map(r => (
-                                                <button
-                                                  key={`${r.category}-${r.rating}`}
-                                                  type="button"
-                                                  onClick={() => selectAircraftType(index, rowIndex, r.rating)}
-                                                  className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-0"
-                                                >
-                                                  <span className="font-medium">{r.rating}</span>
-                                                  <span className="text-muted-foreground ml-2 text-xs">{r.category} · {r.group}</span>
-                                                </button>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <div>
-                                          <span className="font-medium text-xs">{endorsement.rating}</span>
-                                          {b1Sub && <span className="text-[10px] text-muted-foreground ml-1">({b1Sub})</span>}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-1">
-                                      {isEmptyRow ? (
-                                        <div className="h-10 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground">-</div>
-                                      ) : (
-                                        <DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} />
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-1">
-                                      {isEmptyRow ? (
-                                        <div className="h-10 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground">-</div>
-                                      ) : (
-                                        <DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} />
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-1">
-                                      {isEmptyRow ? (
-                                        <div className="h-10 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground">-</div>
-                                      ) : (
-                                        <DateInput value={endorsement.b3Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b3Date', v)} filled={!!endorsement.b3Date} />
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-1">
-                                      {isEmptyRow ? (
-                                        <div className="h-10 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground">-</div>
-                                      ) : (
-                                        <DateInput value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} />
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-1">
-                                      {!isEmptyRow && (
-                                        <button type="button" onClick={() => removeEndorsement(index, rowIndex)}
-                                          className="text-muted-foreground hover:text-red-500 text-sm">&times;</button>
-                                      )}
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
+                      return (
+                      <div className="mt-3 space-y-3">
+                        {/* Filled endorsement cards */}
+                        {filledEndorsements.map((endorsement, i) => {
+                          const rowIndex = licence.endorsements.indexOf(endorsement)
+                          const b1Sub = getCategoryForRating(endorsement.rating)
+                          const cDateValue = endorsement.cDate ?? firstCDate
+                          return (
+                            <div key={rowIndex} className="border rounded-xl p-4 relative">
+                              <button
+                                type="button"
+                                onClick={() => removeEndorsement(index, rowIndex)}
+                                className="absolute top-3 right-3 text-muted-foreground hover:text-red-500 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                              <p className="text-sm font-semibold text-foreground">{endorsement.rating}</p>
+                              {b1Sub && <p className="text-xs text-muted-foreground mt-0.5">{b1Sub}</p>}
+                              <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">B1</p>
+                                  <DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">B2</p>
+                                  <DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">B3</p>
+                                  <DateInput value={endorsement.b3Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b3Date', v)} filled={!!endorsement.b3Date} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">C</p>
+                                  <DateInput value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} />
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {/* Search input for adding new type */}
+                        <div className="relative">
+                          <Input
+                            value={licence.activeSearchRow === emptyRowIndex ? licence.typeSearch : ''}
+                            onChange={e => {
+                              setLicenceActiveSearchRow(index, emptyRowIndex)
+                              setLicenceTypeSearch(index, e.target.value)
+                            }}
+                            onFocus={() => setLicenceActiveSearchRow(index, emptyRowIndex)}
+                            placeholder="Search aircraft type to add..."
+                            className="text-sm h-12 rounded-xl"
+                          />
+                          {filtered.length > 0 && (
+                            <div className="absolute z-10 mt-1 w-full bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {filtered.map(r => (
+                                <button
+                                  key={`${r.category}-${r.rating}`}
+                                  type="button"
+                                  onClick={() => selectAircraftType(index, emptyRowIndex, r.rating)}
+                                  className="w-full text-left px-4 py-3 text-sm hover:bg-muted border-b last:border-0"
+                                >
+                                  <span className="font-medium">{r.rating}</span>
+                                  <span className="text-muted-foreground ml-2 text-xs">{r.category} · {r.group}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       )
