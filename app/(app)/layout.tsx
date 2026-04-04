@@ -26,7 +26,7 @@ export default async function AppLayout({
       <main className="md:ml-60 min-h-screen bg-background">
         {/* Mobile top padding for the mobile header */}
         <div className="md:hidden h-12" />
-        <div className="max-w-4xl mx-auto px-6 md:pt-[4.5rem] pt-4 pb-8">
+        <div className="max-w-4xl mx-auto px-6 md:pt-6 pt-4 pb-8">
           {children}
         </div>
       </main>
