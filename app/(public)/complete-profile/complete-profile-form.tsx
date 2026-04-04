@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -66,27 +66,31 @@ function ukToIso(uk: string): string {
 function DateInput({ value, onChange, filled, onError }: { value: string | null, onChange: (v: string) => void, filled: boolean, onError?: (hasError: boolean) => void }) {
   const [display, setDisplay] = useState(isoToUk(value))
   const [error, setError] = useState('')
+  const hasErrorRef = useRef(false)
 
   function setValidationError(msg: string) {
     setError(msg)
-    onError?.(true)
-    onChange('')
+    if (!hasErrorRef.current) {
+      hasErrorRef.current = true
+      onError?.(true)
+    }
   }
 
   function clearError() {
     setError('')
-    onError?.(false)
+    if (hasErrorRef.current) {
+      hasErrorRef.current = false
+      onError?.(false)
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    // Allow digits and slashes only, max 10 chars
     const cleaned = e.target.value.replace(/[^\d/]/g, '').slice(0, 10)
     setDisplay(cleaned)
     if (error) clearError()
   }
 
   function handleBlur() {
-    // On blur, try to parse and format
     const digits = display.replace(/[^\d]/g, '')
     if (digits.length === 0) {
       clearError()
@@ -102,13 +106,11 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
     const m = parseInt(digits.slice(2, 4), 10)
     const y = parseInt(digits.slice(4, 8), 10)
 
-    // Validate day/month ranges
     if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900) {
       setValidationError('Invalid date')
       return
     }
 
-    // Validate the date is real (e.g. no 31 Feb)
     const parsed = new Date(y, m - 1, d)
     if (
       isNaN(parsed.getTime()) ||
@@ -120,7 +122,6 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
       return
     }
 
-    // Reject future dates (allow today)
     const now = new Date()
     const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     if (parsed > todayDate) {
@@ -132,8 +133,7 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
     const dd = String(d).padStart(2, '0')
     const mm = String(m).padStart(2, '0')
     const iso = `${y}-${mm}-${dd}`
-    const formatted = `${dd}/${mm}/${y}`
-    setDisplay(formatted)
+    setDisplay(`${dd}/${mm}/${y}`)
     onChange(iso)
   }
 
