@@ -47,10 +47,15 @@ export default async function ManageProfilePage() {
   const categories = profile.aml_categories ?? []
   const typeRatings = Array.isArray(profile.type_ratings) ? profile.type_ratings : []
 
-  // Normalise type ratings (handle old string[] format)
+  // Normalise type ratings (stored as JSON strings in text[] column)
   const normalised = typeRatings.map((item: any) => {
     if (typeof item === 'string') {
-      return { rating: item, b1Date: null, b2Date: null, b3Date: null, cDate: null }
+      try {
+        const parsed = JSON.parse(item)
+        return { rating: parsed.rating ?? '', b1Date: parsed.b1Date ?? null, b2Date: parsed.b2Date ?? null, b3Date: parsed.b3Date ?? null, cDate: parsed.cDate ?? null }
+      } catch {
+        return { rating: item, b1Date: null, b2Date: null, b3Date: null, cDate: null }
+      }
     }
     return item
   })
