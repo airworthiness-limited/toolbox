@@ -225,7 +225,7 @@ export function SettingsPanel({ userEmail }: SettingsPanelProps) {
       <section>
         <div className="flex items-center gap-2 mb-4">
           <Shield className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-          <h2 className="text-lg font-semibold text-red-600">Delete Account</h2>
+          <h2 className="text-lg font-semibold text-foreground">Delete Account</h2>
         </div>
         <div className="rounded-xl border border-border p-5">
           <p className="text-sm text-muted-foreground mb-4">
