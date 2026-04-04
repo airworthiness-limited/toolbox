@@ -12,7 +12,7 @@ const alexandria = Alexandria({
 })
 
 export const metadata: Metadata = {
-  title: 'Airworthiness Limited',
+  title: 'Airworthiness',
   description: 'Continuation training, digital logbooks, and module exam tracking for UK Aircraft Maintenance Licence holders.',
 }
 
