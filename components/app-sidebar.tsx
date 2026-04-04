@@ -108,7 +108,7 @@ function UserMenu({ fullName, onLogout, onClose }: { fullName: string | null; on
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-56 bg-popover border border-border rounded-xl shadow-xl py-1.5 z-50">
+        <div className="absolute bottom-full left-0 mb-2 w-56 bg-popover border border-border rounded-xl shadow-xl py-1.5 z-[60]">
           {/* User info header */}
           <div className="px-3 py-2 mb-1">
             <p className="text-sm font-medium text-foreground truncate">{fullName || 'User'}</p>
