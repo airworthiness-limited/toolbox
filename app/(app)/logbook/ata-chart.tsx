@@ -174,7 +174,7 @@ export function AtaChart({ entries }: AtaChartProps) {
                       }}
                     />
                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 bg-gray-900 text-white text-[10px] px-3 py-2 rounded-lg shadow-lg pointer-events-none" style={{ minWidth: 160 }}>
-                      <div className="font-bold mb-1">ATA {code}: {count} task{count !== 1 ? 's' : ''}</div>
+                      <div className="font-semibold mb-1">ATA {code}: {count} task{count !== 1 ? 's' : ''}</div>
                       {breakdown.length > 0 ? (
                         <div className="space-y-0.5">
                           {breakdown.map(sub => (

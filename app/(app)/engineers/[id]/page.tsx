@@ -208,7 +208,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-bold text-foreground">{uniqueTaskDays} days</span>
+                <span className="text-2xl font-semibold text-foreground">{uniqueTaskDays} days</span>
                 <Badge variant={recencyMet ? 'default' : 'destructive'}>
                   {recencyMet ? 'Current' : 'Not Met'}
                 </Badge>

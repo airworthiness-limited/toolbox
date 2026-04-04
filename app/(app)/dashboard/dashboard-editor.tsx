@@ -122,7 +122,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Tasks</span>
-                  <span className="text-sm font-bold text-foreground">{props.logbookCount} / 180</span>
+                  <span className="text-sm font-semibold text-foreground">{props.logbookCount} / 180</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div
@@ -134,7 +134,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Days</span>
-                  <span className="text-sm font-bold text-foreground">{props.recencyTotalDays} / {props.recencyRequiredDays}</span>
+                  <span className="text-sm font-semibold text-foreground">{props.recencyTotalDays} / {props.recencyRequiredDays}</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div
@@ -211,7 +211,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
     <div>
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-semibold text-foreground">
           {props.fullName}
         </h1>
         <button

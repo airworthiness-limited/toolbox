@@ -90,7 +90,7 @@ export default async function ExamPage({ params }: Props) {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">{course.title}</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{course.title}</h1>
           <p className="text-muted-foreground mt-1">
             Final exam, {questions?.length} questions · Pass mark: {exam.pass_score}%
           </p>

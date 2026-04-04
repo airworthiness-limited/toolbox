@@ -93,7 +93,7 @@ export default async function LogbookEntryPage({ params }: Props) {
       <div className="min-h-screen aw-gradient">
         <div className="max-w-2xl mx-auto px-4 py-12">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold text-white">Edit Entry</h1>
+            <h1 className="text-2xl font-semibold text-white">Edit Entry</h1>
             <Badge variant={statusInfo.color as 'default' | 'secondary' | 'outline' | 'destructive'}>
               {statusInfo.label}
             </Badge>
@@ -124,7 +124,7 @@ export default async function LogbookEntryPage({ params }: Props) {
       <div className="max-w-2xl mx-auto px-4 py-12">
 
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-white">Logbook Entry</h1>
+          <h1 className="text-2xl font-semibold text-white">Logbook Entry</h1>
           <Badge variant={statusInfo.color as 'default' | 'secondary' | 'outline' | 'destructive'}>
             {statusInfo.label}
           </Badge>

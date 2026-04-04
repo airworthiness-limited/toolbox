@@ -73,7 +73,7 @@ export default async function CoursePage({ params }: Props) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold text-white">{course.title}</h1>
+            <h1 className="text-2xl font-semibold text-white">{course.title}</h1>
             {course.is_premium && <Badge variant="secondary">Premium</Badge>}
           </div>
           <p className="text-white/60">{course.description}</p>
@@ -99,7 +99,7 @@ export default async function CoursePage({ params }: Props) {
         {course.is_premium && !hasPremium && (
           <div className="my-8 bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
             <div className="text-4xl mb-3">🔒</div>
-            <h2 className="text-lg font-bold text-amber-900 mb-2">
+            <h2 className="text-lg font-semibold text-amber-900 mb-2">
               This is a premium course
             </h2>
             <p className="text-amber-700 mb-6">
@@ -143,7 +143,7 @@ export default async function CoursePage({ params }: Props) {
               <div className="mt-8 bg-muted border border-border rounded-xl p-6 text-center">
                 {certificate ? (
                   <>
-                    <h2 className="text-lg font-bold text-foreground">
+                    <h2 className="text-lg font-semibold text-foreground">
                       🏆 You've earned a certificate!
                     </h2>
                     <p className="text-foreground mt-1 mb-4">
@@ -155,7 +155,7 @@ export default async function CoursePage({ params }: Props) {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-lg font-bold text-foreground">
+                    <h2 className="text-lg font-semibold text-foreground">
                       You've completed all modules!
                     </h2>
                     <p className="text-foreground mt-1 mb-4">

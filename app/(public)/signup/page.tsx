@@ -61,7 +61,7 @@ function AuthForm() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-foreground mb-2">Check your email</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Check your email</h2>
           <p className="text-sm text-muted-foreground">
             We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>.
           </p>
@@ -97,7 +97,7 @@ function AuthForm() {
       <div className="w-full max-w-sm">
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Sign in to Airworthiness</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Sign in to Airworthiness</h1>
           <p className="text-sm text-muted-foreground mt-2">
             The digital platform for aviation engineering.
           </p>

@@ -74,7 +74,7 @@ export function EmploymentForm({ periods: initialPeriods }: Props) {
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-foreground">{period.employer}</p>
                     {period.is_military && (
-                      <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Military / Non-Civil</span>
+                      <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Military / Non-Civil</span>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">

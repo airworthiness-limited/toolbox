@@ -54,7 +54,7 @@ export default async function ModulePage({ params }: Props) {
         </Link>
 
         {/* Module title */}
-        <h1 className="text-2xl font-bold text-white mb-6">{module.title}</h1>
+        <h1 className="text-2xl font-semibold text-white mb-6">{module.title}</h1>
 
         {/* Content */}
         <div className="bg-card rounded-xl border p-8 prose prose-gray max-w-none">

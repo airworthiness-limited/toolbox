@@ -229,7 +229,7 @@ export default async function LogbookPage({
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-foreground">Digital Logbook</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Digital Logbook</h1>
             <Link href="/logbook/export">
               <Button variant="outline" size="sm">View All Tasks</Button>
             </Link>
@@ -287,7 +287,7 @@ export default async function LogbookPage({
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Tasks</span>
-                  <span className="text-sm font-bold text-foreground">{recencyTasks} / {RECENCY_TASK_THRESHOLD}</span>
+                  <span className="text-sm font-semibold text-foreground">{recencyTasks} / {RECENCY_TASK_THRESHOLD}</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div
@@ -299,7 +299,7 @@ export default async function LogbookPage({
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Days</span>
-                  <span className="text-sm font-bold text-foreground">{recencyDays} / {RECENCY_DAY_THRESHOLD}</span>
+                  <span className="text-sm font-semibold text-foreground">{recencyDays} / {RECENCY_DAY_THRESHOLD}</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div
@@ -323,7 +323,7 @@ export default async function LogbookPage({
 
 
         {/* Mass Input */}
-        <h2 className="text-lg font-bold text-foreground mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
         <MassInput
           defaultEmployer={defaultEmployer}
           lastMaintenanceType={lastMaintenanceType}

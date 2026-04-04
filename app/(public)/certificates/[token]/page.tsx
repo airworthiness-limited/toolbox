@@ -52,7 +52,7 @@ export default async function CertificatePage({ params }: Props) {
 
           <p className="text-muted-foreground text-lg mb-3">This certifies that</p>
 
-          <h1 className="text-2xl font-bold text-foreground mb-3">
+          <h1 className="text-2xl font-semibold text-foreground mb-3">
             {cert.recipient_name ?? 'Unknown'}
           </h1>
 
@@ -60,7 +60,7 @@ export default async function CertificatePage({ params }: Props) {
             has successfully completed
           </p>
 
-          <h2 className="text-lg font-bold text-foreground mb-8">
+          <h2 className="text-lg font-semibold text-foreground mb-8">
             {(cert.courses as any)?.title}
           </h2>
 

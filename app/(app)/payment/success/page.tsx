@@ -37,7 +37,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-card rounded-2xl border p-12 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Payment not confirmed
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -57,7 +57,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-card rounded-2xl border p-12 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Payment user mismatch
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -80,7 +80,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
     return (
       <div className="min-h-screen aw-gradient flex items-center justify-center">
         <div className="bg-card rounded-2xl border p-12 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Payment received, but activation failed
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -97,7 +97,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen aw-gradient flex items-center justify-center">
       <div className="bg-card rounded-2xl border p-12 text-center max-w-md">
-        <h1 className="text-2xl font-bold text-foreground mb-2">
+        <h1 className="text-2xl font-semibold text-foreground mb-2">
           Adverts removed
         </h1>
         <p className="text-muted-foreground mb-8">

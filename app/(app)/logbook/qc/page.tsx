@@ -56,7 +56,7 @@ export default async function QcPage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">QC Review Queue</h1>
+            <h1 className="text-2xl font-semibold text-white">QC Review Queue</h1>
             <p className="text-white/60 mt-1">
               Cross-check that the individual and verifier were both on the job. Independent of the AML verification.
             </p>

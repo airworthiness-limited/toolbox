@@ -99,7 +99,7 @@ export default async function ManageProfilePage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-semibold text-foreground">
           Manage Profile
         </h1>
       </div>

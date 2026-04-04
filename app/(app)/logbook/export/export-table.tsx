@@ -360,7 +360,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
           {grouped.map(group => (
             <div key={group.category}>
               {/* Category heading */}
-              <h2 className="text-base font-bold text-foreground mb-3 pb-1 border-b-2 border-border print:text-sm">
+              <h2 className="text-base font-semibold text-foreground mb-3 pb-1 border-b-2 border-border print:text-sm">
                 {group.label}
               </h2>
 
@@ -368,7 +368,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
                 {group.ataGroups.map(({ ata, entries: ataEntries }, ataIdx) => (
                   <div key={ata}>
                     {/* ATA subheading */}
-                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 print:text-[10px]">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 print:text-[10px]">
                       {ata ? getAtaLabel(ata) : 'Uncategorised'}
                     </h3>
                     <div className="border rounded-lg print:border-black">

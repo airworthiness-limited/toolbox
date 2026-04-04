@@ -132,7 +132,7 @@ export default async function ExportPage() {
         {/* Header */}
         <div className="mb-8 print:mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-2xl font-bold text-foreground print:text-xl">
+            <h1 className="text-2xl font-semibold text-foreground print:text-xl">
               Digital Logbook (CAP 741)
             </h1>
             <div className="print:hidden flex items-center gap-2">

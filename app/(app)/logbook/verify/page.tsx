@@ -46,7 +46,7 @@ export default async function VerifyPage({
     return (
       <div className="min-h-screen aw-gradient">
         <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Verification Queue</h1>
+          <h1 className="text-2xl font-semibold text-white mb-4">Verification Queue</h1>
           <p className="text-white/60 mb-6">
             You need a Part 66 Aircraft Maintenance Licence to verify logbook entries.
           </p>
@@ -77,7 +77,7 @@ export default async function VerifyPage({
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">Verification Queue</h1>
+            <h1 className="text-2xl font-semibold text-white">Verification Queue</h1>
             <p className="text-white/60 mt-1">
               Entries from personnel at your employer(s), matching your AML categories.
             </p>
