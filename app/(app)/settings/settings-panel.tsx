@@ -224,10 +224,10 @@ export function SettingsPanel({ userEmail }: SettingsPanelProps) {
       {/* Delete Account */}
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <Shield className="w-4 h-4 text-red-500" strokeWidth={1.5} />
+          <Shield className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
           <h2 className="text-lg font-semibold text-red-600">Delete Account</h2>
         </div>
-        <div className="rounded-xl border border-red-100 p-5">
+        <div className="rounded-xl border border-border p-5">
           <p className="text-sm text-muted-foreground mb-4">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
