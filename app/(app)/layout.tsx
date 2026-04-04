@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppSidebar } from '@/components/app-sidebar'
+import { SidebarTriggerInline } from '@/components/sidebar-trigger-inline'
 
 export default async function AppLayout({
   children,
@@ -23,8 +24,9 @@ export default async function AppLayout({
   return (
     <>
       <AppSidebar />
-      <main className="md:ml-60 min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto pl-14 pr-6 md:px-6 pt-6 pb-8">
+      <main className="md:ml-60 min-h-screen bg-background relative">
+        <div className="max-w-4xl mx-auto pl-12 pr-6 md:px-6 pt-6 pb-8">
+          <SidebarTriggerInline />
           {children}
         </div>
       </main>

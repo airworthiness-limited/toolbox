@@ -148,11 +148,30 @@ function UserMenu({ fullName, onLogout, onClose }: { fullName: string | null; on
   )
 }
 
+export function SidebarTrigger() {
+  return (
+    <button
+      onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+      className="md:hidden text-foreground/60 hover:text-foreground rounded-lg hover:bg-muted transition-colors flex-shrink-0"
+      aria-label="Open menu"
+    >
+      <Menu className="w-5 h-5" />
+    </button>
+  )
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, profile, loaded } = useUserProfile()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Listen for external trigger
+  useEffect(() => {
+    function handleToggle() { setMobileOpen(true) }
+    window.addEventListener('toggle-sidebar', handleToggle)
+    return () => window.removeEventListener('toggle-sidebar', handleToggle)
+  }, [])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -228,16 +247,6 @@ export function AppSidebar() {
         )}
       </aside>
 
-      {/* Mobile hamburger button */}
-      {!mobileOpen && (
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="md:hidden fixed top-[1.85rem] left-4 z-50 text-foreground/60 hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      )}
 
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
