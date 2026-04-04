@@ -26,7 +26,7 @@ export default async function ManageProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, aml_licence_number, aml_categories, type_ratings, aml_photo_path, industry')
+    .select('full_name, date_of_birth, aml_licence_number, aml_categories, type_ratings, aml_photo_path, industry')
     .eq('id', user.id)
     .single()
 
@@ -88,6 +88,7 @@ export default async function ManageProfilePage() {
     firstName,
     middleNames,
     lastName,
+    dateOfBirth: profile.date_of_birth ?? '',
     hasLicence: hasLicence ? 'yes' : '',
     licences,
     employers,

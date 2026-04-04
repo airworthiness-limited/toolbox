@@ -181,6 +181,7 @@ export interface ProfileFormInitialData {
   firstName: string
   middleNames: string
   lastName: string
+  dateOfBirth: string
   hasLicence: 'yes' | 'no' | ''
   licences: LicenceEntry[]
   employers: Employer[]
@@ -203,6 +204,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
   const [firstName, setFirstName] = useState(initialData?.firstName ?? '')
   const [middleNames, setMiddleNames] = useState(initialData?.middleNames ?? '')
   const [lastName, setLastName] = useState(initialData?.lastName ?? '')
+  const [dateOfBirth, setDateOfBirth] = useState(initialData?.dateOfBirth ?? '')
   const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>(initialData?.hasLicence ?? '')
   const [licences, setLicences] = useState<LicenceEntry[]>(initialData?.licences ?? [{ ...DEFAULT_LICENCE }])
   const [employers, setEmployers] = useState<Employer[]>(initialData?.employers ?? [{ ...DEFAULT_EMPLOYER }])
@@ -374,6 +376,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
     const profileUpdate: Record<string, any> = {
       full_name: fullName,
+      date_of_birth: dateOfBirth || null,
       aml_licence_number: hasLicence === 'yes' && validLicences.length > 0
         ? validLicences.map(l => l.number.trim()).join(', ')
         : null,
@@ -485,6 +488,19 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                   className="h-12 rounded-xl border-border"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Date of Birth */}
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Date of Birth</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="dob" className="text-sm font-medium text-muted-foreground">Date of Birth <span className="text-muted-foreground/60">Required</span></Label>
+              <DateInput
+                value={dateOfBirth || null}
+                onChange={v => setDateOfBirth(v)}
+                filled={!!dateOfBirth}
+              />
             </div>
           </div>
 
