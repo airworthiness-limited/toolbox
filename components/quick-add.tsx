@@ -353,21 +353,17 @@ export function QuickAdd() {
             />
 
             {/* Save */}
-            <div className="flex flex-col items-center gap-2 pt-2">
-              {saved && (
-                <span className="flex items-center gap-1 text-xs text-green-600">
-                  <Check className="w-3 h-3" />
-                  Saved
-                </span>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={saving || !taskDetail.trim() || hasDateError}
-                className="w-full py-2 text-xs font-medium bg-foreground text-background rounded-xl hover:bg-foreground/90 disabled:opacity-40 transition-colors"
-              >
-                {saving ? 'Saving...' : 'Add Logbook Task'}
-              </button>
-            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving || (!saved && (!taskDetail.trim() || hasDateError))}
+              className={`w-full py-2 text-xs font-medium rounded-xl transition-all duration-300 ${
+                saved
+                  ? 'bg-green-500 text-white'
+                  : 'bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40'
+              }`}
+            >
+              {saving ? 'Saving...' : saved ? 'Added Successfully' : 'Add Logbook Task'}
+            </button>
           </div>
         </div>
       </div>
