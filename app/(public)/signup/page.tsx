@@ -65,6 +65,9 @@ function AuthForm() {
           <p className="text-sm text-muted-foreground">
             We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>.
           </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            If you do not see it, check your junk or spam folder.
+          </p>
           <div className="mt-6 space-y-3">
             {resendCountdown > 0 ? (
               <p className="text-sm text-muted-foreground">Resend available in {resendCountdown}s</p>
