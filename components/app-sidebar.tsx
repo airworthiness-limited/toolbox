@@ -112,7 +112,6 @@ function UserMenu({ fullName, onLogout, onClose }: { fullName: string | null; on
           {/* User info header */}
           <div className="px-3 py-2 mb-1">
             <p className="text-sm font-medium text-foreground truncate">{fullName || 'User'}</p>
-            <p className="text-xs text-muted-foreground truncate">{firstName}</p>
           </div>
           <div className="h-px bg-border mx-2 mb-1" />
           {menuItems.map(item => {

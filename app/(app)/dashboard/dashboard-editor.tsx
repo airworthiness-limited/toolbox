@@ -218,7 +218,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
           onClick={() => editing ? handleSave() : setEditing(true)}
           disabled={saving}
           className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted"
-          title={editing ? 'Save layout' : 'Customise dashboard'}
+          title={editing ? 'Save' : 'Customise'}
         >
           {editing ? (
             <Check className="w-4 h-4" strokeWidth={2} />
@@ -231,7 +231,7 @@ export function DashboardEditor(props: DashboardEditorProps) {
       {/* Edit mode panel */}
       {editing && (
         <div className="mb-6 rounded-xl border border-border p-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Customise Dashboard</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Customise</p>
           <div className="space-y-2">
             {config.order.map((id, idx) => {
               const isHidden = config.hidden.includes(id)
