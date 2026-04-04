@@ -165,11 +165,16 @@ export function AppSidebar() {
   const { user, profile, loaded } = useUserProfile()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Listen for external trigger
+  // Listen for external triggers
   useEffect(() => {
     function handleToggle() { setMobileOpen(true) }
+    function handleClose() { setMobileOpen(false) }
     window.addEventListener('toggle-sidebar', handleToggle)
-    return () => window.removeEventListener('toggle-sidebar', handleToggle)
+    window.addEventListener('close-sidebar', handleClose)
+    return () => {
+      window.removeEventListener('toggle-sidebar', handleToggle)
+      window.removeEventListener('close-sidebar', handleClose)
+    }
   }, [])
 
   async function handleLogout() {
