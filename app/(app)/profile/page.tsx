@@ -105,7 +105,17 @@ export default async function ManageProfilePage() {
       </div>
       <div className="max-w-md">
         <CompleteProfileForm mode="edit" initialData={initialData} />
+
+        <div className="mt-10 pt-6 border-t border-red-100">
+          <h2 className="text-base font-semibold text-red-600 mb-1">Delete Account</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+          <DeleteAccountButton />
+        </div>
       </div>
     </div>
   )
 }
+
+import { DeleteAccountButton } from '@/app/(app)/dashboard/delete-account-button'

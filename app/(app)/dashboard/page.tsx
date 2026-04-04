@@ -1,16 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { REQUIRED_TRAINING, RECENCY_REQUIRED_DAYS, RECENCY_PERIOD_YEARS } from '@/lib/profile/constants'
-import { MODULE_REQUIREMENTS, PART_66_MODULES, ESSAY_MODULES, PASS_MARK, PASS_VALIDITY_YEARS, isSameModuleEquivalent, getCrossModuleEquivalency } from '@/lib/progress/constants'
+import { MODULE_REQUIREMENTS, ESSAY_MODULES, PASS_MARK, PASS_VALIDITY_YEARS, isSameModuleEquivalent, getCrossModuleEquivalency } from '@/lib/progress/constants'
 import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
-import { ExternalTrainingForm } from './external-training-form'
-import { LogoutButton } from '../dashboard/logout-button'
 
 export const metadata: Metadata = { title: 'Dashboard | Airworthiness' }
 
@@ -34,7 +28,7 @@ export default async function ProfilePage() {
   // Fetch profile first (needed for redirect check and aml_categories)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, aml_licence_number, aml_categories, type_ratings, aml_photo_path, aml_verified, is_public, competency_completed_at, created_at')
+    .select('id, full_name, role, aml_licence_number, aml_categories, type_ratings, aml_photo_path, aml_verified, is_public, competency_completed_at, created_at, dashboard_widgets')
     .eq('id', user.id)
     .single()
 
@@ -202,170 +196,22 @@ export default async function ProfilePage() {
   const fullName = profile.full_name ?? 'User'
 
   return (
-    <div>
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">
-            {fullName}
-          </h1>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="rounded-xl border border-border p-6">
-            <p className="text-sm text-muted-foreground">Module Exams ({selectedCategory})</p>
-            <p className="text-3xl font-bold mt-1">{passedModules}/{totalModules}</p>
-            <div className="w-full bg-muted rounded-full h-2 mt-2">
-              <div
-                className={`h-2 rounded-full transition-all ${progressPercent === 100 ? 'bg-green-500' : 'bg-amber-500'}`}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">{progressPercent}% complete</p>
-          </div>
-          <div className="rounded-xl border border-border p-6">
-            <p className="text-sm text-muted-foreground">Logbook Tasks</p>
-            <p className="text-3xl font-bold mt-1">{logbookCount}</p>
-          </div>
-        </div>
-
-        {/* Recency - same format as logbook */}
-        <div className="rounded-xl border border-border p-5 mb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Recency (6 Months / 2 Years)
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Tasks</span>
-                <span className="text-sm font-bold text-foreground">{logbookCount} / 180</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                <div
-                  style={{ width: `${Math.min(100, (logbookCount / 180) * 100)}%`, backgroundColor: logbookCount >= 180 ? '#22c55e' : '#3b82f6' }}
-                  className="h-1.5 rounded-full"
-                />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Days</span>
-                <span className="text-sm font-bold text-foreground">{recencyStatus.totalDays} / {recencyStatus.requiredDays}</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                <div
-                  style={{ width: `${Math.min(100, (recencyStatus.totalDays / recencyStatus.requiredDays) * 100)}%`, backgroundColor: recencyStatus.isCurrent ? '#22c55e' : '#3b82f6' }}
-                  className="h-1.5 rounded-full"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Continuation Training */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Continuation Training</CardTitle>
-            <CardDescription>Required to be completed within the last 2 years.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {trainingStatuses.map(training => {
-                const extCert = externalCerts?.find(c => c.training_slug === training.slug)
-                return (
-                  <div key={training.slug} className="rounded-lg border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-base font-semibold">{training.label}</p>
-                        {training.certificateDate ? (
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
-                              day: 'numeric', month: 'long', year: 'numeric'
-                            })}
-                            {extCert?.expiry_date && (
-                              <span className="text-muted-foreground"> · Expires {new Date(extCert.expiry_date).toLocaleDateString('en-GB', {
-                                day: 'numeric', month: 'long', year: 'numeric'
-                              })}</span>
-                            )}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground mt-0.5">No certificate on record</p>
-                        )}
-                      </div>
-                      <Badge variant={training.isCurrent ? 'default' : 'destructive'}>
-                        {training.isCurrent ? 'Current' : 'Expired'}
-                      </Badge>
-                    </div>
-                    <ExternalTrainingForm
-                      slug={training.slug}
-                      existingDate={extCert?.completion_date ?? null}
-                      existingCertificatePath={extCert?.certificate_path ?? null}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-            {!allTrainingCurrent && (
-              <div className="mt-4">
-                <Link href="/training">
-                  <Button size="sm">Complete Training</Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Competency Assessment — Coming Soon */}
-        <Card className="mb-4 opacity-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Competency Assessment
-              <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2.5 py-1 rounded-lg">Coming Soon</span>
-            </CardTitle>
-            <CardDescription>
-              A basic competency check covering core maintenance knowledge.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        {/* Task Logbook */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Aircraft Maintenance Digital Logbook</CardTitle>
-            <CardDescription>
-              Track your tasks in our Aircraft Maintenance Digital Logbook, in the format required by the Civil Aviation Authority. Tasks can be electronically verified, or printed to be signed manually, should they not have an Airworthiness account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {logbookCount > 0
-                  ? `${logbookCount} tasks recorded`
-                  : 'Record and verify your maintenance tasks'}
-              </p>
-              <Link href="/logbook">
-                <Button variant="outline" size="sm">Open Logbook</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Delete Account */}
-        <Card className="border-red-100">
-          <CardHeader>
-            <CardTitle className="text-base text-red-600">Delete Account</CardTitle>
-            <CardDescription>
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DeleteAccountButton />
-          </CardContent>
-        </Card>
-
-    </div>
+    <DashboardEditor
+      fullName={fullName}
+      selectedCategory={selectedCategory}
+      passedModules={passedModules}
+      totalModules={totalModules}
+      progressPercent={progressPercent}
+      logbookCount={logbookCount}
+      recencyTotalDays={recencyStatus.totalDays}
+      recencyRequiredDays={recencyStatus.requiredDays}
+      recencyIsCurrent={recencyStatus.isCurrent}
+      trainingStatuses={trainingStatuses}
+      allTrainingCurrent={allTrainingCurrent}
+      externalCerts={externalCerts ?? []}
+      widgetConfig={profile.dashboard_widgets as any}
+    />
   )
 }
 
-import { DeleteAccountButton } from './delete-account-button'
+import { DashboardEditor } from './dashboard-editor'
