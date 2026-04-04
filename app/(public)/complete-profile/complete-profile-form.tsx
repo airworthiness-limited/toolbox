@@ -319,15 +319,6 @@ export function CompleteProfileForm() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                  className="h-12 rounded-xl border-border"
-                />
-              </div>
-              <div className="space-y-1.5">
                 <Label htmlFor="middleNames" className="text-sm font-medium text-muted-foreground">
                   Middle Name(s) <span className="text-muted-foreground/60">Optional</span>
                 </Label>
@@ -335,6 +326,15 @@ export function CompleteProfileForm() {
                   id="middleNames"
                   value={middleNames}
                   onChange={e => setMiddleNames(e.target.value)}
+                  className="h-12 rounded-xl border-border"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
                   className="h-12 rounded-xl border-border"
                 />
               </div>
