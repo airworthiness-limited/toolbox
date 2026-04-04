@@ -71,6 +71,8 @@ export function QuickAdd() {
   const [ataChapters, setAtaChapters] = useState<string[]>([])
   const [taskTypes, setTaskTypes] = useState<string[]>([])
   const [taskDetail, setTaskDetail] = useState('')
+  const [aircraftFocused, setAircraftFocused] = useState(false)
+  const [taskTypeFocused, setTaskTypeFocused] = useState(false)
 
   const firstInputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -101,10 +103,11 @@ export function QuickAdd() {
   }, [saved])
 
   const filteredTypes = useMemo(() => {
-    if (!aircraftSearch.trim()) return []
+    if (!aircraftSearch.trim() && !aircraftFocused) return []
+    if (!aircraftSearch.trim()) return UK_TYPE_RATINGS.slice(0, 8)
     const q = aircraftSearch.toLowerCase()
     return UK_TYPE_RATINGS.filter(r => r.rating.toLowerCase().includes(q) || r.make.toLowerCase().includes(q) || r.model.toLowerCase().includes(q)).slice(0, 8)
-  }, [aircraftSearch])
+  }, [aircraftSearch, aircraftFocused])
 
   const filteredAta = useMemo(() => {
     if (!ataSearch.trim()) return []
@@ -133,11 +136,12 @@ export function QuickAdd() {
   }
 
   const filteredTaskTypes = useMemo(() => {
-    if (!taskTypeSearch.trim()) return []
-    const q = taskTypeSearch.toLowerCase()
     const selected = new Set(taskTypes)
+    if (!taskTypeSearch.trim() && !taskTypeFocused) return []
+    if (!taskTypeSearch.trim()) return TASK_TYPES.filter(t => !selected.has(t))
+    const q = taskTypeSearch.toLowerCase()
     return TASK_TYPES.filter(t => !selected.has(t) && t.toLowerCase().includes(q))
-  }, [taskTypeSearch, taskTypes])
+  }, [taskTypeSearch, taskTypes, taskTypeFocused])
 
   function removeAta(value: string) {
     setAtaChapters(prev => prev.filter(v => v !== value))
@@ -236,14 +240,16 @@ export function QuickAdd() {
               )}
             </div>
 
-            {/* 2. Aircraft Type */}
+            {/* 2. Aircraft Type Rating(s) */}
             <div className="relative">
               <div className="relative">
                 <input
                   type="text"
                   value={aircraftType ? aircraftType : aircraftSearch}
                   onChange={e => { setAircraftSearch(e.target.value); if (aircraftType) setAircraftType('') }}
-                  placeholder="Aircraft Type"
+                  onFocus={() => setAircraftFocused(true)}
+                  onBlur={() => setTimeout(() => setAircraftFocused(false), 150)}
+                  placeholder="Aircraft Type Rating(s)"
                   className={`${inputClass} pr-8`}
                 />
                 {(aircraftType || aircraftSearch) && (
@@ -255,7 +261,7 @@ export function QuickAdd() {
               {filteredTypes.length > 0 && !aircraftType && (
                 <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
                   {filteredTypes.map(r => (
-                    <button key={`${r.category}-${r.rating}`} type="button" onClick={() => { setAircraftType(r.rating); setAircraftSearch('') }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
+                    <button key={`${r.category}-${r.rating}`} type="button" onClick={() => { setAircraftType(r.rating); setAircraftSearch(''); setAircraftFocused(false) }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
                       <span className="font-medium">{r.rating}</span>
                     </button>
                   ))}
@@ -274,21 +280,6 @@ export function QuickAdd() {
 
             {/* 4. ATA Group (multi-select) */}
             <div className="relative">
-              {ataChapters.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-1.5">
-                  {ataChapters.map(v => {
-                    const label = ATA_2200_CHAPTERS.find(c => c.value === v)?.label ?? v
-                    return (
-                      <span key={v} className="inline-flex items-center gap-1 text-[10px] bg-muted text-foreground rounded-lg px-2 py-0.5">
-                        {label}
-                        <button type="button" onClick={() => removeAta(v)} className="text-muted-foreground hover:text-foreground">
-                          <X className="w-3 h-3" strokeWidth={1.5} />
-                        </button>
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
               <input
                 type="text"
                 value={ataSearch}
@@ -305,12 +296,45 @@ export function QuickAdd() {
                   ))}
                 </div>
               )}
+              {ataChapters.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+                  {ataChapters.map(v => {
+                    const label = ATA_2200_CHAPTERS.find(c => c.value === v)?.label ?? v
+                    return (
+                      <span key={v} className="inline-flex items-center gap-1 text-[10px] bg-muted text-foreground rounded-lg px-2 py-0.5">
+                        {label}
+                        <button type="button" onClick={() => removeAta(v)} className="text-muted-foreground hover:text-foreground">
+                          <X className="w-3 h-3" strokeWidth={1.5} />
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* 5. Task Type (multi-select search like ATA) */}
+            {/* 5. Task Type (multi-select, shows all on focus) */}
             <div className="relative">
+              <input
+                type="text"
+                value={taskTypeSearch}
+                onChange={e => setTaskTypeSearch(e.target.value)}
+                onFocus={() => setTaskTypeFocused(true)}
+                onBlur={() => setTimeout(() => setTaskTypeFocused(false), 150)}
+                placeholder="Task Type"
+                className={inputClass}
+              />
+              {filteredTaskTypes.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                  {filteredTaskTypes.map(t => (
+                    <button key={t} type="button" onClick={() => { setTaskTypes(prev => [...prev, t]); setTaskTypeSearch(''); setTaskTypeFocused(false) }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
               {taskTypes.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-1.5">
+                <div className="flex flex-wrap justify-center gap-1 mt-1.5">
                   {taskTypes.map(t => (
                     <span key={t} className="inline-flex items-center gap-1 text-[10px] bg-muted text-foreground rounded-lg px-2 py-0.5">
                       {t}
@@ -318,22 +342,6 @@ export function QuickAdd() {
                         <X className="w-3 h-3" strokeWidth={1.5} />
                       </button>
                     </span>
-                  ))}
-                </div>
-              )}
-              <input
-                type="text"
-                value={taskTypeSearch}
-                onChange={e => setTaskTypeSearch(e.target.value)}
-                placeholder="Task Type"
-                className={inputClass}
-              />
-              {filteredTaskTypes.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
-                  {filteredTaskTypes.map(t => (
-                    <button key={t} type="button" onClick={() => { setTaskTypes(prev => [...prev, t]); setTaskTypeSearch('') }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
-                      {t}
-                    </button>
                   ))}
                 </div>
               )}
