@@ -17,8 +17,7 @@ function AuthForm() {
   const [email, setEmail] = useState(searchParams.get('email') || '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [state, setState] = useState<'idle' | 'link_sent' | 'code_sent'>('idle')
-  const [code, setCode] = useState('')
+  const [state, setState] = useState<'idle' | 'link_sent'>('idle')
   const [resendCountdown, setResendCountdown] = useState(0)
 
   useEffect(() => {
@@ -46,41 +45,8 @@ function AuthForm() {
     setLoading(false)
   }
 
-  async function handleSendCode() {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
-    })
-    if (error) {
-      setError(error.message)
-    } else {
-      setState('code_sent')
-      setResendCountdown(60)
-    }
-    setLoading(false)
-  }
-
-  async function handleVerifyCode() {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
-    })
-    if (error) {
-      setError(error.message)
-    } else {
-      router.push('/complete-profile')
-    }
-    setLoading(false)
-  }
-
   function handleTryDifferentEmail() {
     setState('idle')
-    setCode('')
     setError('')
     setResendCountdown(0)
   }
@@ -122,73 +88,6 @@ function AuthForm() {
     )
   }
 
-  // Sent state -- 6-digit code
-  if (state === 'code_sent') {
-    return (
-      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h2 className="text-lg font-semibold text-foreground mb-2">Enter your code</h2>
-            <p className="text-sm text-muted-foreground">
-              We sent a verification code to <span className="font-medium text-foreground">{email}</span>.
-            </p>
-          </div>
-
-          <form onSubmit={(e) => { e.preventDefault(); handleVerifyCode() }} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="code" className="text-sm font-medium text-foreground">Verification code</Label>
-              <Input
-                id="code"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={8}
-                placeholder="00000000"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className="h-12 rounded-xl text-center text-lg tracking-widest border-gray-300 focus:border-black focus:ring-black"
-                autoFocus
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-800 p-3">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-xl"
-              disabled={loading || code.length < 6}
-            >
-              {loading ? 'Verifying...' : 'Verify'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center space-y-3">
-            {resendCountdown > 0 ? (
-              <p className="text-sm text-muted-foreground">Resend available in {resendCountdown}s</p>
-            ) : (
-              <button
-                onClick={handleSendCode}
-                disabled={loading}
-                className="text-sm font-semibold text-foreground hover:underline"
-              >
-                {loading ? 'Sending...' : 'Resend code'}
-              </button>
-            )}
-            <div>
-              <button onClick={handleTryDifferentEmail} className="text-sm text-muted-foreground hover:underline">
-                Try a different email
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // Default — idle state
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-16">
@@ -197,7 +96,7 @@ function AuthForm() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Sign in to Airworthiness</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            The digital platform for aviation engineering professionals.
+            The digital platform for aviation engineering.
           </p>
         </div>
 
@@ -227,17 +126,8 @@ function AuthForm() {
             className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-xl"
             disabled={loading || !email}
           >
-            {loading ? 'Sending...' : 'Send magic link'}
+            {loading ? 'Sending...' : 'Log In or Sign Up'}
           </Button>
-
-          <button
-            type="button"
-            onClick={handleSendCode}
-            disabled={loading || !email}
-            className="w-full h-12 rounded-xl border border-border text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
-            Send code instead
-          </button>
         </div>
 
         <p className="text-xs text-muted-foreground/60 text-center mt-6 leading-relaxed">
