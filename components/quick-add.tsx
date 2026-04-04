@@ -62,15 +62,14 @@ export function QuickAdd() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  // Form fields
   const [date, setDate] = useState(todayDDMMYYYY)
   const [dateError, setDateError] = useState<string | null>(null)
   const [aircraftType, setAircraftType] = useState('')
   const [aircraftSearch, setAircraftSearch] = useState('')
   const [registration, setRegistration] = useState('')
   const [ataSearch, setAtaSearch] = useState('')
-  const [ataChapter, setAtaChapter] = useState('')
-  const [taskType, setTaskType] = useState('')
+  const [ataChapters, setAtaChapters] = useState<string[]>([])
+  const [taskTypes, setTaskTypes] = useState<string[]>([])
   const [taskDetail, setTaskDetail] = useState('')
 
   const firstInputRef = useRef<HTMLInputElement>(null)
@@ -81,26 +80,19 @@ export function QuickAdd() {
     setOpen(true)
   }
 
-  // Close on click outside
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  // Focus first input when opened
   useEffect(() => {
-    if (open) {
-      setTimeout(() => firstInputRef.current?.focus(), 50)
-    }
+    if (open) setTimeout(() => firstInputRef.current?.focus(), 50)
   }, [open])
 
-  // Clear saved indicator
   useEffect(() => {
     if (saved) {
       const t = setTimeout(() => setSaved(false), 2000)
@@ -108,23 +100,18 @@ export function QuickAdd() {
     }
   }, [saved])
 
-  // Aircraft type search
   const filteredTypes = useMemo(() => {
     if (!aircraftSearch.trim()) return []
     const q = aircraftSearch.toLowerCase()
-    return UK_TYPE_RATINGS
-      .filter(r => r.rating.toLowerCase().includes(q) || r.make.toLowerCase().includes(q) || r.model.toLowerCase().includes(q))
-      .slice(0, 8)
+    return UK_TYPE_RATINGS.filter(r => r.rating.toLowerCase().includes(q) || r.make.toLowerCase().includes(q) || r.model.toLowerCase().includes(q)).slice(0, 8)
   }, [aircraftSearch])
 
-  // ATA search
   const filteredAta = useMemo(() => {
     if (!ataSearch.trim()) return []
     const q = ataSearch.toLowerCase()
-    return ATA_2200_CHAPTERS
-      .filter(c => c.label.toLowerCase().includes(q) || c.value.includes(q))
-      .slice(0, 8)
-  }, [ataSearch])
+    const selected = new Set(ataChapters)
+    return ATA_2200_CHAPTERS.filter(c => !selected.has(c.value) && (c.label.toLowerCase().includes(q) || c.value.includes(q))).slice(0, 8)
+  }, [ataSearch, ataChapters])
 
   function reset() {
     setDate(todayDDMMYYYY())
@@ -133,13 +120,17 @@ export function QuickAdd() {
     setAircraftSearch('')
     setRegistration('')
     setAtaSearch('')
-    setAtaChapter('')
-    setTaskType('')
+    setAtaChapters([])
+    setTaskTypes([])
     setTaskDetail('')
   }
 
-  function handleDateBlur() {
-    setDateError(validateDate(date))
+  function toggleTaskType(t: string) {
+    setTaskTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  }
+
+  function removeAta(value: string) {
+    setAtaChapters(prev => prev.filter(v => v !== value))
   }
 
   async function handleSave() {
@@ -164,7 +155,7 @@ export function QuickAdd() {
     const aircraftCategory = found ? (groupToCategory(found.group) ?? 'aeroplane_turbine') : 'aeroplane_turbine'
 
     const descriptionParts = [
-      taskType ? `[${taskType}]` : '',
+      taskTypes.length > 0 ? `[${taskTypes.join(', ')}]` : '',
       taskDetail.trim(),
     ].filter(Boolean).join(' ')
 
@@ -175,8 +166,8 @@ export function QuickAdd() {
       aircraft_category: aircraftCategory,
       aircraft_registration: registration.toUpperCase() || 'N/A',
       aircraft_type: aircraftType || 'N/A',
-      ata_chapter: ataChapter || '',
-      ata_chapters: ataChapter ? [ataChapter] : [],
+      ata_chapter: ataChapters[0] ?? '',
+      ata_chapters: ataChapters,
       job_number: '',
       description: descriptionParts,
       employer,
@@ -187,7 +178,6 @@ export function QuickAdd() {
     })
 
     setSaving(false)
-
     if (!error) {
       setSaved(true)
       reset()
@@ -198,20 +188,17 @@ export function QuickAdd() {
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') setOpen(false)
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault()
-      handleSave()
-    }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave() }
   }
 
   const hasDateError = dateError !== null
   const inputClass = "w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring text-center"
 
   return (
-    <div ref={panelRef} className="fixed bottom-6 right-6 z-50">
+    <div ref={panelRef} className="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-3rem)]">
       {/* Expanded form */}
       <div className={`transition-all duration-200 ease-out origin-bottom-right ${open ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'}`}>
-        <div className="w-[28rem] bg-popover border border-border/50 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-visible mb-3">
+        <div className="w-full max-w-md bg-popover border border-border/50 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-visible mb-3">
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <span className="text-sm font-semibold text-foreground">Add Logbook Task</span>
@@ -228,7 +215,7 @@ export function QuickAdd() {
                 type="text"
                 value={date}
                 onChange={e => { setDate(e.target.value.replace(/[^\d/]/g, '').slice(0, 10)); setDateError(null) }}
-                onBlur={handleDateBlur}
+                onBlur={() => setDateError(validateDate(date))}
                 placeholder="DD/MM/YYYY"
                 maxLength={10}
                 className={`${inputClass} ${hasDateError ? 'border-red-400 bg-red-50 text-red-700 pr-8' : ''}`}
@@ -246,19 +233,12 @@ export function QuickAdd() {
                 <input
                   type="text"
                   value={aircraftType ? aircraftType : aircraftSearch}
-                  onChange={e => {
-                    setAircraftSearch(e.target.value)
-                    if (aircraftType) setAircraftType('')
-                  }}
+                  onChange={e => { setAircraftSearch(e.target.value); if (aircraftType) setAircraftType('') }}
                   placeholder="Aircraft Type"
                   className={`${inputClass} pr-8`}
                 />
                 {(aircraftType || aircraftSearch) && (
-                  <button
-                    type="button"
-                    onClick={() => { setAircraftType(''); setAircraftSearch('') }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <button type="button" onClick={() => { setAircraftType(''); setAircraftSearch('') }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
                 )}
@@ -266,12 +246,7 @@ export function QuickAdd() {
               {filteredTypes.length > 0 && !aircraftType && (
                 <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
                   {filteredTypes.map(r => (
-                    <button
-                      key={`${r.category}-${r.rating}`}
-                      type="button"
-                      onClick={() => { setAircraftType(r.rating); setAircraftSearch('') }}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0"
-                    >
+                    <button key={`${r.category}-${r.rating}`} type="button" onClick={() => { setAircraftType(r.rating); setAircraftSearch('') }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
                       <span className="font-medium">{r.rating}</span>
                     </button>
                   ))}
@@ -288,36 +263,34 @@ export function QuickAdd() {
               className={`${inputClass} [&:not(:placeholder-shown)]:uppercase`}
             />
 
-            {/* 4. ATA Group */}
+            {/* 4. ATA Group (multi-select) */}
             <div className="relative">
+              {ataChapters.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {ataChapters.map(v => {
+                    const label = ATA_2200_CHAPTERS.find(c => c.value === v)?.label ?? v
+                    return (
+                      <span key={v} className="inline-flex items-center gap-1 text-[10px] bg-muted text-foreground rounded-lg px-2 py-0.5">
+                        {label}
+                        <button type="button" onClick={() => removeAta(v)} className="text-muted-foreground hover:text-foreground">
+                          <X className="w-3 h-3" strokeWidth={1.5} />
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
               <input
                 type="text"
-                value={ataChapter ? ATA_2200_CHAPTERS.find(c => c.value === ataChapter)?.label ?? ataChapter : ataSearch}
-                onChange={e => {
-                  setAtaSearch(e.target.value)
-                  if (ataChapter) setAtaChapter('')
-                }}
+                value={ataSearch}
+                onChange={e => setAtaSearch(e.target.value)}
                 placeholder="ATA Group"
-                className={`${inputClass} ${ataChapter ? 'pr-8' : ''}`}
+                className={inputClass}
               />
-              {ataChapter && (
-                <button
-                  type="button"
-                  onClick={() => { setAtaChapter(''); setAtaSearch('') }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
-              )}
-              {filteredAta.length > 0 && !ataChapter && (
+              {filteredAta.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
                   {filteredAta.map(c => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => { setAtaChapter(c.value); setAtaSearch('') }}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0"
-                    >
+                    <button key={c.value} type="button" onClick={() => { setAtaChapters(prev => [...prev, c.value]); setAtaSearch('') }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
                       {c.label}
                     </button>
                   ))}
@@ -325,17 +298,28 @@ export function QuickAdd() {
               )}
             </div>
 
-            {/* 5. Task Type */}
-            <select
-              value={taskType}
-              onChange={e => setTaskType(e.target.value)}
-              className={`${inputClass} ${taskType ? 'text-foreground' : 'text-muted-foreground'}`}
-            >
-              <option value="">Task Type</option>
-              {TASK_TYPES.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            {/* 5. Task Type (multi-select pills) */}
+            <div>
+              <div className="flex flex-wrap gap-1">
+                {TASK_TYPES.map(t => {
+                  const selected = taskTypes.includes(t)
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => toggleTaskType(t)}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${
+                        selected
+                          ? 'bg-foreground text-background border-foreground'
+                          : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             {/* 6. Task Detail */}
             <textarea
