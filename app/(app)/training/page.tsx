@@ -24,7 +24,7 @@ export default async function CoursesPage() {
 
   return (
     <div>
-      <div className="mb-8 text-center">
+      <div className="mb-8">
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">Continuation Training</h1>
         <p className="text-sm text-muted-foreground mt-1">Browse professional learning courses</p>
       </div>

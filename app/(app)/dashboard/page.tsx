@@ -204,7 +204,7 @@ export default async function ProfilePage() {
   return (
     <div>
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-8">
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             {fullName}
           </h1>

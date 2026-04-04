@@ -98,7 +98,7 @@ export default async function ManageProfilePage() {
 
   return (
     <div>
-      <div className="mb-6 text-center">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">
           Manage Profile
         </h1>
