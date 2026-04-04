@@ -185,15 +185,15 @@ export function QuickAdd() {
             </button>
           </div>
 
-          <div className="px-4 pb-4 space-y-3" onKeyDown={handleKeyDown}>
+          <div className="px-4 pb-4 space-y-2.5" onKeyDown={handleKeyDown}>
             {/* Task detail */}
             <textarea
               ref={inputRef}
               value={taskDetail}
               onChange={e => setTaskDetail(e.target.value)}
               placeholder="I performed [Task Type] on [Part or System] in accordance with [Maintenance Data]."
-              rows={3}
-              className="w-full text-sm px-3 py-2.5 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none placeholder:text-muted-foreground/40 placeholder:text-xs text-center"
+              rows={2}
+              className="w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none placeholder:text-muted-foreground/40 text-center"
             />
 
             {/* Date */}
@@ -262,7 +262,7 @@ export function QuickAdd() {
               value={registration}
               onChange={e => setRegistration(e.target.value)}
               placeholder="Aircraft Registration"
-              className="w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase text-center"
+              className="w-full text-xs px-3 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-1 focus:ring-ring text-center [&:not(:placeholder-shown)]:uppercase"
             />
 
             {/* Save */}
