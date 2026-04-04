@@ -122,12 +122,22 @@ export function QuickAdd() {
     setAtaSearch('')
     setAtaChapters([])
     setTaskTypes([])
+    setTaskTypeSearch('')
     setTaskDetail('')
   }
 
-  function toggleTaskType(t: string) {
-    setTaskTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  const [taskTypeSearch, setTaskTypeSearch] = useState('')
+
+  function removeTaskType(t: string) {
+    setTaskTypes(prev => prev.filter(x => x !== t))
   }
+
+  const filteredTaskTypes = useMemo(() => {
+    if (!taskTypeSearch.trim()) return []
+    const q = taskTypeSearch.toLowerCase()
+    const selected = new Set(taskTypes)
+    return TASK_TYPES.filter(t => !selected.has(t) && t.toLowerCase().includes(q))
+  }, [taskTypeSearch, taskTypes])
 
   function removeAta(value: string) {
     setAtaChapters(prev => prev.filter(v => v !== value))
@@ -188,7 +198,6 @@ export function QuickAdd() {
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') setOpen(false)
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSave() }
   }
 
   const hasDateError = dateError !== null
@@ -298,27 +307,36 @@ export function QuickAdd() {
               )}
             </div>
 
-            {/* 5. Task Type (multi-select pills) */}
-            <div>
-              <div className="flex flex-wrap gap-1">
-                {TASK_TYPES.map(t => {
-                  const selected = taskTypes.includes(t)
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => toggleTaskType(t)}
-                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${
-                        selected
-                          ? 'bg-foreground text-background border-foreground'
-                          : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
-                      }`}
-                    >
+            {/* 5. Task Type (multi-select search like ATA) */}
+            <div className="relative">
+              {taskTypes.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {taskTypes.map(t => (
+                    <span key={t} className="inline-flex items-center gap-1 text-[10px] bg-muted text-foreground rounded-lg px-2 py-0.5">
+                      {t}
+                      <button type="button" onClick={() => removeTaskType(t)} className="text-muted-foreground hover:text-foreground">
+                        <X className="w-3 h-3" strokeWidth={1.5} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                type="text"
+                value={taskTypeSearch}
+                onChange={e => setTaskTypeSearch(e.target.value)}
+                placeholder="Task Type"
+                className={inputClass}
+              />
+              {filteredTaskTypes.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                  {filteredTaskTypes.map(t => (
+                    <button key={t} type="button" onClick={() => { setTaskTypes(prev => [...prev, t]); setTaskTypeSearch('') }} className="w-full text-left px-3 py-2 text-xs hover:bg-muted border-b last:border-0">
                       {t}
                     </button>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 6. Task Detail */}
@@ -331,25 +349,20 @@ export function QuickAdd() {
             />
 
             {/* Save */}
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-muted-foreground/50">
-                {saved ? '' : 'Ctrl+Enter to save'}
-              </span>
-              <div className="flex items-center gap-2">
-                {saved && (
-                  <span className="flex items-center gap-1 text-xs text-green-600">
-                    <Check className="w-3 h-3" />
-                    Saved
-                  </span>
-                )}
-                <button
-                  onClick={handleSave}
-                  disabled={saving || !taskDetail.trim() || hasDateError}
-                  className="px-4 py-1.5 text-xs font-medium bg-foreground text-background rounded-lg hover:bg-foreground/90 disabled:opacity-40 transition-colors"
-                >
-                  {saving ? 'Saving...' : 'Add Task'}
-                </button>
-              </div>
+            <div className="flex flex-col items-center gap-2 pt-2">
+              {saved && (
+                <span className="flex items-center gap-1 text-xs text-green-600">
+                  <Check className="w-3 h-3" />
+                  Saved
+                </span>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={saving || !taskDetail.trim() || hasDateError}
+                className="w-full py-2 text-xs font-medium bg-foreground text-background rounded-xl hover:bg-foreground/90 disabled:opacity-40 transition-colors"
+              >
+                {saving ? 'Saving...' : 'Add Task'}
+              </button>
             </div>
           </div>
         </div>
