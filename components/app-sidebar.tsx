@@ -191,22 +191,7 @@ export function AppSidebar() {
           <ul className="space-y-1">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon
-              const active = !item.comingSoon && isActive(item.href)
-
-              if (item.comingSoon) {
-                return (
-                  <li key={item.label}>
-                    <span
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/20 cursor-default group relative"
-                      title="Coming soon..."
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                      {item.label}
-                      <span className="ml-auto text-[10px] text-white/30 bg-white/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">Coming Soon</span>
-                    </span>
-                  </li>
-                )
-              }
+              const active = isActive(item.href)
 
               return (
                 <li key={item.href}>
@@ -268,18 +253,7 @@ export function AppSidebar() {
               <ul className="space-y-1">
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon
-                  const active = !item.comingSoon && isActive(item.href)
-
-                  if (item.comingSoon) {
-                    return (
-                      <li key={item.label}>
-                        <span className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/20 cursor-default">
-                          <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                          {item.label}
-                        </span>
-                      </li>
-                    )
-                  }
+                  const active = isActive(item.href)
 
                   return (
                     <li key={item.href}>
