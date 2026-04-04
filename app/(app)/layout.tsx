@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarTriggerInline } from '@/components/sidebar-trigger-inline'
+import { QuickAdd } from '@/components/quick-add'
 
 export default async function AppLayout({
   children,
@@ -30,6 +31,7 @@ export default async function AppLayout({
           {children}
         </div>
       </main>
+      <QuickAdd />
     </>
   )
 }
