@@ -387,35 +387,26 @@ export function CompleteProfileForm() {
 
           <div className="h-px bg-border" />
 
-          {/* Licence question */}
-          <div>
-            <p className="text-sm font-semibold text-foreground mb-1">Do you hold an Aircraft Maintenance Licence?</p>
-            <p className="text-xs text-muted-foreground mb-3">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setHasLicence('yes')}
-                className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-colors ${
-                  hasLicence === 'yes'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => { setHasLicence('no'); setLicences([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }]) }}
-                className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-colors ${
-                  hasLicence === 'no'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                No
-              </button>
+          {/* Licence checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hasLicence === 'yes'}
+              onChange={e => {
+                if (e.target.checked) {
+                  setHasLicence('yes')
+                } else {
+                  setHasLicence('no')
+                  setLicences([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
+                }
+              }}
+              className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+            />
+            <div>
+              <span className="text-sm font-medium text-foreground">Part 66 Aircraft Maintenance Licence</span>
+              <p className="text-xs text-muted-foreground mt-0.5">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
             </div>
-          </div>
+          </label>
 
           {/* Licence Photo Upload */}
           {hasLicence === 'yes' && (
@@ -635,13 +626,6 @@ export function CompleteProfileForm() {
             </div>
           )}
 
-          {/* Unlicensed context */}
-          {hasLicence === 'no' && (
-            <p className="text-xs text-muted-foreground bg-muted rounded-xl p-3">
-              No problem. You can still use the digital logbook, continuation training tracker, and all other tools. You can add licence details later from your profile if you obtain one.
-            </p>
-          )}
-
           <div className="h-px bg-border" />
 
           {/* Employer section */}
@@ -779,7 +763,7 @@ export function CompleteProfileForm() {
                         onClick={() => addEmployerApproval(i)}
                         className="text-xs font-semibold text-foreground hover:underline"
                       >
-                        + Add another approval
+                        + Add Approval
                       </button>
                     </div>
                   </div>
@@ -790,7 +774,7 @@ export function CompleteProfileForm() {
                 onClick={() => setEmployers(prev => [...prev, { name: '', startDate: '', endDate: '', approvals: [{ type: '', reference: '' }] }])}
                 className="text-xs font-semibold text-foreground hover:underline"
               >
-                + Add another employer
+                + Add Employer
               </button>
             </div>
           </div>
