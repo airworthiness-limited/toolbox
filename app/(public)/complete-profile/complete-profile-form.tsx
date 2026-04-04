@@ -65,6 +65,7 @@ function ukToIso(uk: string): string {
 
 function DateInput({ value, onChange, filled }: { value: string | null, onChange: (v: string) => void, filled: boolean }) {
   const [display, setDisplay] = useState(isoToUk(value))
+  const [error, setError] = useState('')
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     // Allow digits and slashes only, max 10 chars
@@ -73,6 +74,7 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
   }
 
   function handleBlur() {
+    setError('')
     // On blur, try to parse and format
     const digits = display.replace(/[^\d]/g, '')
     if (digits.length === 0) {
@@ -80,59 +82,68 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
       onChange('')
       return
     }
-    if (digits.length >= 8) {
-      const d = parseInt(digits.slice(0, 2), 10)
-      const m = parseInt(digits.slice(2, 4), 10)
-      const y = parseInt(digits.slice(4, 8), 10)
-
-      // Validate day/month ranges
-      if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900) {
-        setDisplay('')
-        onChange('')
-        return
-      }
-
-      // Validate the date is real (e.g. no 31 Feb)
-      const parsed = new Date(y, m - 1, d)
-      if (
-        isNaN(parsed.getTime()) ||
-        parsed.getFullYear() !== y ||
-        parsed.getMonth() !== m - 1 ||
-        parsed.getDate() !== d
-      ) {
-        setDisplay('')
-        onChange('')
-        return
-      }
-
-      // Reject future dates (allow today)
-      const now = new Date()
-      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      if (parsed > todayDate) {
-        setDisplay('')
-        onChange('')
-        return
-      }
-
-      const dd = String(d).padStart(2, '0')
-      const mm = String(m).padStart(2, '0')
-      const iso = `${y}-${mm}-${dd}`
-      const formatted = `${dd}/${mm}/${y}`
-      setDisplay(formatted)
-      onChange(iso)
+    if (digits.length < 8) {
+      setError('Enter a full date as DD/MM/YYYY')
+      return
     }
+    const d = parseInt(digits.slice(0, 2), 10)
+    const m = parseInt(digits.slice(2, 4), 10)
+    const y = parseInt(digits.slice(4, 8), 10)
+
+    // Validate day/month ranges
+    if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900) {
+      setError('Invalid date')
+      setDisplay('')
+      onChange('')
+      return
+    }
+
+    // Validate the date is real (e.g. no 31 Feb)
+    const parsed = new Date(y, m - 1, d)
+    if (
+      isNaN(parsed.getTime()) ||
+      parsed.getFullYear() !== y ||
+      parsed.getMonth() !== m - 1 ||
+      parsed.getDate() !== d
+    ) {
+      setError('Invalid date')
+      setDisplay('')
+      onChange('')
+      return
+    }
+
+    // Reject future dates (allow today)
+    const now = new Date()
+    const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    if (parsed > todayDate) {
+      setError('Date cannot be in the future')
+      setDisplay('')
+      onChange('')
+      return
+    }
+
+    const dd = String(d).padStart(2, '0')
+    const mm = String(m).padStart(2, '0')
+    const iso = `${y}-${mm}-${dd}`
+    const formatted = `${dd}/${mm}/${y}`
+    setDisplay(formatted)
+    onChange(iso)
   }
 
   return (
-    <input
-      type="text"
-      placeholder="DD/MM/YYYY"
-      value={display}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      maxLength={10}
-      className={`w-full h-10 rounded-md border px-1 text-xs text-center ${filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-muted border-border text-muted-foreground placeholder:text-muted-foreground/60'}`}
-    />
+    <div>
+      <input
+        type="text"
+        placeholder="DD/MM/YYYY"
+        value={display}
+        onChange={handleChange}
+        onFocus={() => setError('')}
+        onBlur={handleBlur}
+        maxLength={10}
+        className={`w-full h-10 rounded-md border px-1 text-xs text-center ${error ? 'border-red-400 bg-red-50 text-red-700' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-muted border-border text-muted-foreground placeholder:text-muted-foreground/60'}`}
+      />
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -465,7 +476,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
                   className="h-12 rounded-xl border-border"
-                  autoFocus
+                  autoFocus={mode === 'create'}
                 />
               </div>
               <div className="space-y-1.5">
