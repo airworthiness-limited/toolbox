@@ -288,6 +288,25 @@ export function CompleteProfileForm() {
       return
     }
 
+    if (hasLicence === 'yes') {
+      const hasValidLicence = licences.some(l => l.number.trim() && l.categories.length > 0)
+      if (!hasValidLicence) {
+        setError('Required information is missing.')
+        setLoading(false)
+        return
+      }
+      // Check type rating dates
+      for (const licence of licences) {
+        for (const endorsement of licence.endorsements) {
+          if (endorsement.rating && !endorsement.b1Date && !endorsement.b2Date) {
+            setError('Each type rating requires at least a B1 or B2 endorsement date.')
+            setLoading(false)
+            return
+          }
+        }
+      }
+    }
+
     const fullName = [firstName.trim(), middleNames.trim(), lastName.trim()].filter(Boolean).join(' ')
     const validLicences = licences.filter(l => l.number.trim())
     const allCategories = [...new Set(licences.flatMap(l => l.categories))]
@@ -438,7 +457,7 @@ export function CompleteProfileForm() {
                     <label className="flex items-center justify-center h-24 rounded-xl border-2 border-dashed border-border hover:border-foreground/40 transition-colors cursor-pointer">
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,application/pdf"
+                        accept="image/*,application/pdf"
                         className="hidden"
                         onChange={e => {
                           const file = e.target.files?.[0]
@@ -462,7 +481,7 @@ export function CompleteProfileForm() {
                     <label className="flex items-center justify-center h-24 rounded-xl border-2 border-dashed border-border hover:border-foreground/40 transition-colors cursor-pointer">
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,application/pdf"
+                        accept="image/*,application/pdf"
                         className="hidden"
                         onChange={e => {
                           const file = e.target.files?.[0]
@@ -488,7 +507,7 @@ export function CompleteProfileForm() {
                     <div className="flex gap-2">
                       <div className="flex-1 space-y-1.5">
                         <Label className="text-sm font-medium text-muted-foreground">
-                          Licence Number {licences.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/60">Optional</span>
+                          Licence Number {licences.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/60">Required</span>
                         </Label>
                         <Input
                           placeholder="e.g. UK.66.123456A"
@@ -512,7 +531,7 @@ export function CompleteProfileForm() {
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Categories{licences.length > 1 ? ` (${index + 1})` : ''}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Categories{licences.length > 1 ? ` (${index + 1})` : ''} <span className="text-muted-foreground/60">Required</span></p>
                       <div className="flex flex-wrap gap-2">
                         {AML_CATEGORIES.map(cat => {
                           const isSelected = licence.categories.includes(cat.value)
@@ -574,21 +593,21 @@ export function CompleteProfileForm() {
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B1</span>
                                   <div className="flex-1"><DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} /></div>
-                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b1Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b1Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B2</span>
                                   <div className="flex-1"><DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} /></div>
-                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b2Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b2Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">C</span>
                                   <div className="flex-1"><DateInput value={endorsement.cDate} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!endorsement.cDate} /></div>
-                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'cDate', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                  <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'cDate', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 w-4" title="Clear date">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                   </button>
                                 </div>
