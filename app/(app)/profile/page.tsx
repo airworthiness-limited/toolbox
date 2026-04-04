@@ -102,9 +102,6 @@ export default async function ManageProfilePage() {
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">
           Manage Profile
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Update your personal details, licence, and employer information.
-        </p>
       </div>
       <div className="max-w-md">
         <CompleteProfileForm mode="edit" initialData={initialData} />

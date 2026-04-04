@@ -15,7 +15,7 @@ export function LogoutButton() {
 
   return (
     <Button variant="outline" onClick={handleLogout}>
-      Log out
+      Log Out
     </Button>
   )
 }

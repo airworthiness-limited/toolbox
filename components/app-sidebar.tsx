@@ -135,7 +135,7 @@ export function AppSidebar() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors w-full"
             >
               <LogOut className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-              Log out
+              Log Out
             </button>
           </div>
         </div>

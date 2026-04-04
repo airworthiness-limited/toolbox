@@ -138,7 +138,7 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
   }
 
   return (
-    <div>
+    <div className="relative">
       <input
         type="text"
         placeholder="DD/MM/YYYY"
@@ -148,7 +148,13 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
         maxLength={10}
         className={`w-full h-12 rounded-xl border px-3 text-sm text-center ${error ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-300' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-background border-border text-foreground placeholder:text-muted-foreground/60'}`}
       />
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+      )}
     </div>
   )
 }
@@ -472,8 +478,8 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
           {/* Name section */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Your Full Name</p>
-            <p className="text-xs text-muted-foreground mb-3">If you hold an Aircraft Maintenance Licence, this should match.</p>
+            <p className="text-sm font-semibold text-foreground mb-3">Full Name</p>
+            <p className="text-xs text-muted-foreground mb-3">These details should match your Aircraft Maintenance Licence and/or Organisation Authorisation.</p>
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First Name <span className="text-muted-foreground/60">Required</span></Label>
@@ -510,9 +516,8 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
           {/* Date of Birth */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Date of Birth</p>
-            <div className="space-y-1.5">
-              <Label htmlFor="dob" className="text-sm font-medium text-muted-foreground">Date of Birth <span className="text-muted-foreground/60">Required</span></Label>
+            <p className="text-sm font-semibold text-foreground mb-3">Date of Birth <span className="text-muted-foreground/60 font-normal">Required</span></p>
+            <div>
               <DateInput
                 value={dateOfBirth || null}
                 onChange={v => setDateOfBirth(v)}
@@ -525,7 +530,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
           <div className="h-px bg-border" />
 
           {/* Licence checkbox */}
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={hasLicence === 'yes'}
@@ -537,11 +542,10 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                   setLicences([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
                 }
               }}
-              className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
             />
             <div>
               <span className="text-sm font-medium text-foreground">Aircraft Maintenance Licence (Part 66)</span>
-              <p className="text-xs text-muted-foreground mt-0.5">This may be issued by any competent authority (e.g. UK.66.123456A).</p>
             </div>
           </label>
 
@@ -868,7 +872,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
                               <select
                                 value={approval.type}
                                 onChange={e => updateEmployerApproval(i, aIdx, 'type', e.target.value)}
-                                className="w-full h-12 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none"
+                                className={`w-full h-12 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none ${approval.type ? 'text-foreground' : 'text-muted-foreground'}`}
                               >
                                 <option value="">e.g. Maintenance (Part 145)</option>
                                 {APPROVAL_TYPES.map(type => (
@@ -1004,8 +1008,8 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
           )}
 
           {saved && (
-            <div className="rounded-xl bg-green-50 border border-green-100 p-3">
-              <p className="text-sm text-green-600">Profile saved successfully.</p>
+            <div className="rounded-xl bg-green-50 border border-green-100 p-3 text-center">
+              <p className="text-sm font-medium text-green-600">Profile Updated</p>
             </div>
           )}
 
