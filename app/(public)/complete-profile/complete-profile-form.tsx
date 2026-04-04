@@ -170,22 +170,49 @@ function isCategoryImpliedIn(categories: string[], cat: string): boolean {
   )
 }
 
-export function CompleteProfileForm() {
+interface Employer {
+  name: string
+  startDate: string
+  endDate: string
+  approvals: Approval[]
+}
+
+export interface ProfileFormInitialData {
+  firstName: string
+  middleNames: string
+  lastName: string
+  hasLicence: 'yes' | 'no' | ''
+  licences: LicenceEntry[]
+  employers: Employer[]
+  licenceFrontPath: string | null
+  licenceBackPath: string | null
+}
+
+interface CompleteProfileFormProps {
+  mode?: 'create' | 'edit'
+  initialData?: ProfileFormInitialData
+}
+
+const DEFAULT_LICENCE: LicenceEntry = { number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }
+const DEFAULT_EMPLOYER: Employer = { name: '', startDate: '', endDate: '', approvals: [{ type: '', reference: '', certifyingStaff: false, arcSignatory: false, instructor: false }] }
+
+export function CompleteProfileForm({ mode = 'create', initialData }: CompleteProfileFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  const [firstName, setFirstName] = useState('')
-  const [middleNames, setMiddleNames] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>('')
-  const [licences, setLicences] = useState<LicenceEntry[]>([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
-  const [employers, setEmployers] = useState<{ name: string; startDate: string; endDate: string; approvals: Approval[] }[]>([{ name: '', startDate: '', endDate: '', approvals: [{ type: '', reference: '', certifyingStaff: false, arcSignatory: false, instructor: false }] }])
+  const [firstName, setFirstName] = useState(initialData?.firstName ?? '')
+  const [middleNames, setMiddleNames] = useState(initialData?.middleNames ?? '')
+  const [lastName, setLastName] = useState(initialData?.lastName ?? '')
+  const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>(initialData?.hasLicence ?? '')
+  const [licences, setLicences] = useState<LicenceEntry[]>(initialData?.licences ?? [{ ...DEFAULT_LICENCE }])
+  const [employers, setEmployers] = useState<Employer[]>(initialData?.employers ?? [{ ...DEFAULT_EMPLOYER }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [recruitmentOptIn, setRecruitmentOptIn] = useState(false)
-  const [licenceFrontPath, setLicenceFrontPath] = useState<string | null>(null)
-  const [licenceBackPath, setLicenceBackPath] = useState<string | null>(null)
+  const [licenceFrontPath, setLicenceFrontPath] = useState<string | null>(initialData?.licenceFrontPath ?? null)
+  const [licenceBackPath, setLicenceBackPath] = useState<string | null>(initialData?.licenceBackPath ?? null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   // Licence helpers
   function updateLicenceNumber(index: number, value: string) {
@@ -304,6 +331,7 @@ export function CompleteProfileForm() {
   async function handleSubmit() {
     setLoading(true)
     setError('')
+    setSaved(false)
 
     if (!firstName.trim() || !lastName.trim()) {
       setError('Required information is missing.')
@@ -344,18 +372,25 @@ export function CompleteProfileForm() {
       return
     }
 
+    const profileUpdate: Record<string, any> = {
+      full_name: fullName,
+      aml_licence_number: hasLicence === 'yes' && validLicences.length > 0
+        ? validLicences.map(l => l.number.trim()).join(', ')
+        : null,
+      aml_categories: hasLicence === 'yes' ? allCategories : [],
+      type_ratings: hasLicence === 'yes' ? allEndorsements : [],
+      industry: employers.flatMap(e => e.approvals).filter(a => a.type).map(a => a.type).join(', ') || null,
+      aml_photo_path: licenceFrontPath,
+      aml_photo_back_path: licenceBackPath,
+    }
+
+    if (mode === 'create') {
+      profileUpdate.profile_completed_at = new Date().toISOString()
+    }
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({
-        full_name: fullName,
-        aml_licence_number: hasLicence === 'yes' && validLicences.length > 0
-          ? validLicences.map(l => l.number.trim()).join(', ')
-          : null,
-        aml_categories: hasLicence === 'yes' ? allCategories : [],
-        type_ratings: hasLicence === 'yes' ? allEndorsements : [],
-        industry: employers.flatMap(e => e.approvals).filter(a => a.type).map(a => a.type).join(', ') || null,
-        profile_completed_at: new Date().toISOString(),
-      })
+      .update(profileUpdate)
       .eq('id', user.id)
 
     if (profileError) {
@@ -364,14 +399,16 @@ export function CompleteProfileForm() {
       return
     }
 
-    if (licenceFrontPath || licenceBackPath) {
-      await supabase.from('profiles').update({
-        aml_photo_path: licenceFrontPath,
-        aml_photo_back_path: licenceBackPath,
-      }).eq('id', user.id)
+    const validEmployers = employers.filter(e => e.name.trim())
+
+    if (mode === 'edit') {
+      // Replace existing employment periods
+      await supabase
+        .from('employment_periods')
+        .delete()
+        .eq('user_id', user.id)
     }
 
-    const validEmployers = employers.filter(e => e.name.trim())
     if (validEmployers.length > 0) {
       await supabase.from('employment_periods').insert(
         validEmployers.map(e => ({
@@ -385,19 +422,32 @@ export function CompleteProfileForm() {
 
     await supabase.auth.updateUser({ data: { full_name: fullName } })
 
+    if (mode === 'edit') {
+      setSaved(true)
+      setLoading(false)
+      router.refresh()
+      return
+    }
+
     router.push('/profile')
   }
 
-  return (
+  const Wrapper = mode === 'create' ? ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md">{children}</div>
+    </div>
+  ) : ({ children }: { children: React.ReactNode }) => <>{children}</>
 
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Complete your profile</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            We need a few details to set up your profile.
-          </p>
-        </div>
+  return (
+    <Wrapper>
+        {mode === 'create' && (
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Complete your profile</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              We need a few details to set up your profile.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit() }} className="space-y-5">
 
@@ -875,42 +925,52 @@ export function CompleteProfileForm() {
             </div>
           </div>
 
-          <div className="h-px bg-border" />
+          {mode === 'create' && (
+            <>
+              <div className="h-px bg-border" />
 
-          {/* Consent */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">
-              By continuing you agree to our <Link href="/terms" className="text-foreground font-semibold hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-foreground font-semibold hover:underline">Privacy Policy</Link>.
-            </p>
+              {/* Consent */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">
+                  By continuing you agree to our <Link href="/terms" className="text-foreground font-semibold hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-foreground font-semibold hover:underline">Privacy Policy</Link>.
+                </p>
 
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={marketingOptIn}
-                onChange={e => setMarketingOptIn(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
-              />
-              <span className="text-sm font-medium text-muted-foreground">
-                Keep me updated with product news, regulatory changes, and training resources. You can unsubscribe at any time.
-              </span>
-            </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={marketingOptIn}
+                    onChange={e => setMarketingOptIn(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Keep me updated with product news, regulatory changes, and training resources. You can unsubscribe at any time.
+                  </span>
+                </label>
 
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={recruitmentOptIn}
-                onChange={e => setRecruitmentOptIn(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
-              />
-              <span className="text-sm font-medium text-muted-foreground">
-                Share my profile with approved recruitment partners to receive relevant job opportunities and salary insights.
-              </span>
-            </label>
-          </div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={recruitmentOptIn}
+                    onChange={e => setRecruitmentOptIn(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Share my profile with approved recruitment partners to receive relevant job opportunities and salary insights.
+                  </span>
+                </label>
+              </div>
+            </>
+          )}
 
           {error && (
             <div className="rounded-xl bg-red-50 border border-red-100 p-3">
               <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {saved && (
+            <div className="rounded-xl bg-green-50 border border-green-100 p-3">
+              <p className="text-sm text-green-600">Profile saved successfully.</p>
             </div>
           )}
 
@@ -919,14 +979,15 @@ export function CompleteProfileForm() {
             className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-xl"
             disabled={loading}
           >
-            {loading ? 'Saving...' : 'Continue'}
+            {loading ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Continue'}
           </Button>
 
-          <p className="text-xs text-muted-foreground/60 text-center leading-relaxed">
-            You can update these details at any time from your profile settings.
-          </p>
+          {mode === 'create' && (
+            <p className="text-xs text-muted-foreground/60 text-center leading-relaxed">
+              You can update these details at any time from your profile settings.
+            </p>
+          )}
         </form>
-      </div>
-    </div>
+    </Wrapper>
   )
 }

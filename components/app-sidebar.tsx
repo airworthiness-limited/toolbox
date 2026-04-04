@@ -10,6 +10,7 @@ import {
   GraduationCap,
   ShieldCheck,
   User,
+  UserCog,
   LogOut,
   Menu,
   X,
@@ -17,6 +18,7 @@ import {
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/profile', icon: User },
+  { label: 'Manage Profile', href: '/manage-profile', icon: UserCog },
   { label: 'Digital Logbook', href: '/logbook', icon: BookOpen },
   { label: 'Module Tracker', href: '/progress', icon: ClipboardList },
   { label: 'Continuation Training', href: '/courses', icon: GraduationCap },

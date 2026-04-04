@@ -9,7 +9,6 @@ import { REQUIRED_TRAINING, RECENCY_REQUIRED_DAYS, RECENCY_PERIOD_YEARS } from '
 import { MODULE_REQUIREMENTS, PART_66_MODULES, ESSAY_MODULES, PASS_MARK, PASS_VALIDITY_YEARS, isSameModuleEquivalent, getCrossModuleEquivalency } from '@/lib/progress/constants'
 import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
-import { ProfileEditor } from './profile-editor'
 import { ExternalTrainingForm } from './external-training-form'
 import { LogoutButton } from '../dashboard/logout-button'
 
@@ -314,25 +313,6 @@ export default async function ProfilePage() {
                 </Link>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Aircraft Maintenance Licence */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Aircraft Maintenance Licence</CardTitle>
-            <CardDescription>Your licence categories and aircraft type ratings.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProfileEditor
-              profile={{
-                aml_licence_number: profile.aml_licence_number ?? '',
-                aml_categories: profile.aml_categories ?? [],
-                type_ratings: normaliseTypeRatings(profile.type_ratings),
-                aml_photo_path: profile.aml_photo_path ?? null,
-                aml_verified: profile.aml_verified ?? false,
-              }}
-            />
           </CardContent>
         </Card>
 
