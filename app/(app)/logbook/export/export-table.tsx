@@ -286,7 +286,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               onChange={e => setDateFrom(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
               placeholder="DD/MM/YYYY"
               maxLength={10}
-              className="text-sm h-9 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
             />
             <span className="text-muted-foreground text-sm">to</span>
             <input
@@ -295,7 +295,7 @@ export function ExportTable({ entries }: { entries: ExportEntry[] }) {
               onChange={e => setDateTo(e.target.value.replace(/[^\d/]/g, '').slice(0, 10))}
               placeholder="DD/MM/YYYY"
               maxLength={10}
-              className="text-sm h-9 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+              className="text-sm h-10 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
             />
             {(dateFrom || dateTo) && (
               <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>

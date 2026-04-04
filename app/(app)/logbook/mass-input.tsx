@@ -403,7 +403,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                     }}
                     placeholder="DD/MM/YYYY"
                     maxLength={10}
-                    className="w-full text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -441,7 +441,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                         setTypeSearch(prev => ({ ...prev, [row.id]: e.target.value }))
                         updateRow(row.id, 'aircraftType', e.target.value)
                       }}
-                      className="w-full text-sm h-10 px-3 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full text-sm h-12 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {getTypeResults(row.id).length > 0 && (
                       <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -587,7 +587,7 @@ export function MassInput({ defaultEmployer, lastMaintenanceType, editingEntry }
                   )}
                   {!canSave && row.taskDate && (
                     <span className="text-xs text-amber-600">
-                      {!dateValid ? 'Date must be DD/MM/YYYY' : !row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
+                      {!dateValid ? 'Invalid date' : !row.aircraftCategory ? 'Select licence category' : !isSimple && !row.aircraftRegistration ? 'Enter registration' : ''}
                     </span>
                   )}
                   {row.saving && (

@@ -99,7 +99,7 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
       return
     }
     if (digits.length < 8) {
-      setValidationError('Enter a full date as DD/MM/YYYY')
+      setValidationError('Invalid date')
       return
     }
     const d = parseInt(digits.slice(0, 2), 10)
@@ -125,7 +125,7 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
     const now = new Date()
     const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     if (parsed > todayDate) {
-      setValidationError('Date cannot be in the future')
+      setValidationError('Invalid date')
       return
     }
 
@@ -146,7 +146,7 @@ function DateInput({ value, onChange, filled, onError }: { value: string | null,
         onChange={handleChange}
         onBlur={handleBlur}
         maxLength={10}
-        className={`w-full h-10 rounded-md border px-1 text-xs text-center ${error ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-300' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-muted border-border text-muted-foreground placeholder:text-muted-foreground/60'}`}
+        className={`w-full h-12 rounded-xl border px-3 text-sm text-center ${error ? 'border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-300' : filled ? 'bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-100' : 'bg-background border-border text-foreground placeholder:text-muted-foreground/60'}`}
       />
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
