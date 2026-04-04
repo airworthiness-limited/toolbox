@@ -86,9 +86,19 @@ function DateInput({ value, onChange, filled }: { value: string | null, onChange
       const d = digits.slice(0, 2)
       const m = digits.slice(2, 4)
       const y = digits.slice(4, 8)
+      const iso = `${y}-${m}-${d}`
+      // Reject future dates
+      const parsed = new Date(iso)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (!isNaN(parsed.getTime()) && parsed > today) {
+        setDisplay('')
+        onChange('')
+        return
+      }
       const formatted = `${d}/${m}/${y}`
       setDisplay(formatted)
-      onChange(`${y}-${m}-${d}`)
+      onChange(iso)
     }
   }
 
@@ -145,8 +155,7 @@ export function CompleteProfileForm() {
   const [lastName, setLastName] = useState('')
   const [hasLicence, setHasLicence] = useState<'yes' | 'no' | ''>('')
   const [licences, setLicences] = useState<LicenceEntry[]>([{ number: '', categories: [], endorsements: [{ ...EMPTY_ENDORSEMENT }], showTypeRatings: false, typeSearch: '', activeSearchRow: null }])
-  const [employers, setEmployers] = useState<{ name: string; startDate: string; endDate: string }[]>([{ name: '', startDate: '', endDate: '' }])
-  const [approvals, setApprovals] = useState<Approval[]>([{ type: '', reference: '' }])
+  const [employers, setEmployers] = useState<{ name: string; startDate: string; endDate: string; approvals: Approval[] }[]>([{ name: '', startDate: '', endDate: '', approvals: [{ type: '', reference: '' }] }])
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [recruitmentOptIn, setRecruitmentOptIn] = useState(false)
   const [error, setError] = useState('')
@@ -221,17 +230,26 @@ export function CompleteProfileForm() {
       .slice(0, 20)
   }
 
-  // Approval helpers
-  function updateApproval(index: number, field: keyof Approval, value: string) {
-    setApprovals(prev => prev.map((a, i) => i === index ? { ...a, [field]: value } : a))
+  // Employer approval helpers
+  function updateEmployerApproval(empIndex: number, appIndex: number, field: keyof Approval, value: string) {
+    setEmployers(prev => prev.map((e, i) => {
+      if (i !== empIndex) return e
+      return { ...e, approvals: e.approvals.map((a, j) => j === appIndex ? { ...a, [field]: value } : a) }
+    }))
   }
 
-  function removeApproval(index: number) {
-    setApprovals(prev => prev.filter((_, i) => i !== index))
+  function removeEmployerApproval(empIndex: number, appIndex: number) {
+    setEmployers(prev => prev.map((e, i) => {
+      if (i !== empIndex) return e
+      return { ...e, approvals: e.approvals.filter((_, j) => j !== appIndex) }
+    }))
   }
 
-  function addApproval() {
-    setApprovals(prev => [...prev, { type: '', reference: '' }])
+  function addEmployerApproval(empIndex: number) {
+    setEmployers(prev => prev.map((e, i) => {
+      if (i !== empIndex) return e
+      return { ...e, approvals: [...e.approvals, { type: '', reference: '' }] }
+    }))
   }
 
   async function handleSubmit() {
@@ -267,7 +285,7 @@ export function CompleteProfileForm() {
           : null,
         aml_categories: hasLicence === 'yes' ? allCategories : [],
         type_ratings: hasLicence === 'yes' ? allEndorsements : [],
-        industry: approvals.filter(a => a.type).map(a => a.type).join(', ') || null,
+        industry: employers.flatMap(e => e.approvals).filter(a => a.type).map(a => a.type).join(', ') || null,
       })
       .eq('id', user.id)
 
@@ -477,14 +495,29 @@ export function CompleteProfileForm() {
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B1</span>
                                   <div className="flex-1"><DateInput value={endorsement.b1Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b1Date', v)} filled={!!endorsement.b1Date} /></div>
+                                  {endorsement.b1Date && (
+                                    <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b1Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">B2</span>
                                   <div className="flex-1"><DateInput value={endorsement.b2Date} onChange={v => updateEndorsementDate(index, rowIndex, 'b2Date', v)} filled={!!endorsement.b2Date} /></div>
+                                  {endorsement.b2Date && (
+                                    <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'b2Date', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-sm font-medium text-muted-foreground w-6 shrink-0">C</span>
                                   <div className="flex-1"><DateInput value={endorsement.cDate ?? cDateValue} onChange={v => updateEndorsementDate(index, rowIndex, 'cDate', v)} filled={!!(endorsement.cDate ?? cDateValue)} /></div>
+                                  {(endorsement.cDate ?? cDateValue) && (
+                                    <button type="button" onClick={() => updateEndorsementDate(index, rowIndex, 'cDate', '')} className="text-muted-foreground hover:text-red-500 transition-colors shrink-0" title="Clear date">
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -578,90 +611,120 @@ export function CompleteProfileForm() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium text-muted-foreground">Start Date</Label>
-                    <Input
-                      type="date"
-                      value={emp.startDate}
-                      onChange={e => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, startDate: e.target.value } : p))}
-                      className="h-12 rounded-xl border-border"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <DateInput
+                          value={emp.startDate || null}
+                          onChange={v => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, startDate: v } : p))}
+                          filled={!!emp.startDate}
+                        />
+                      </div>
+                      {emp.startDate && (
+                        <button
+                          type="button"
+                          onClick={() => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, startDate: '' } : p))}
+                          className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                          title="Clear date"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium text-muted-foreground">End Date <span className="text-muted-foreground/60">Leave blank if current</span></Label>
-                    <Input
-                      type="date"
-                      value={emp.endDate}
-                      onChange={e => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, endDate: e.target.value } : p))}
-                      className="h-12 rounded-xl border-border"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <DateInput
+                          value={emp.endDate || null}
+                          onChange={v => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, endDate: v } : p))}
+                          filled={!!emp.endDate}
+                        />
+                      </div>
+                      {emp.endDate && (
+                        <button
+                          type="button"
+                          onClick={() => setEmployers(prev => prev.map((p, j) => j === i ? { ...p, endDate: '' } : p))}
+                          className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                          title="Clear date"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Organisation Approval within employer */}
+                  <div className="mt-2">
+                    <p className="text-sm font-semibold text-foreground mb-1">Organisation Approval</p>
+                    <p className="text-xs text-muted-foreground mb-3">The type of approval and reference number held by this organisation.</p>
+                    <div className="space-y-3">
+                      {emp.approvals.map((approval, aIdx) => (
+                        <div key={aIdx} className="space-y-2">
+                          {aIdx > 0 && <div className="h-px bg-border mt-1" />}
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+                                Approval Type {emp.approvals.length > 1 && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Optional</span>
+                              </Label>
+                              <select
+                                value={approval.type}
+                                onChange={e => updateEmployerApproval(i, aIdx, 'type', e.target.value)}
+                                className="w-full h-12 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none"
+                              >
+                                <option value="">Select approval type</option>
+                                {APPROVAL_TYPES.map(type => (
+                                  <option key={type} value={type}>{type}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {emp.approvals.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeEmployerApproval(i, aIdx)}
+                                className="self-end h-12 px-3 text-muted-foreground hover:text-red-500 transition-colors"
+                                title="Remove approval"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+                              Approval Reference {emp.approvals.length > 1 && `(${aIdx + 1})`} <span className="text-muted-foreground/60">Optional</span>
+                            </Label>
+                            <Input
+                              placeholder="e.g. UK.145.0000"
+                              value={approval.reference}
+                              onChange={e => updateEmployerApproval(i, aIdx, 'reference', e.target.value)}
+                              className="h-12 rounded-xl border-border"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addEmployerApproval(i)}
+                        className="text-xs font-semibold text-foreground hover:underline"
+                      >
+                        + Add another approval
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
               <button
                 type="button"
-                onClick={() => setEmployers(prev => [...prev, { name: '', startDate: '', endDate: '' }])}
+                onClick={() => setEmployers(prev => [...prev, { name: '', startDate: '', endDate: '', approvals: [{ type: '', reference: '' }] }])}
                 className="text-xs font-semibold text-foreground hover:underline"
               >
                 + Add another employer
-              </button>
-            </div>
-          </div>
-
-          {/* Approvals — repeatable */}
-          <div>
-            <p className="text-sm font-semibold text-foreground mb-1">Organisation Approval</p>
-            <p className="text-xs text-muted-foreground mb-3">The type of approval and reference number held by your organisation.</p>
-            <div className="space-y-3">
-              {approvals.map((approval, index) => (
-                <div key={index} className="space-y-2">
-                  {index > 0 && <div className="h-px bg-border mt-1" />}
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                        Approval Type {approvals.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/60">Optional</span>
-                      </Label>
-                      <select
-                        value={approval.type}
-                        onChange={e => updateApproval(index, 'type', e.target.value)}
-                        className="w-full h-12 rounded-xl border border-border bg-background px-3 text-sm focus:outline-none"
-                      >
-                        <option value="">Select approval type</option>
-                        {APPROVAL_TYPES.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {approvals.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeApproval(index)}
-                        className="self-end h-12 px-3 text-muted-foreground hover:text-red-500 transition-colors"
-                        title="Remove"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-                      Approval Reference {approvals.length > 1 && `(${index + 1})`} <span className="text-muted-foreground/60">Optional</span>
-                    </Label>
-                    <Input
-                      placeholder="e.g. UK.145.0000"
-                      value={approval.reference}
-                      onChange={e => updateApproval(index, 'reference', e.target.value)}
-                      className="h-12 rounded-xl border-border"
-                    />
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addApproval}
-                className="text-xs font-semibold text-foreground hover:underline"
-              >
-                + Add another approval
               </button>
             </div>
           </div>
