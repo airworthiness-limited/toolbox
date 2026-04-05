@@ -160,7 +160,7 @@ function MobileMenu({
 
           <div className="border-t mt-4 pt-4 space-y-3">
             {loaded && !user && (
-              <Link href="/signup" onClick={onClose}>
+              <Link href="/" onClick={onClose}>
                 <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
                   Sign up
                 </Button>
@@ -219,7 +219,7 @@ export function Navbar() {
                     Consultancy
                   </Button>
                 </a>
-                <Link href="/signup">
+                <Link href="/">
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-xl px-6 h-10 text-sm">
                     Get started
                   </Button>

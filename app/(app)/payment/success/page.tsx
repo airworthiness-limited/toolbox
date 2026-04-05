@@ -28,7 +28,7 @@ export default async function PaymentSuccessPage({ searchParams }: Props) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/signup')
+    redirect('/')
   }
 
   const session = await stripe.checkout.sessions.retrieve(session_id)

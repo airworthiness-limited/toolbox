@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/training') ||
       request.nextUrl.pathname.startsWith('/complete-profile'))
   ) {
-    return NextResponse.redirect(new URL('/signup', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   if (

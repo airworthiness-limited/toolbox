@@ -6,7 +6,7 @@ export default async function CompleteProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) redirect('/signup')
+  if (!user) redirect('/')
 
   const { data: profile } = await supabase
     .from('profiles')
