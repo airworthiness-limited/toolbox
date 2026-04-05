@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { REQUIRED_TRAINING, RECENCY_REQUIRED_DAYS, RECENCY_PERIOD_YEARS } from '@/lib/profile/constants'
+import { REQUIRED_TRAINING, RECENCY_TASK_THRESHOLD, RECENCY_REQUIRED_DAYS, RECENCY_PERIOD_YEARS } from '@/lib/profile/constants'
 import { MODULE_REQUIREMENTS, ESSAY_MODULES, PASS_MARK, PASS_VALIDITY_YEARS, isSameModuleEquivalent, getCrossModuleEquivalency } from '@/lib/progress/constants'
 import type { TrainingStatus, RecencyStatus, TypeEndorsement } from '@/lib/profile/types'
 import type { ModuleExamProgress } from '@/lib/progress/types'
@@ -140,10 +140,13 @@ export default async function ProfilePage() {
     return new Date() > expiryDate
   }
 
-  // Count passed modules for the selected category
-  let passedModules = 0
+  // Count passed exams for the selected category (MCQ and essay counted separately)
+  let passedExams = 0
+  let totalExams = 0
   for (const moduleId of requiredModuleIds) {
     const hasEssay = ESSAY_MODULES.includes(moduleId)
+    totalExams++ // MCQ exam
+    if (hasEssay) totalExams++ // Essay exam
 
     let progress = progressRecords.find(
       p => p.module_id === moduleId && p.target_category === selectedCategory
@@ -183,19 +186,23 @@ export default async function ProfilePage() {
     }
 
     const effectiveRecord = progress ?? equivalentSourceRecord
-    if (!effectiveRecord) continue
+    if (!effectiveRecord) {
+      continue
+    }
 
     const isExpired = checkExpired(effectiveRecord.issue_date)
     if (isExpired) continue
 
     const mcqPassed = effectiveRecord.mcq_score !== null && effectiveRecord.mcq_score >= PASS_MARK
-    const essayPassed = !hasEssay || (effectiveRecord.essay_score !== null && effectiveRecord.essay_score >= PASS_MARK)
+    if (mcqPassed) passedExams++
 
-    if (mcqPassed && essayPassed) passedModules++
+    if (hasEssay) {
+      const essayPassed = effectiveRecord.essay_score !== null && effectiveRecord.essay_score >= PASS_MARK
+      if (essayPassed) passedExams++
+    }
   }
 
-  const totalModules = requiredModuleIds.length
-  const progressPercent = totalModules > 0 ? Math.round((passedModules / totalModules) * 100) : 0
+  const progressPercent = totalExams > 0 ? Math.round((passedExams / totalExams) * 100) : 0
 
   // Competency assessment — coming soon (feature disabled)
   const allTrainingCurrent = trainingStatuses.every(t => t.isCurrent)
@@ -207,10 +214,12 @@ export default async function ProfilePage() {
     <DashboardEditor
       fullName={fullName}
       selectedCategory={selectedCategory}
-      passedModules={passedModules}
-      totalModules={totalModules}
+      passedExams={passedExams}
+      totalExams={totalExams}
       progressPercent={progressPercent}
       logbookCount={logbookCount}
+      recencyTotalTasks={logbookCount}
+      recencyTaskThreshold={RECENCY_TASK_THRESHOLD}
       recencyTotalDays={recencyStatus.totalDays}
       recencyRequiredDays={recencyStatus.requiredDays}
       recencyIsCurrent={recencyStatus.isCurrent}

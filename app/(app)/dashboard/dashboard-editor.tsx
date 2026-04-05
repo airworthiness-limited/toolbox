@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Pencil, ArrowUp, ArrowDown, Eye, EyeOff, Check } from 'lucide-react'
 import { ExternalTrainingForm } from './external-training-form'
 import { SidebarTriggerInline } from '@/components/sidebar-trigger-inline'
@@ -30,10 +29,12 @@ interface WidgetConfig {
 interface DashboardEditorProps {
   fullName: string
   selectedCategory: string
-  passedModules: number
-  totalModules: number
+  passedExams: number
+  totalExams: number
   progressPercent: number
   logbookCount: number
+  recencyTotalTasks: number
+  recencyTaskThreshold: number
   recencyTotalDays: number
   recencyRequiredDays: number
   recencyIsCurrent: boolean
@@ -92,13 +93,15 @@ export function DashboardEditor(props: DashboardEditorProps) {
 
   const visibleWidgets = config.order.filter(id => !config.hidden.includes(id))
 
+  const WIDGET_CARD = 'rounded-xl border border-border p-5 overflow-hidden'
+
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'module_exams':
         return (
-          <div key={id} className="rounded-xl border border-border p-6">
+          <div key={id} className={WIDGET_CARD}>
             <p className="text-sm text-muted-foreground">Module Exams ({props.selectedCategory})</p>
-            <p className="text-3xl font-bold mt-1">{props.passedModules}/{props.totalModules}</p>
+            <p className="text-3xl font-bold mt-1">{props.passedExams}/{props.totalExams}</p>
             <div className="w-full bg-muted rounded-full h-2 mt-2">
               <div
                 className={`h-2 rounded-full transition-all ${props.progressPercent === 100 ? 'bg-green-500' : 'bg-amber-500'}`}
@@ -110,14 +113,14 @@ export function DashboardEditor(props: DashboardEditorProps) {
         )
       case 'logbook_tasks':
         return (
-          <div key={id} className="rounded-xl border border-border p-6">
+          <div key={id} className={WIDGET_CARD}>
             <p className="text-sm text-muted-foreground">Logbook Tasks</p>
             <p className="text-3xl font-bold mt-1">{props.logbookCount}</p>
           </div>
         )
       case 'recency':
         return (
-          <div key={id} className="rounded-xl border border-border p-5">
+          <div key={id} className={WIDGET_CARD}>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Recency (6 Months / 2 Years)
             </p>
@@ -125,11 +128,11 @@ export function DashboardEditor(props: DashboardEditorProps) {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Tasks</span>
-                  <span className="text-sm font-semibold text-foreground">{props.logbookCount} / 180</span>
+                  <span className="text-sm font-semibold text-foreground">{props.recencyTotalTasks} / {props.recencyTaskThreshold}</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 mt-1">
                   <div
-                    style={{ width: `${Math.min(100, (props.logbookCount / 180) * 100)}%`, backgroundColor: props.logbookCount >= 180 ? '#22c55e' : '#3b82f6' }}
+                    style={{ width: `${Math.min(100, (props.recencyTotalTasks / props.recencyTaskThreshold) * 100)}%`, backgroundColor: props.recencyTotalTasks >= props.recencyTaskThreshold ? '#22c55e' : '#3b82f6' }}
                     className="h-1.5 rounded-full"
                   />
                 </div>
@@ -151,112 +154,100 @@ export function DashboardEditor(props: DashboardEditorProps) {
         )
       case 'continuation_training':
         return (
-          <Card key={id}>
-            <CardHeader>
-              <CardTitle>Continuation Training</CardTitle>
-              <CardDescription>Required to be completed within the last 2 years.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {props.trainingStatuses.map(training => {
-                  const extCert = props.externalCerts?.find(c => c.training_slug === training.slug)
-                  return (
-                    <div key={training.slug} className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-base font-semibold">{training.label}</p>
-                          {training.certificateDate ? (
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                              Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
+          <div key={id} className={`${WIDGET_CARD} md:col-span-2`}>
+            <p className="text-base font-semibold text-foreground">Continuation Training</p>
+            <p className="text-sm text-muted-foreground mb-3">Required to be completed within the last 2 years.</p>
+            <div className="grid gap-3 min-w-0">
+              {props.trainingStatuses.map(training => {
+                const extCert = props.externalCerts?.find(c => c.training_slug === training.slug)
+                return (
+                  <div key={training.slug} className="rounded-lg border p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{training.label}</p>
+                        {training.certificateDate ? (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Completed {new Date(training.certificateDate).toLocaleDateString('en-GB', {
+                              day: 'numeric', month: 'long', year: 'numeric'
+                            })}
+                            {extCert?.expiry_date && (
+                              <span className="text-muted-foreground"> · Expires {new Date(extCert.expiry_date).toLocaleDateString('en-GB', {
                                 day: 'numeric', month: 'long', year: 'numeric'
-                              })}
-                              {extCert?.expiry_date && (
-                                <span className="text-muted-foreground"> · Expires {new Date(extCert.expiry_date).toLocaleDateString('en-GB', {
-                                  day: 'numeric', month: 'long', year: 'numeric'
-                                })}</span>
-                              )}
-                            </p>
-                          ) : (
-                            <p className="text-sm text-muted-foreground mt-0.5">No certificate on record</p>
-                          )}
-                        </div>
-                        <Badge className="shrink-0" variant={training.isCurrent ? 'default' : 'destructive'}>
-                          {training.isCurrent ? 'Current' : 'Expired'}
-                        </Badge>
+                              })}</span>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-0.5">No certificate on record</p>
+                        )}
                       </div>
-                      <ExternalTrainingForm
-                        slug={training.slug}
-                        existingDate={extCert?.completion_date ?? null}
-                        existingCertificatePath={extCert?.certificate_path ?? null}
-                      />
+                      <Badge className="shrink-0" variant={training.isCurrent ? 'default' : 'destructive'}>
+                        {training.isCurrent ? 'Current' : 'Expired'}
+                      </Badge>
+                    </div>
+                    <ExternalTrainingForm
+                      slug={training.slug}
+                      existingDate={extCert?.completion_date ?? null}
+                      existingCertificatePath={extCert?.certificate_path ?? null}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            {!props.allTrainingCurrent && (
+              <div className="mt-4">
+                <Link href="/training">
+                  <Button size="sm">Complete Training</Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )
+      case 'recent_entries':
+        return (
+          <div key={id} className={WIDGET_CARD}>
+            <p className="text-base font-semibold text-foreground mb-3">Most Recent Logbook Tasks</p>
+            {props.recentEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No logbook tasks recorded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {props.recentEntries.map(entry => {
+                  const taskTypeMatch = entry.description?.match(/^\[([^\]]+)\]/)
+                  const taskTypes = taskTypeMatch ? taskTypeMatch[1] : null
+                  const detail = entry.description?.replace(/^\[[^\]]+\]\s*/, '') || ''
+                  const statusLabel = entry.status === 'verified' ? 'Verified' : entry.status === 'draft' ? 'Draft' : entry.status === 'pending_verification' ? 'Pending' : entry.status
+                  return (
+                    <div key={entry.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                      <div className="text-xs text-muted-foreground whitespace-nowrap pt-0.5">
+                        {new Date(entry.task_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground truncate">{detail || entry.description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {entry.aircraft_type !== 'N/A' && entry.aircraft_type}
+                          {entry.aircraft_type !== 'N/A' && entry.aircraft_registration !== 'N/A' && ' · '}
+                          {entry.aircraft_registration !== 'N/A' && entry.aircraft_registration}
+                          {taskTypes && ` · ${taskTypes}`}
+                        </p>
+                      </div>
+                      <Badge variant={entry.status === 'verified' ? 'default' : 'outline'} className="text-[10px] flex-shrink-0">
+                        {statusLabel}
+                      </Badge>
                     </div>
                   )
                 })}
               </div>
-              {!props.allTrainingCurrent && (
-                <div className="mt-4">
-                  <Link href="/training">
-                    <Button size="sm">Complete Training</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      case 'recent_entries':
-        return (
-          <Card key={id}>
-            <CardHeader>
-              <CardTitle>Most Recent Logbook Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {props.recentEntries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No logbook tasks recorded yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {props.recentEntries.map(entry => {
-                    const taskTypeMatch = entry.description?.match(/^\[([^\]]+)\]/)
-                    const taskTypes = taskTypeMatch ? taskTypeMatch[1] : null
-                    const detail = entry.description?.replace(/^\[[^\]]+\]\s*/, '') || ''
-                    const statusLabel = entry.status === 'verified' ? 'Verified' : entry.status === 'draft' ? 'Draft' : entry.status === 'pending_verification' ? 'Pending' : entry.status
-                    return (
-                      <div key={entry.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-                        <div className="text-xs text-muted-foreground whitespace-nowrap pt-0.5">
-                          {new Date(entry.task_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground truncate">{detail || entry.description}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {entry.aircraft_type !== 'N/A' && entry.aircraft_type}
-                            {entry.aircraft_type !== 'N/A' && entry.aircraft_registration !== 'N/A' && ' · '}
-                            {entry.aircraft_registration !== 'N/A' && entry.aircraft_registration}
-                            {taskTypes && ` · ${taskTypes}`}
-                          </p>
-                        </div>
-                        <Badge variant={entry.status === 'verified' ? 'default' : 'outline'} className="text-[10px] flex-shrink-0">
-                          {statusLabel}
-                        </Badge>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-              {props.recentEntries.length > 0 && (
-                <div className="mt-3">
-                  <Link href="/logbook">
-                    <Button variant="outline" size="sm">View All Tasks</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+            {props.recentEntries.length > 0 && (
+              <div className="mt-3">
+                <Link href="/logbook">
+                  <Button variant="outline" size="sm">View All Tasks</Button>
+                </Link>
+              </div>
+            )}
+          </div>
         )
     }
   }
-
-  // Stats widgets render in a grid, others render full-width
-  const statsWidgets = visibleWidgets.filter(id => id === 'module_exams' || id === 'logbook_tasks')
-  const otherWidgets = visibleWidgets.filter(id => id !== 'module_exams' && id !== 'logbook_tasks')
 
   return (
     <div>
@@ -328,15 +319,9 @@ export function DashboardEditor(props: DashboardEditorProps) {
         </div>
       )}
 
-      {/* Widgets */}
-      {statsWidgets.length > 0 && (
-        <div className={`grid gap-4 mb-4 ${statsWidgets.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {statsWidgets.map(id => renderWidget(id))}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {otherWidgets.map(id => renderWidget(id))}
+      {/* Widgets — responsive grid: 1 col mobile, 2 col desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {visibleWidgets.map(id => renderWidget(id))}
       </div>
     </div>
   )

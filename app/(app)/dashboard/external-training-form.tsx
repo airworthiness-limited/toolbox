@@ -71,17 +71,19 @@ export function ExternalTrainingForm({ slug, existingDate, existingCertificatePa
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
-          className="w-auto text-sm h-8"
+          className="w-auto min-w-0 flex-1 text-sm h-8"
         />
         <Button
           size="sm"
           variant="outline"
           onClick={handleSaveDate}
           disabled={saving || !date}
-          className="h-8 text-xs"
+          className="h-8 text-xs shrink-0"
         >
           {saving ? 'Saving...' : 'Save Date'}
         </Button>
+      </div>
+      <div className="mt-2">
         <label className="cursor-pointer">
           <Button
             size="sm"

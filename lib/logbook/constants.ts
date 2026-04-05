@@ -33,10 +33,8 @@ export const VERIFICATION_AUTHORITY: Record<AircraftCategory, AmlCategory[]> = {
   helicopter_piston: ['A4', 'B1.4'],
 }
 
-// Recency thresholds per CAP 741
-export const RECENCY_PERIOD_YEARS = 2
-export const RECENCY_TASK_THRESHOLD = 180
-export const RECENCY_DAY_THRESHOLD = 100
+// Recency constants re-exported from profile for backward compatibility
+export { RECENCY_PERIOD_YEARS, RECENCY_TASK_THRESHOLD, RECENCY_REQUIRED_DAYS as RECENCY_DAY_THRESHOLD } from '@/lib/profile/constants'
 
 // Scope of work descriptions per licence category group
 export const SCOPE_OF_WORK: Record<string, string> = {

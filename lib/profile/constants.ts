@@ -20,9 +20,9 @@ export const REQUIRED_TRAINING = [
   { slug: 'fuel-tank-safety', label: 'Fuel Tank Safety' },
 ] as const
 
-// Recency requirement: 6 months of experience in the preceding 2 years
-// Tracked as distinct task days (days on which a logbook task was recorded)
-export const RECENCY_REQUIRED_DAYS = 130
+// Recency requirement: 180 tasks or 100 distinct days in the preceding 2 years
+export const RECENCY_TASK_THRESHOLD = 180
+export const RECENCY_REQUIRED_DAYS = 100
 export const RECENCY_PERIOD_YEARS = 2
 
 // Competency assessment questions for public profile listing
