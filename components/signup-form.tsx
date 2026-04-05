@@ -80,6 +80,8 @@ export function SignUpForm() {
     <form onSubmit={e => { e.preventDefault(); handleSendMagicLink() }} className="space-y-4">
       <Input
         type="email"
+        name="email"
+        autoComplete="email"
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="Email"
