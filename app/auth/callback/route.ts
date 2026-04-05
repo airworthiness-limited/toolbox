@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
   const response = redirectPath
     ? NextResponse.redirect(`${origin}${redirectPath}`)
-    : NextResponse.redirect(`${origin}/signup`)
+    : NextResponse.redirect(`${origin}/`)
 
   // Write session cookies onto the redirect response so the browser stores them
   cookiesToSet.forEach(({ name, value, options }) => {

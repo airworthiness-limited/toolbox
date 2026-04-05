@@ -38,15 +38,15 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/profile') ||
       request.nextUrl.pathname.startsWith('/modules') ||
       request.nextUrl.pathname.startsWith('/training') ||
-      request.nextUrl.pathname.startsWith('/complete-profile'))
+      request.nextUrl.pathname.startsWith('/complete-profile') ||
+      request.nextUrl.pathname.startsWith('/settings'))
   ) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
   if (
     user &&
-    (request.nextUrl.pathname.startsWith('/login') ||
-      request.nextUrl.pathname.startsWith('/signup'))
+    request.nextUrl.pathname.startsWith('/login')
   ) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
@@ -61,8 +61,8 @@ export const config = {
     '/profile/:path*',
     '/modules/:path*',
     '/training/:path*',
+    '/settings/:path*',
     '/complete-profile',
     '/login',
-    '/signup',
   ],
 }
