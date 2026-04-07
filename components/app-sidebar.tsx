@@ -15,10 +15,12 @@ import {
   Menu,
   X,
   ChevronsUpDown,
+  Rss,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: User },
+  { label: 'Social Feed', href: '/feed', icon: Rss },
   { label: 'Digital Logbook', href: '/logbook', icon: BookOpen },
   { label: 'Module Tracker', href: '/modules', icon: ClipboardList },
   { label: 'Continuation Training', href: '/training', icon: GraduationCap },
