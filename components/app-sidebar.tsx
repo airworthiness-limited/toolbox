@@ -18,6 +18,8 @@ import {
   Rss,
   Bell,
   Search,
+  GripVertical,
+  Check,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -29,6 +31,44 @@ const NAV_ITEMS = [
   { label: 'Module Tracker', href: '/modules', icon: ClipboardList },
   { label: 'Continuation Training', href: '/training', icon: GraduationCap },
 ]
+
+const NAV_ORDER_KEY = 'sidebar-nav-order'
+
+function useOrderedNav() {
+  const [order, setOrder] = useState<string[]>(() => NAV_ITEMS.map(i => i.href))
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(NAV_ORDER_KEY)
+      if (stored) {
+        const parsed: string[] = JSON.parse(stored)
+        // Keep only known hrefs, then append any new items not in stored order
+        const known = parsed.filter(h => NAV_ITEMS.some(i => i.href === h))
+        const missing = NAV_ITEMS.map(i => i.href).filter(h => !known.includes(h))
+        setOrder([...known, ...missing])
+      }
+    } catch {}
+  }, [])
+
+  const items = order
+    .map(href => NAV_ITEMS.find(i => i.href === href))
+    .filter((i): i is typeof NAV_ITEMS[number] => !!i)
+
+  function persist(next: string[]) {
+    setOrder(next)
+    try { localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(next)) } catch {}
+  }
+
+  function move(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length) return
+    const next = order.slice()
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    persist(next)
+  }
+
+  return { items, move }
+}
 
 function useUserProfile() {
   const [user, setUser] = useState<any>(null)
@@ -185,12 +225,94 @@ export function SidebarTrigger() {
   )
 }
 
+function NavList({
+  items,
+  isActive,
+  unreadCount,
+  reordering,
+  onDropMove,
+  onItemClick,
+}: {
+  items: typeof NAV_ITEMS
+  isActive: (href: string) => boolean
+  unreadCount: number
+  reordering: boolean
+  onDropMove: (from: number, to: number) => void
+  onItemClick?: () => void
+}) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+
+  return (
+    <ul className="space-y-1">
+      {items.map((item, index) => {
+        const Icon = item.icon
+        const active = isActive(item.href)
+        const showBadge = item.href === '/notifications' && unreadCount > 0
+        const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
+
+        const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          active
+            ? 'bg-sidebar-accent text-sidebar-foreground'
+            : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
+        } ${isOver ? 'ring-2 ring-foreground/20' : ''}`
+
+        const inner = (
+          <>
+            {reordering && (
+              <GripVertical className="w-4 h-4 flex-shrink-0 text-sidebar-foreground/40 cursor-grab" strokeWidth={1.5} />
+            )}
+            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+            <span className="flex-1">{item.label}</span>
+            {showBadge && !reordering && (
+              <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-foreground text-background text-xs font-semibold">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </>
+        )
+
+        return (
+          <li
+            key={item.href}
+            draggable={reordering}
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={e => { if (reordering) { e.preventDefault(); setOverIndex(index) } }}
+            onDragLeave={() => { if (overIndex === index) setOverIndex(null) }}
+            onDrop={e => {
+              if (!reordering) return
+              e.preventDefault()
+              if (dragIndex !== null) onDropMove(dragIndex, index)
+              setDragIndex(null)
+              setOverIndex(null)
+            }}
+            onDragEnd={() => { setDragIndex(null); setOverIndex(null) }}
+            className={dragIndex === index ? 'opacity-40' : ''}
+          >
+            {reordering ? (
+              <div className={baseClass} aria-label={`Drag to reorder ${item.label}`}>
+                {inner}
+              </div>
+            ) : (
+              <Link href={item.href} onClick={onItemClick} className={baseClass}>
+                {inner}
+              </Link>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, profile, loaded } = useUserProfile()
   const unreadCount = useUnreadNotificationCount(user)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [reordering, setReordering] = useState(false)
+  const { items: navItems, move: moveNav } = useOrderedNav()
 
   // Listen for external triggers
   useEffect(() => {
@@ -246,34 +368,19 @@ export function AppSidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3">
-          <ul className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              const showBadge = item.href === '/notifications' && unreadCount > 0
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      active
-                        ? 'bg-sidebar-accent text-sidebar-foreground'
-                        : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                    <span className="flex-1">{item.label}</span>
-                    {showBadge && (
-                      <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-foreground text-background text-xs font-semibold">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+          <NavList
+            items={navItems}
+            isActive={isActive}
+            unreadCount={unreadCount}
+            reordering={reordering}
+            onDropMove={moveNav}
+          />
+          <button
+            onClick={() => setReordering(r => !r)}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/40 transition-colors"
+          >
+            {reordering ? <><Check className="w-3.5 h-3.5" strokeWidth={1.5} /> Done</> : <><GripVertical className="w-3.5 h-3.5" strokeWidth={1.5} /> Reorder</>}
+          </button>
         </nav>
 
         {/* User menu */}
@@ -310,29 +417,20 @@ export function AppSidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 px-3">
-            <ul className="space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        active
-                          ? 'bg-sidebar-accent text-sidebar-foreground'
-                          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                      {item.label}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+            <NavList
+              items={navItems}
+              isActive={isActive}
+              unreadCount={unreadCount}
+              reordering={reordering}
+              onDropMove={moveNav}
+              onItemClick={() => setMobileOpen(false)}
+            />
+            <button
+              onClick={() => setReordering(r => !r)}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/40 transition-colors"
+            >
+              {reordering ? <><Check className="w-3.5 h-3.5" strokeWidth={1.5} /> Done</> : <><GripVertical className="w-3.5 h-3.5" strokeWidth={1.5} /> Reorder</>}
+            </button>
           </nav>
 
           {/* User menu */}
