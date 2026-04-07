@@ -421,8 +421,7 @@ export function CompleteProfileForm({ mode = 'create', initialData }: CompletePr
 
     const { error: profileError } = await supabase
       .from('profiles')
-      .update(profileUpdate)
-      .eq('id', user.id)
+      .upsert({ id: user.id, ...profileUpdate }, { onConflict: 'id' })
 
     if (profileError) {
       setError(profileError.message)
