@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ShareMilestonePrompt } from '@/components/share-milestone-prompt'
 
 interface ExternalTrainingFormProps {
   slug: string
@@ -17,6 +18,7 @@ export function ExternalTrainingForm({ slug, existingDate, existingCertificatePa
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [hasCertificate, setHasCertificate] = useState(!!existingCertificatePath)
+  const [showShare, setShowShare] = useState(false)
 
   async function handleSaveDate() {
     if (!date) return
@@ -28,6 +30,7 @@ export function ExternalTrainingForm({ slug, existingDate, existingCertificatePa
         body: JSON.stringify({ training_slug: slug, completion_date: date }),
       })
       if (res.ok) {
+        setShowShare(true)
         router.refresh()
       }
     } finally {
@@ -104,6 +107,14 @@ export function ExternalTrainingForm({ slug, existingDate, existingCertificatePa
       </div>
       {hasCertificate && (
         <p className="text-xs text-green-600 mt-1">Certificate uploaded</p>
+      )}
+      {showShare && (
+        <ShareMilestonePrompt
+          postType="training_completed"
+          data={{ training_slug: slug, completion_date: date }}
+          preview={`Completed ${slug.replace(/-/g, ' ')} training`}
+          onDone={() => setShowShare(false)}
+        />
       )}
     </div>
   )

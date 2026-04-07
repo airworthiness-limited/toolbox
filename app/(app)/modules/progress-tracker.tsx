@@ -12,6 +12,7 @@ import {
   VERIFICATION_STATUSES,
 } from '@/lib/progress/constants'
 import type { ExamRow } from '@/lib/progress/types'
+import { ShareMilestonePrompt } from '@/components/share-milestone-prompt'
 
 interface ProgressTrackerProps {
   examRows: ExamRow[]
@@ -100,6 +101,8 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [savedMsg, setSavedMsg] = useState<Record<string, string>>({})
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  // Tracks which exam keys have just had a passing save and should show the share prompt
+  const [sharePrompts, setSharePrompts] = useState<Record<string, { type: 'mcq' | 'essay'; score: number } | null>>({})
 
   function updateMcqField(moduleId: string, field: keyof McqFormState, value: string) {
     setMcqForms(prev => ({
@@ -145,6 +148,11 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
       setSavedMsg(prev => ({ ...prev, [key]: 'Failed to save' }))
     } else {
       setSavedMsg(prev => ({ ...prev, [key]: 'Saved' }))
+      // Show share prompt if the score is a pass
+      const score = form.score ? parseInt(form.score, 10) : NaN
+      if (!isNaN(score) && score >= PASS_MARK) {
+        setSharePrompts(prev => ({ ...prev, [key]: { type: 'mcq', score } }))
+      }
       startTransition(() => router.refresh())
     }
   }
@@ -179,6 +187,13 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
       setSavedMsg(prev => ({ ...prev, [key]: 'Failed to save' }))
     } else {
       setSavedMsg(prev => ({ ...prev, [key]: 'Saved' }))
+      // Show share prompt if the essay is a pass (and the second part too if split)
+      const score = form.score ? parseInt(form.score, 10) : NaN
+      const score2 = form.essay_split && form.score_2 ? parseInt(form.score_2, 10) : NaN
+      const passed = !isNaN(score) && score >= PASS_MARK && (!form.essay_split || (!isNaN(score2) && score2 >= PASS_MARK))
+      if (passed) {
+        setSharePrompts(prev => ({ ...prev, [key]: { type: 'essay', score } }))
+      }
       startTransition(() => router.refresh())
     }
   }
@@ -353,30 +368,62 @@ export function ProgressTracker({ examRows, selectedCategory, userId }: Progress
             )}
 
             {!isEquivalent && isMcq && (
-              <McqCardContent
-                row={row}
-                form={mcqForms[row.moduleId] ?? initMcqForm(row)}
-                saving={saving[`mcq-${row.moduleId}`] ?? false}
-                savedMsg={savedMsg[`mcq-${row.moduleId}`] ?? ''}
-                uploadMsg={savedMsg[`upload-${row.moduleId}`] ?? ''}
-                uploading={uploading[row.moduleId] ?? false}
-                onFieldChange={updateMcqField}
-                onSave={handleSaveMcq}
-                onUpload={handleUpload}
-                onRemove={handleRemove}
-              />
+              <>
+                <McqCardContent
+                  row={row}
+                  form={mcqForms[row.moduleId] ?? initMcqForm(row)}
+                  saving={saving[`mcq-${row.moduleId}`] ?? false}
+                  savedMsg={savedMsg[`mcq-${row.moduleId}`] ?? ''}
+                  uploadMsg={savedMsg[`upload-${row.moduleId}`] ?? ''}
+                  uploading={uploading[row.moduleId] ?? false}
+                  onFieldChange={updateMcqField}
+                  onSave={handleSaveMcq}
+                  onUpload={handleUpload}
+                  onRemove={handleRemove}
+                />
+                {sharePrompts[`mcq-${row.moduleId}`] && (
+                  <div className="px-6 pb-4">
+                    <ShareMilestonePrompt
+                      postType="module_pass"
+                      data={{
+                        module_id: row.moduleId,
+                        category: selectedCategory,
+                        mcq_score: sharePrompts[`mcq-${row.moduleId}`]!.score,
+                      }}
+                      preview={`Passed Module ${row.moduleId} (${selectedCategory}) — MCQ ${sharePrompts[`mcq-${row.moduleId}`]!.score}%`}
+                      onDone={() => setSharePrompts(prev => ({ ...prev, [`mcq-${row.moduleId}`]: null }))}
+                    />
+                  </div>
+                )}
+              </>
             )}
 
             {!isEquivalent && isEssay && (
-              <EssayCardContent
-                row={row}
-                form={essayForms[row.moduleId] ?? initEssayForm(row)}
-                saving={saving[`essay-${row.moduleId}`] ?? false}
-                savedMsg={savedMsg[`essay-${row.moduleId}`] ?? ''}
-                onFieldChange={updateEssayField}
-                onSave={handleSaveEssay}
-                onRemove={handleRemove}
-              />
+              <>
+                <EssayCardContent
+                  row={row}
+                  form={essayForms[row.moduleId] ?? initEssayForm(row)}
+                  saving={saving[`essay-${row.moduleId}`] ?? false}
+                  savedMsg={savedMsg[`essay-${row.moduleId}`] ?? ''}
+                  onFieldChange={updateEssayField}
+                  onSave={handleSaveEssay}
+                  onRemove={handleRemove}
+                />
+                {sharePrompts[`essay-${row.moduleId}`] && (
+                  <div className="px-6 pb-4">
+                    <ShareMilestonePrompt
+                      postType="module_pass"
+                      data={{
+                        module_id: row.moduleId,
+                        category: selectedCategory,
+                        essay_score: sharePrompts[`essay-${row.moduleId}`]!.score,
+                      }}
+                      preview={`Passed Module ${row.moduleId} (${selectedCategory}) — Essay ${sharePrompts[`essay-${row.moduleId}`]!.score}%`}
+                      onDone={() => setSharePrompts(prev => ({ ...prev, [`essay-${row.moduleId}`]: null }))}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </Card>
         </React.Fragment>
