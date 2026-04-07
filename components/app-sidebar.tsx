@@ -19,7 +19,6 @@ import {
   Bell,
   Search,
   GripVertical,
-  Check,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -229,14 +228,12 @@ function NavList({
   items,
   isActive,
   unreadCount,
-  reordering,
   onDropMove,
   onItemClick,
 }: {
   items: typeof NAV_ITEMS
   isActive: (href: string) => boolean
   unreadCount: number
-  reordering: boolean
   onDropMove: (from: number, to: number) => void
   onItemClick?: () => void
 }) {
@@ -251,53 +248,49 @@ function NavList({
         const showBadge = item.href === '/notifications' && unreadCount > 0
         const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
 
-        const baseClass = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          active
-            ? 'bg-sidebar-accent text-sidebar-foreground'
-            : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
-        } ${isOver ? 'ring-2 ring-foreground/20' : ''}`
-
-        const inner = (
-          <>
-            {reordering && (
-              <GripVertical className="w-4 h-4 flex-shrink-0 text-sidebar-foreground/40 cursor-grab" strokeWidth={1.5} />
-            )}
-            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-            <span className="flex-1">{item.label}</span>
-            {showBadge && !reordering && (
-              <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-foreground text-background text-xs font-semibold">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </>
-        )
-
         return (
           <li
             key={item.href}
-            draggable={reordering}
-            onDragStart={() => setDragIndex(index)}
-            onDragOver={e => { if (reordering) { e.preventDefault(); setOverIndex(index) } }}
+            onDragOver={e => { if (dragIndex !== null) { e.preventDefault(); setOverIndex(index) } }}
             onDragLeave={() => { if (overIndex === index) setOverIndex(null) }}
             onDrop={e => {
-              if (!reordering) return
               e.preventDefault()
               if (dragIndex !== null) onDropMove(dragIndex, index)
               setDragIndex(null)
               setOverIndex(null)
             }}
-            onDragEnd={() => { setDragIndex(null); setOverIndex(null) }}
-            className={dragIndex === index ? 'opacity-40' : ''}
+            className={`group relative flex items-center rounded-lg ${
+              active
+                ? 'bg-sidebar-accent'
+                : 'hover:bg-sidebar-accent/50'
+            } ${isOver ? 'ring-2 ring-foreground/20' : ''} ${dragIndex === index ? 'opacity-40' : ''}`}
           >
-            {reordering ? (
-              <div className={baseClass} aria-label={`Drag to reorder ${item.label}`}>
-                {inner}
-              </div>
-            ) : (
-              <Link href={item.href} onClick={onItemClick} className={baseClass}>
-                {inner}
-              </Link>
-            )}
+            <Link
+              href={item.href}
+              onClick={onItemClick}
+              className={`flex items-center gap-3 flex-1 min-w-0 px-3 py-2.5 text-sm font-medium transition-colors ${
+                active
+                  ? 'text-sidebar-foreground'
+                  : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'
+              }`}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+              <span className="flex-1 truncate">{item.label}</span>
+              {showBadge && (
+                <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-foreground text-background text-xs font-semibold">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+            <span
+              draggable
+              onDragStart={e => { setDragIndex(index); e.dataTransfer.effectAllowed = 'move' }}
+              onDragEnd={() => { setDragIndex(null); setOverIndex(null) }}
+              aria-label={`Drag to reorder ${item.label}`}
+              className="flex-shrink-0 px-2 py-2.5 cursor-grab active:cursor-grabbing text-sidebar-foreground/30 hover:text-sidebar-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <GripVertical className="w-4 h-4" strokeWidth={1.5} />
+            </span>
           </li>
         )
       })}
@@ -311,7 +304,6 @@ export function AppSidebar() {
   const { user, profile, loaded } = useUserProfile()
   const unreadCount = useUnreadNotificationCount(user)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [reordering, setReordering] = useState(false)
   const { items: navItems, move: moveNav } = useOrderedNav()
 
   // Listen for external triggers
@@ -372,15 +364,8 @@ export function AppSidebar() {
             items={navItems}
             isActive={isActive}
             unreadCount={unreadCount}
-            reordering={reordering}
             onDropMove={moveNav}
           />
-          <button
-            onClick={() => setReordering(r => !r)}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/40 transition-colors"
-          >
-            {reordering ? <><Check className="w-3.5 h-3.5" strokeWidth={1.5} /> Done</> : <><GripVertical className="w-3.5 h-3.5" strokeWidth={1.5} /> Reorder</>}
-          </button>
         </nav>
 
         {/* User menu */}
@@ -421,16 +406,9 @@ export function AppSidebar() {
               items={navItems}
               isActive={isActive}
               unreadCount={unreadCount}
-              reordering={reordering}
               onDropMove={moveNav}
               onItemClick={() => setMobileOpen(false)}
             />
-            <button
-              onClick={() => setReordering(r => !r)}
-              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent/40 transition-colors"
-            >
-              {reordering ? <><Check className="w-3.5 h-3.5" strokeWidth={1.5} /> Done</> : <><GripVertical className="w-3.5 h-3.5" strokeWidth={1.5} /> Reorder</>}
-            </button>
           </nav>
 
           {/* User menu */}
