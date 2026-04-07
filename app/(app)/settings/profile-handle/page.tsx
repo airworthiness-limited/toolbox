@@ -18,7 +18,7 @@ export default async function ProfileHandlePage() {
 
   const { data: profile } = await supabase
     .from('public_profiles')
-    .select('handle, is_public')
+    .select('handle, is_public, avatar_path')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -27,14 +27,18 @@ export default async function ProfileHandlePage() {
     redirect('/settings')
   }
 
+  const avatarUrl = profile.avatar_path
+    ? supabase.storage.from('public-profile-avatars').getPublicUrl(profile.avatar_path).data.publicUrl
+    : null
+
   return (
     <div>
       <div className="mb-8 flex items-center gap-2">
         <SidebarTriggerInline />
-        <h1 className="text-2xl font-semibold text-foreground">Choose your handle</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Profile settings</h1>
       </div>
-      <div className="max-w-lg">
-        <HandleForm currentHandle={profile.handle} />
+      <div className="max-w-lg space-y-6">
+        <HandleForm currentHandle={profile.handle} initialAvatarUrl={avatarUrl} />
       </div>
     </div>
   )
