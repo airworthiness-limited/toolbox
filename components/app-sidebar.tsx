@@ -17,11 +17,13 @@ import {
   ChevronsUpDown,
   Rss,
   Bell,
+  Search,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: User },
   { label: 'Social Feed', href: '/feed', icon: Rss },
+  { label: 'Discover', href: '/discover', icon: Search },
   { label: 'Notifications', href: '/notifications', icon: Bell },
   { label: 'Digital Logbook', href: '/logbook', icon: BookOpen },
   { label: 'Module Tracker', href: '/modules', icon: ClipboardList },
