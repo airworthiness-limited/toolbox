@@ -18,7 +18,7 @@ export default async function ProfileHandlePage() {
 
   const { data: profile } = await supabase
     .from('public_profiles')
-    .select('handle, is_public, avatar_path')
+    .select('handle, is_public, avatar_path, display_name_first_only, show_employment_status, show_years_in_industry, show_apprenticeship, show_continuation_training_status, show_first_endorsement_dates')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -38,7 +38,18 @@ export default async function ProfileHandlePage() {
         <h1 className="text-2xl font-semibold text-foreground">Profile settings</h1>
       </div>
       <div className="max-w-lg space-y-6">
-        <HandleForm currentHandle={profile.handle} initialAvatarUrl={avatarUrl} />
+        <HandleForm
+          currentHandle={profile.handle}
+          initialAvatarUrl={avatarUrl}
+          visibility={{
+            display_name_first_only: profile.display_name_first_only,
+            show_employment_status: profile.show_employment_status,
+            show_years_in_industry: profile.show_years_in_industry,
+            show_apprenticeship: profile.show_apprenticeship,
+            show_continuation_training_status: profile.show_continuation_training_status,
+            show_first_endorsement_dates: profile.show_first_endorsement_dates,
+          }}
+        />
       </div>
     </div>
   )

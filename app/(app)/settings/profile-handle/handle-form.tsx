@@ -12,9 +12,46 @@ const MAX_AVATAR_BYTES = 2 * 1024 * 1024 // 2 MB
 const AVATAR_DIMENSION = 512 // re-encoded square
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+interface VisibilitySettings {
+  display_name_first_only: boolean
+  show_employment_status: boolean
+  show_years_in_industry: boolean
+  show_apprenticeship: boolean
+  show_continuation_training_status: boolean
+  show_first_endorsement_dates: boolean
+}
+
 interface Props {
   currentHandle: string
   initialAvatarUrl: string | null
+  visibility: VisibilitySettings
+}
+
+const VISIBILITY_LABELS: Record<keyof VisibilitySettings, { label: string; description: string }> = {
+  display_name_first_only: {
+    label: 'Show first name only',
+    description: 'Hide your last name on your public profile.',
+  },
+  show_employment_status: {
+    label: 'Employment type',
+    description: 'Show whether you are Permanent or Contractor.',
+  },
+  show_years_in_industry: {
+    label: 'Years in industry',
+    description: 'Calculated from your earliest employment period.',
+  },
+  show_apprenticeship: {
+    label: 'Apprenticeship completion',
+    description: 'Show that you have completed an apprenticeship.',
+  },
+  show_continuation_training_status: {
+    label: 'Continuation training currency',
+    description: 'Show whether your training is all current.',
+  },
+  show_first_endorsement_dates: {
+    label: 'Type rating dates',
+    description: 'Show the date each type rating was first endorsed.',
+  },
 }
 
 /**
@@ -60,7 +97,7 @@ async function reencodeImage(file: File): Promise<Blob> {
   return blob
 }
 
-export function HandleForm({ currentHandle, initialAvatarUrl }: Props) {
+export function HandleForm({ currentHandle, initialAvatarUrl, visibility }: Props) {
   const router = useRouter()
 
   // Handle state
@@ -74,6 +111,29 @@ export function HandleForm({ currentHandle, initialAvatarUrl }: Props) {
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Visibility toggles
+  const [vis, setVis] = useState<VisibilitySettings>(visibility)
+  const [visBusy, setVisBusy] = useState<keyof VisibilitySettings | null>(null)
+
+  async function toggleVisibility(field: keyof VisibilitySettings) {
+    const newValue = !vis[field]
+    // Optimistic update
+    setVis(prev => ({ ...prev, [field]: newValue }))
+    setVisBusy(field)
+    const res = await fetch('/api/profile/public/visibility', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field, value: newValue }),
+    })
+    setVisBusy(null)
+    if (!res.ok) {
+      // Revert
+      setVis(prev => ({ ...prev, [field]: !newValue }))
+      return
+    }
+    router.refresh()
+  }
 
   function validateHandle(value: string): string | null {
     if (!value) return 'Handle is required'
@@ -252,6 +312,45 @@ export function HandleForm({ currentHandle, initialAvatarUrl }: Props) {
           <Link href="/settings">
             <Button variant="outline" size="sm">Back to settings</Button>
           </Link>
+        </div>
+      </div>
+
+      {/* Visibility toggles */}
+      <div className="rounded-xl border border-border p-5 space-y-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">What to show on your profile</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Each section is opt-in. Your name, type ratings, and licence categories are always shown when your profile is public.
+          </p>
+        </div>
+        <div className="space-y-3">
+          {(Object.keys(VISIBILITY_LABELS) as Array<keyof VisibilitySettings>).map(field => {
+            const meta = VISIBILITY_LABELS[field]
+            const enabled = vis[field]
+            return (
+              <div key={field} className="flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => toggleVisibility(field)}
+                  disabled={visBusy === field}
+                  aria-pressed={enabled}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 mt-0.5 ${
+                    enabled ? 'bg-foreground' : 'bg-muted'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-background transition-transform ${
+                      enabled ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{meta.label}</p>
+                  <p className="text-xs text-muted-foreground">{meta.description}</p>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </>
