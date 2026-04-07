@@ -324,13 +324,17 @@ export default async function LogbookPage({
         </div>
 
 
-        {/* Mass Input */}
-        <h2 className="text-lg font-semibold text-foreground mb-3">{editingEntry ? 'Edit Entry' : 'New Entries'}</h2>
-        <MassInput
-          defaultEmployer={defaultEmployer}
-          lastMaintenanceType={lastMaintenanceType}
-          editingEntry={editingEntry}
-        />
+        {/* Edit form — only shown when editing an existing entry via ?edit= */}
+        {editingEntry && (
+          <>
+            <h2 className="text-lg font-semibold text-foreground mb-3">Edit Entry</h2>
+            <MassInput
+              defaultEmployer={defaultEmployer}
+              lastMaintenanceType={lastMaintenanceType}
+              editingEntry={editingEntry}
+            />
+          </>
+        )}
 
     </div>
   )
