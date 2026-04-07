@@ -5,6 +5,8 @@ import { SettingsPanel } from './settings-panel'
 import { SidebarTriggerInline } from '@/components/sidebar-trigger-inline'
 import { isFeatureEnabledForUser } from '@/lib/feature-flags'
 
+interface PendingRequest { follower_id: string }
+
 export const metadata: Metadata = { title: 'Settings | Airworthiness' }
 
 export default async function SettingsPage() {
@@ -13,6 +15,7 @@ export default async function SettingsPage() {
   if (!user) redirect('/login')
 
   const socialProfileEnabled = await isFeatureEnabledForUser('social_profile', user.id)
+  const socialFollowEnabled = await isFeatureEnabledForUser('social_follow', user.id)
 
   // Load the user's public profile row if it exists. May be null if they
   // have never opted in. Loaded server-side so the panel can render the
@@ -22,6 +25,13 @@ export default async function SettingsPage() {
     .select('handle, is_public')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  // Pending follow request count (Phase 2)
+  let pendingFollowRequests = 0
+  if (socialFollowEnabled) {
+    const { data: pending } = await supabase.rpc('get_pending_follow_requests')
+    pendingFollowRequests = ((pending as PendingRequest[]) ?? []).length
+  }
 
   return (
     <div>
@@ -34,6 +44,8 @@ export default async function SettingsPage() {
       <SettingsPanel
         userEmail={user.email ?? ''}
         socialProfileEnabled={socialProfileEnabled}
+        socialFollowEnabled={socialFollowEnabled}
+        pendingFollowRequests={pendingFollowRequests}
         publicProfile={publicProfile}
       />
     </div>

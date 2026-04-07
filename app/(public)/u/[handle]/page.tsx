@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { isFeatureEnabled } from '@/lib/feature-flags'
 import { Button } from '@/components/ui/button'
+import { FollowButton } from './follow-button'
 
 interface PageProps {
   params: Promise<{ handle: string }>
@@ -139,6 +140,25 @@ export default async function PublicProfilePage({ params }: PageProps) {
     if (typeof years === 'number') yearsInIndustry = years
   }
 
+  // Phase 2: follower / following counts and current user's follow state
+  const followEnabled = await isFeatureEnabled('social_follow')
+  let followerCount = 0
+  let followingCount = 0
+  let followState: 'none' | 'pending' | 'active' | 'self' = 'none'
+
+  if (followEnabled) {
+    const [{ data: fc }, { data: gc }, { data: fs }] = await Promise.all([
+      supabase.rpc('get_follower_count', { p_handle: handle }),
+      supabase.rpc('get_following_count', { p_handle: handle }),
+      supabase.rpc('get_follow_state', { p_handle: handle }),
+    ])
+    if (typeof fc === 'number') followerCount = fc
+    if (typeof gc === 'number') followingCount = gc
+    if (typeof fs === 'string' && (fs === 'none' || fs === 'pending' || fs === 'active' || fs === 'self')) {
+      followState = fs
+    }
+  }
+
   // Avatar URL from storage (public bucket, no signed URL needed)
   const avatarUrl = profile.avatar_path
     ? supabase.storage.from('public-profile-avatars').getPublicUrl(profile.avatar_path).data.publicUrl
@@ -171,7 +191,22 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 {profile.employment_type}
               </p>
             )}
+            {followEnabled && (
+              <div className="flex items-center gap-4 mt-3 text-sm">
+                <span>
+                  <span className="font-semibold text-foreground">{followerCount}</span>
+                  <span className="text-muted-foreground"> {followerCount === 1 ? 'follower' : 'followers'}</span>
+                </span>
+                <span>
+                  <span className="text-muted-foreground">Following </span>
+                  <span className="font-semibold text-foreground">{followingCount}</span>
+                </span>
+              </div>
+            )}
           </div>
+          {followEnabled && followState !== 'self' && (
+            <FollowButton targetHandle={profile.handle} initialState={followState} />
+          )}
         </div>
 
         {/* Licence categories */}
