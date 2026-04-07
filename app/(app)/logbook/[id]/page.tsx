@@ -15,7 +15,9 @@ import { EditEntryForm } from './edit-entry-form'
 import { SubmitForVerification } from './submit-for-verification'
 import { VerificationActions } from './verification-actions'
 import { QcActions } from './qc-actions'
+import { ShareTaskButton } from './share-task-button'
 import { SidebarTriggerInline } from '@/components/sidebar-trigger-inline'
+import { isFeatureEnabledForUser } from '@/lib/feature-flags'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -78,6 +80,16 @@ export default async function LogbookEntryPage({ params }: Props) {
   const canSubmitForQc = isOwner && entry.status === 'verified'
 
   const statusInfo = ENTRY_STATUSES[entry.status as EntryStatus]
+
+  // Phase 4: share to feed (only the owner can share, and only if the
+  // feature is enabled for them)
+  const canShareToFeed = isOwner && (await isFeatureEnabledForUser('social_task_posts', user.id))
+  const taskTypeMatch = entry.description?.match(/^\[([^\]]+)\]/)
+  const taskTypesPreview = taskTypeMatch ? taskTypeMatch[1] : null
+  const sharePreview = [
+    entry.aircraft_type !== 'N/A' ? entry.aircraft_type : null,
+    taskTypesPreview,
+  ].filter(Boolean).join(' · ') || 'Logbook task'
 
   // If editable, show edit form
   if (isEditable) {
@@ -215,6 +227,10 @@ export default async function LogbookEntryPage({ params }: Props) {
 
           {canShowQcActions && (
             <QcActions entryId={entry.id} />
+          )}
+
+          {canShareToFeed && (
+            <ShareTaskButton logbookEntryId={entry.id} preview={sharePreview} />
           )}
 
           <Link href="/logbook">

@@ -58,18 +58,29 @@ async function FeedContent({ userId }: { userId: string }) {
     )
   }
 
-  // Resolve avatar URLs
-  const postsWithAvatars = list.map(post => ({
-    post,
-    avatarUrl: post.author_avatar_path
+  // Resolve avatar URLs and photo URLs (for task_share posts)
+  const postsWithMedia = list.map(post => {
+    const avatarUrl = post.author_avatar_path
       ? supabase.storage.from('public-profile-avatars').getPublicUrl(post.author_avatar_path).data.publicUrl
-      : null,
-  }))
+      : null
+
+    let photoUrls: string[] = []
+    if (post.post_type === 'task_share') {
+      const photos = (post.data as { photos?: unknown }).photos
+      if (Array.isArray(photos)) {
+        photoUrls = photos
+          .filter((p): p is string => typeof p === 'string')
+          .map(path => supabase.storage.from('post-photos').getPublicUrl(path).data.publicUrl)
+      }
+    }
+
+    return { post, avatarUrl, photoUrls }
+  })
 
   return (
     <div className="space-y-3 max-w-2xl">
-      {postsWithAvatars.map(({ post, avatarUrl }) => (
-        <PostCard key={post.id} post={post} avatarUrl={avatarUrl} isOwn={post.author_id === userId} />
+      {postsWithMedia.map(({ post, avatarUrl, photoUrls }) => (
+        <PostCard key={post.id} post={post} avatarUrl={avatarUrl} photoUrls={photoUrls} isOwn={post.author_id === userId} />
       ))}
     </div>
   )

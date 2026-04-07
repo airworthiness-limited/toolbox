@@ -15,6 +15,10 @@ export type PostType =
   | 'module_pass'
   | 'type_rating_added'
   | 'training_completed'
+  | 'task_share'
+
+export const MAX_TASK_NOTE_LENGTH = 140
+export const MAX_TASK_PHOTOS = 4
 
 export interface PostTypeDescriptor {
   key: PostType
@@ -70,6 +74,68 @@ export const POST_TYPES: Record<PostType, PostTypeDescriptor> = {
         data: {
           training_slug: data.training_slug,
           completion_date: data.completion_date ?? null,
+        },
+      }
+    },
+  },
+  task_share: {
+    key: 'task_share',
+    label: 'Task share',
+    validate: (data) => {
+      if (!isObject(data)) return { ok: false, error: 'data must be an object' }
+      // Required: at least one of aircraft_type or task_types
+      if (!isString(data.aircraft_type) && !Array.isArray(data.task_types)) {
+        return { ok: false, error: 'aircraft_type or task_types required' }
+      }
+
+      // Optional fields
+      const aircraft_type = isString(data.aircraft_type) ? data.aircraft_type : null
+      const aircraft_category = isString(data.aircraft_category) ? data.aircraft_category : null
+      const task_types = Array.isArray(data.task_types)
+        ? data.task_types.filter(isString).slice(0, 20)
+        : []
+      const ata_chapters = Array.isArray(data.ata_chapters)
+        ? data.ata_chapters.filter(isString).slice(0, 20)
+        : []
+      const task_date = isString(data.task_date) ? data.task_date : null
+
+      // Note (140 char max)
+      let note: string | null = null
+      if (data.note !== undefined && data.note !== null) {
+        if (!isString(data.note)) {
+          return { ok: false, error: 'note must be a string' }
+        }
+        if (data.note.length > MAX_TASK_NOTE_LENGTH) {
+          return { ok: false, error: `note must be ${MAX_TASK_NOTE_LENGTH} chars or fewer` }
+        }
+        note = data.note
+      }
+
+      // Photos (max MAX_TASK_PHOTOS, each must be a string path)
+      let photos: string[] = []
+      if (data.photos !== undefined && data.photos !== null) {
+        if (!Array.isArray(data.photos)) {
+          return { ok: false, error: 'photos must be an array' }
+        }
+        if (data.photos.length > MAX_TASK_PHOTOS) {
+          return { ok: false, error: `Maximum ${MAX_TASK_PHOTOS} photos per post` }
+        }
+        if (!data.photos.every(isString)) {
+          return { ok: false, error: 'each photo must be a path string' }
+        }
+        photos = data.photos as string[]
+      }
+
+      return {
+        ok: true,
+        data: {
+          aircraft_type,
+          aircraft_category,
+          task_types,
+          ata_chapters,
+          task_date,
+          note,
+          photos,
         },
       }
     },
