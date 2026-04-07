@@ -158,15 +158,19 @@ All fields are sourced from data the user has already entered into Airworthiness
 | `created_at` | timestamptz | When the user first opted in |
 | `updated_at` | timestamptz | Last edit |
 
-### New table: `profile_audit_log`
+### Audit logging
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid PK | |
-| `user_id` | uuid | FK to `auth.users` ON DELETE CASCADE |
-| `event` | text | `opt_in`, `opt_out`, `handle_change`, `visibility_change` |
-| `metadata` | jsonb | Event-specific details (no PII) |
-| `created_at` | timestamptz | |
+**Decision (revised from original spec):** profile audit events use the existing
+`privacy_audit_log` table with `event_category = 'profile'`. We do not create a
+separate `profile_audit_log` because consolidating reduces surface area and the
+existing table already enforces the right RLS, immutability, and cascade
+semantics.
+
+Event types we will use for profile actions:
+- `profile_opted_in` — user enabled the public profile
+- `profile_opted_out` — user disabled the public profile
+- `handle_changed` — user changed their handle
+- `visibility_changed` — user toggled an optional section
 
 ### Row Level Security policies
 
@@ -290,13 +294,28 @@ Only when every box is ticked does Phase 1 ship.
 
 ## Estimated build, in vertical slices
 
-1. **Database** — migration, RLS policies, tests (1 slice, ships and merges first)
+1. **Database** ✅ — migration, RLS policies, tests, storage bucket. Done in commit per migration tracker.
 2. **Settings UI** — opt-in toggle, modal, audit logging (1 slice)
 3. **Handle selection** — page, validation, uniqueness (1 slice)
 4. **Profile page** — server-rendered, type rating trophy case, optional sections (1 slice)
-5. **Avatar upload** — storage, EXIF stripping, replacement (1 slice)
+5. **Avatar upload** — storage upload route, EXIF stripping, replacement (1 slice)
 6. **404 handling and meta tags** — polish (1 slice)
 7. **Privacy policy update and in-app notification** — content, banner (1 slice)
 8. **Soft launch** — feature flag scoped to a list of users (1 slice)
 
 Each slice is its own PR, reviewed for privacy, tested in isolation, merged before the next begins.
+
+## Slice 1 — what was applied
+
+Migrations applied via Supabase MCP (tracked in `supabase_migrations.schema_migrations`):
+
+- `public_profiles_phase_1` — adds `employment_type` to `profiles`, creates `public_profiles` table with RLS, handle format constraint, updated_at trigger
+- `public_profile_avatars_storage` — creates `public-profile-avatars` storage bucket (2MB limit, jpeg/png/webp), with RLS policies allowing public read and per-user write to `{user_id}/{filename}` paths
+
+Tests run inline as part of the migration (DO blocks):
+- anon can read public profiles ✓
+- anon cannot read private profiles ✓
+- RLS enabled, 4 policies present ✓
+- Cascade delete works ✓
+- Handle format rejects too short, spaces, uppercase ✓
+- Handle format accepts valid `[a-z0-9-]{3,30}` ✓
