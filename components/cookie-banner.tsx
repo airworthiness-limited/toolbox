@@ -12,14 +12,23 @@ export function CookieBanner() {
     if (!consent) setVisible(true)
   }, [])
 
-  function accept() {
-    localStorage.setItem('cookie-consent', 'accepted')
+  async function recordChoice(choice: 'accepted' | 'rejected') {
+    localStorage.setItem('cookie-consent', choice)
     setVisible(false)
+    // Fire-and-forget — audit logging must never block the UI
+    fetch('/api/consent/cookies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ choice }),
+    }).catch(() => {})
+  }
+
+  function accept() {
+    recordChoice('accepted')
   }
 
   function reject() {
-    localStorage.setItem('cookie-consent', 'rejected')
-    setVisible(false)
+    recordChoice('rejected')
   }
 
   if (!visible) return null
