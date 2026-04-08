@@ -279,7 +279,7 @@ export function SettingsPanel({
                     href={`/profile/${profile.public_id}`}
                     className="text-sm font-medium text-foreground hover:underline break-all"
                   >
-                    airworthiness.org.uk/profile/{profile.public_id}
+                    toolbox.airworthiness.org.uk/profile/{profile.public_id}
                   </Link>
                 </div>
                 <div className="flex flex-wrap gap-2">

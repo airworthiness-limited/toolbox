@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 const PUBLIC_ID_REGEX = /^[0-9]{8}$/
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://airworthiness.org.uk'
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://toolbox.airworthiness.org.uk'
 
 // Allow Vercel/CDN to cache public profile pages for 60 seconds.
 // This bounds the propagation delay of profile updates and the kill switch.

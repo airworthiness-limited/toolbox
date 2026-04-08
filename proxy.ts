@@ -6,10 +6,16 @@ export async function proxy(request: NextRequest) {
     request,
   })
 
+  const host = request.headers.get('host') ?? ''
+  const cookieDomain = host.endsWith('airworthiness.org.uk')
+    ? '.airworthiness.org.uk'
+    : undefined
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: cookieDomain ? { domain: cookieDomain } : undefined,
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -20,7 +26,10 @@ export async function proxy(request: NextRequest) {
           )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              ...(cookieDomain ? { domain: cookieDomain } : {}),
+            })
           )
         },
       },

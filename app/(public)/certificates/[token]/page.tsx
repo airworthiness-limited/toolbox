@@ -29,7 +29,7 @@ export default async function CertificatePage({ params }: Props) {
     year: 'numeric',
   })
 
-  const verifyUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/certificates/${token}`
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://toolbox.airworthiness.org.uk'}/certificates/${token}`
 
   return (
     <>

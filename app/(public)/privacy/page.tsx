@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mt-8 mb-3">8. Social Features</h2>
             <p>Airworthiness offers optional social features that allow you to share your professional achievements with other engineers. These features are entirely opt-in and disabled by default. The core platform — licence tracking, digital logbook, training management — works fully without enabling any social feature.</p>
-            <p><strong>What is shared when you enable a public profile:</strong> your name, optional profile photo, type ratings, licence categories, and any optional sections you choose to enable. Your profile becomes viewable at airworthiness.org.uk/profile/[your-id], where [your-id] is a randomly assigned 8-digit number that uniquely identifies your profile.</p>
+            <p><strong>What is shared when you enable a public profile:</strong> your name, optional profile photo, type ratings, licence categories, and any optional sections you choose to enable. Your profile becomes viewable at toolbox.airworthiness.org.uk/profile/[your-id], where [your-id] is a randomly assigned 8-digit number that uniquely identifies your profile.</p>
             <p><strong>What is never shared, even with a public profile:</strong> your licence number, date of birth, employer, customer or operator names, logbook entries, exam scores, contact details, and your private licence photograph.</p>
             <p><strong>You are in control:</strong></p>
             <ul className="list-disc pl-5 space-y-1">
