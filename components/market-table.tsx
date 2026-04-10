@@ -29,29 +29,58 @@ type Approval = {
   website: string | null
 }
 
+type SortKey = 'organisation_name' | 'reference_number' | 'country'
+type SortDir = 'asc' | 'desc'
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  return (
+    <svg className={`inline-block w-3 h-3 ml-1 ${active ? 'text-foreground' : 'text-muted-foreground/40'}`} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={2}>
+      {dir === 'asc' || !active
+        ? <path d="M6 2 L6 10 M3 5 L6 2 L9 5" />
+        : <path d="M6 10 L6 2 M3 7 L6 10 L9 7" />
+      }
+    </svg>
+  )
+}
+
 export function MarketTable({ approvals }: { approvals: Approval[] }) {
-  const [nameFilter, setNameFilter] = useState('')
-  const [approvalFilter, setApprovalFilter] = useState('')
-  const [countryFilter, setCountryFilter] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
-  const uniqueCountries = useMemo(() => {
-    const codes = [...new Set(approvals.map(a => a.country_code))].filter(c => c && /^[A-Z]{2}$/.test(c))
-    return codes.sort((a, b) => (COUNTRY_NAMES[a] || a).localeCompare(COUNTRY_NAMES[b] || b))
-  }, [approvals])
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
 
-  const filtered = useMemo(() => {
-    const nameLower = nameFilter.toLowerCase()
-    const approvalLower = approvalFilter.toLowerCase()
+  const sorted = useMemo(() => {
+    const list = [...approvals]
+    const dir = sortDir === 'asc' ? 1 : -1
 
-    return approvals.filter(org => {
-      if (nameLower && !org.organisation_name.toLowerCase().includes(nameLower)) return false
-      if (approvalLower && !org.reference_number.toLowerCase().includes(approvalLower)) return false
-      if (countryFilter && org.country_code !== countryFilter) return false
-      return true
+    list.sort((a, b) => {
+      let av: string, bv: string
+      switch (sortKey) {
+        case 'organisation_name':
+          av = a.organisation_name
+          bv = b.organisation_name
+          break
+        case 'reference_number':
+          av = a.reference_number
+          bv = b.reference_number
+          break
+        case 'country':
+          av = COUNTRY_NAMES[a.country_code] || a.country_code || ''
+          bv = COUNTRY_NAMES[b.country_code] || b.country_code || ''
+          break
+      }
+      return av.localeCompare(bv) * dir
     })
-  }, [approvals, nameFilter, approvalFilter, countryFilter])
 
-  const hasFilters = nameFilter || approvalFilter || countryFilter
+    return list
+  }, [approvals, sortKey, sortDir])
 
   return (
     <>
@@ -60,45 +89,31 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left font-medium text-muted-foreground px-4 pt-3 pb-1">Organisation</th>
-                <th className="text-left font-medium text-muted-foreground px-4 pt-3 pb-1 hidden sm:table-cell">Approval(s)</th>
-                <th className="text-left font-medium text-muted-foreground px-4 pt-3 pb-1 hidden md:table-cell">Location</th>
-              </tr>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 pt-1 pb-3">
-                  <input
-                    type="text"
-                    value={nameFilter}
-                    onChange={e => setNameFilter(e.target.value)}
-                    placeholder="Filter..."
-                    className="w-full h-7 rounded border border-input bg-background px-2 text-xs font-normal text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
+                <th
+                  className="text-left font-medium text-muted-foreground px-4 py-3 cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort('organisation_name')}
+                >
+                  Organisation
+                  <SortIcon active={sortKey === 'organisation_name'} dir={sortDir} />
                 </th>
-                <th className="px-4 pt-1 pb-3 hidden sm:table-cell">
-                  <input
-                    type="text"
-                    value={approvalFilter}
-                    onChange={e => setApprovalFilter(e.target.value)}
-                    placeholder="Filter..."
-                    className="w-full h-7 rounded border border-input bg-background px-2 text-xs font-normal text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
+                <th
+                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort('reference_number')}
+                >
+                  Approval(s)
+                  <SortIcon active={sortKey === 'reference_number'} dir={sortDir} />
                 </th>
-                <th className="px-4 pt-1 pb-3 hidden md:table-cell">
-                  <select
-                    value={countryFilter}
-                    onChange={e => setCountryFilter(e.target.value)}
-                    className="w-full h-7 rounded border border-input bg-background px-2 text-xs font-normal text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">All countries</option>
-                    {uniqueCountries.map(c => (
-                      <option key={c} value={c}>{COUNTRY_NAMES[c] || c}</option>
-                    ))}
-                  </select>
+                <th
+                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort('country')}
+                >
+                  Location
+                  <SortIcon active={sortKey === 'country'} dir={sortDir} />
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(org => (
+              {sorted.map(org => (
                 <tr key={org.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <Link
@@ -119,10 +134,10 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {sorted.length === 0 && (
                 <tr>
                   <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
-                    No organisations found matching your filters.
+                    No organisations found.
                   </td>
                 </tr>
               )}
@@ -132,10 +147,7 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        {hasFilters
-          ? `${filtered.length.toLocaleString()} of ${approvals.length.toLocaleString()} organisations`
-          : `${approvals.length.toLocaleString()} organisations`
-        }
+        {approvals.length.toLocaleString()} organisations
       </p>
     </>
   )
