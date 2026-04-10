@@ -272,10 +272,21 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
       if (subcategoryFilter !== 'all') {
         // Filter by specific subcategory
         if (ratingClassFilter === 'D') {
-          // D class: filter by method in the detail field
-          const method = subcategoryFilter.replace('D1-', '')
+          // D class: filter by method keyword in the detail field
+          const METHOD_KEYWORDS: Record<string, string[]> = {
+            'D1-PT': ['PENETRANT', '(PT)'],
+            'D1-MT': ['MAGNETIC', '(MT)'],
+            'D1-IRT': ['THERMOGRAPH', '(IRT)'],
+            'D1-ET': ['EDDY', '(ET)'],
+            'D1-UT': ['ULTRASONIC', '(UT)'],
+            'D1-RT': ['RADIOGRAPH', '(RT)'],
+            'D1-ST': ['SHEAROGRAPH', '(ST)'],
+          }
+          const keywords = METHOD_KEYWORDS[subcategoryFilter] || []
           list = list.filter(org =>
-            (org.part145_ratings || []).some(r => r.rating_class === 'D' && r.detail && r.detail.toUpperCase().includes(method))
+            (org.part145_ratings || []).some(r =>
+              r.rating_class === 'D' && r.detail && keywords.some(kw => r.detail!.toUpperCase().includes(kw))
+            )
           )
         } else {
           // A/B/C: filter by category code
