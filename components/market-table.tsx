@@ -259,9 +259,11 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
           }}
           className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
+
+          <option value="" disabled>Organisation Approval</option>
           {APPROVAL_TYPES.map(type => (
             <option key={type.key} value={type.key} disabled={!type.hasData}>
-              {type.label}{!type.hasData ? ' (Coming soon)' : ''}
+              {type.label}
             </option>
           ))}
         </select>
@@ -282,12 +284,6 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
         )}
       </div>
 
-      {/* Coming soon message for other types */}
-      {approvalType !== 'part145' && (
-        <div className="mb-6 py-8 text-center text-sm text-muted-foreground bg-muted/30 rounded-xl border border-dashed">
-          Coming soon
-        </div>
-      )}
 
       <div className="bg-card rounded-xl border overflow-hidden">
         <div className="overflow-x-auto">
