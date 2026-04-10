@@ -204,7 +204,7 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [approvalType, setApprovalType] = useState<string>('part145')
+  const [approvalType, setApprovalType] = useState<string>('')
   const [ratingClassFilter, setRatingClassFilter] = useState<string>('all')
 
   function toggleSort(key: SortKey) {
@@ -219,15 +219,15 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const sorted = useMemo(() => {
     let list = [...approvals]
 
-    // Filter by rating class if set
+    // Filter by rating class if Part 145 selected with a specific class
     if (approvalType === 'part145' && ratingClassFilter !== 'all') {
       list = list.filter(org =>
         (org.part145_ratings || []).some(r => r.rating_class === ratingClassFilter)
       )
     }
 
-    // Non-Part 145 types have no data yet
-    if (approvalType !== 'part145') {
+    // Non-Part 145 types (except blank/all) have no data yet
+    if (approvalType && approvalType !== 'part145') {
       list = []
     }
 
@@ -259,6 +259,7 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
           }}
           className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
+          <option value="">Organisation Approval</option>
           {APPROVAL_TYPES.map(type => (
             <option key={type.key} value={type.key} disabled={!type.hasData}>
               {type.label}
