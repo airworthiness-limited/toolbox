@@ -200,12 +200,60 @@ const PART145_CLASSES = [
   { key: 'D', label: 'Non-Destructive Testing (Class D)' },
 ] as const
 
+const SUBCATEGORIES: Record<string, { key: string; label: string }[]> = {
+  A: [
+    { key: 'A1', label: 'Complex Aircraft (A1)' },
+    { key: 'A2', label: 'Non-Complex Aeroplane (A2)' },
+    { key: 'A3', label: 'Non-Complex Helicopter (A3)' },
+    { key: 'A4', label: 'Other Aircraft (A4)' },
+  ],
+  B: [
+    { key: 'B1', label: 'Turbine Engine (B1)' },
+    { key: 'B2', label: 'Piston Engine (B2)' },
+    { key: 'B3', label: 'Auxiliary Power Unit (B3)' },
+  ],
+  C: [
+    { key: 'C1', label: 'Air Conditioning and Pressurisation (C1)' },
+    { key: 'C2', label: 'Auto Flight (C2)' },
+    { key: 'C3', label: 'Communication/Navigation (C3)' },
+    { key: 'C4', label: 'Doors/Hatches (C4)' },
+    { key: 'C5', label: 'Electrical Power (C5)' },
+    { key: 'C6', label: 'Equipment (C6)' },
+    { key: 'C7', label: 'Engine/Auxiliary Power Unit (C7)' },
+    { key: 'C8', label: 'Flight Controls (C8)' },
+    { key: 'C9', label: 'Fuel (C9)' },
+    { key: 'C10', label: 'Rotors (C10)' },
+    { key: 'C11', label: 'Transmission (C11)' },
+    { key: 'C12', label: 'Hydraulic (C12)' },
+    { key: 'C13', label: 'Instruments (C13)' },
+    { key: 'C14', label: 'Landing Gear (C14)' },
+    { key: 'C15', label: 'Oxygen (C15)' },
+    { key: 'C16', label: 'Propellers (C16)' },
+    { key: 'C17', label: 'Pneumatic (C17)' },
+    { key: 'C18', label: 'Ice, Rain and Fire Protection (C18)' },
+    { key: 'C19', label: 'Windows (C19)' },
+    { key: 'C20', label: 'Structural (C20)' },
+    { key: 'C21', label: 'Water Ballast (C21)' },
+    { key: 'C22', label: 'Propulsion Augmentation (C22)' },
+  ],
+  D: [
+    { key: 'D1-PT', label: 'Liquid Penetrant (PT)' },
+    { key: 'D1-MT', label: 'Magnetic Particle (MT)' },
+    { key: 'D1-IRT', label: 'Thermography (IRT)' },
+    { key: 'D1-ET', label: 'Eddy Current (ET)' },
+    { key: 'D1-UT', label: 'Ultrasonic (UT)' },
+    { key: 'D1-RT', label: 'Radiography (RT)' },
+    { key: 'D1-ST', label: 'Shearography (ST)' },
+  ],
+}
+
 export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [approvalType, setApprovalType] = useState<string>('')
   const [ratingClassFilter, setRatingClassFilter] = useState<string>('all')
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string>('all')
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -221,9 +269,25 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
 
     // Filter by rating class if Part 145 selected with a specific class
     if (approvalType === 'part145' && ratingClassFilter !== 'all') {
-      list = list.filter(org =>
-        (org.part145_ratings || []).some(r => r.rating_class === ratingClassFilter)
-      )
+      if (subcategoryFilter !== 'all') {
+        // Filter by specific subcategory
+        if (ratingClassFilter === 'D') {
+          // D class: filter by method in the detail field
+          const method = subcategoryFilter.replace('D1-', '')
+          list = list.filter(org =>
+            (org.part145_ratings || []).some(r => r.rating_class === 'D' && r.detail && r.detail.toUpperCase().includes(method))
+          )
+        } else {
+          // A/B/C: filter by category code
+          list = list.filter(org =>
+            (org.part145_ratings || []).some(r => r.category === subcategoryFilter)
+          )
+        }
+      } else {
+        list = list.filter(org =>
+          (org.part145_ratings || []).some(r => r.rating_class === ratingClassFilter)
+        )
+      }
     }
 
     // Non-Part 145 types (except blank/all) have no data yet
@@ -272,12 +336,29 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
             value={ratingClassFilter}
             onChange={e => {
               setRatingClassFilter(e.target.value)
+              setSubcategoryFilter('all')
               setExpandedId(null)
             }}
             className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             {PART145_CLASSES.map(cls => (
               <option key={cls.key} value={cls.key}>{cls.label}</option>
+            ))}
+          </select>
+        )}
+
+        {approvalType === 'part145' && ratingClassFilter !== 'all' && SUBCATEGORIES[ratingClassFilter] && (
+          <select
+            value={subcategoryFilter}
+            onChange={e => {
+              setSubcategoryFilter(e.target.value)
+              setExpandedId(null)
+            }}
+            className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="all">All</option>
+            {SUBCATEGORIES[ratingClassFilter].map(sub => (
+              <option key={sub.key} value={sub.key}>{sub.label}</option>
             ))}
           </select>
         )}
