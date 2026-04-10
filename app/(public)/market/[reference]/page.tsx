@@ -33,6 +33,15 @@ const RATING_CLASS_LABELS: Record<string, string> = {
   D: 'Specialised Services',
 }
 
+function formatLongDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr + 'T00:00:00')
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
 export default async function OrgDetailPage({ params }: Props) {
   const { reference } = await params
   const ref = decodeURIComponent(reference)
@@ -94,16 +103,10 @@ export default async function OrgDetailPage({ params }: Props) {
                 {org.postcode && <p className="text-sm text-muted-foreground">{org.postcode}</p>}
               </div>
             )}
-            {org.issuing_authority && (
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Issuing Authority</p>
-                <p className="text-sm text-foreground">{org.issuing_authority.replace('_', ' ')}</p>
-              </div>
-            )}
             {org.issued_date && (
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Issued Date</p>
-                <p className="text-sm text-foreground">{org.issued_date}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Issued</p>
+                <p className="text-sm text-foreground">{formatLongDate(org.issued_date)}</p>
               </div>
             )}
             {org.website && (
@@ -149,14 +152,13 @@ export default async function OrgDetailPage({ params }: Props) {
                           <thead>
                             <tr className="border-b">
                               <th className="text-left font-medium text-muted-foreground py-2 pr-4">Category</th>
-                              <th className="text-left font-medium text-muted-foreground py-2 pr-4">Detail</th>
+                              <th className="text-left font-medium text-muted-foreground py-2 pr-4">Rating(s)</th>
                               {cls === 'A' && (
                                 <>
                                   <th className="text-left font-medium text-muted-foreground py-2 pr-4">Base</th>
                                   <th className="text-left font-medium text-muted-foreground py-2 pr-4">Line</th>
                                 </>
                               )}
-                              <th className="text-left font-medium text-muted-foreground py-2">Limitations</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -170,7 +172,6 @@ export default async function OrgDetailPage({ params }: Props) {
                                     <td className="py-2 pr-4">{r.line_maintenance ? 'Yes' : '—'}</td>
                                   </>
                                 )}
-                                <td className="py-2 text-muted-foreground text-xs">{r.limitations || '—'}</td>
                               </tr>
                             ))}
                           </tbody>
