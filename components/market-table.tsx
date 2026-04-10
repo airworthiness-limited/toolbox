@@ -184,10 +184,28 @@ function ExpandedRow({ org }: { org: Approval }) {
   )
 }
 
+const APPROVAL_TYPES = [
+  { key: 'part145', label: 'Maintenance (Part 145)', hasData: true },
+  { key: 'camo', label: 'Management (Part CAMO)', hasData: false },
+  { key: 'part147', label: 'Aircraft Maintenance Training (Part 147)', hasData: false },
+  { key: 'part21g', label: 'Production (Part 21G)', hasData: false },
+  { key: 'part21j', label: 'Design (Part 21J)', hasData: false },
+] as const
+
+const PART145_CLASSES = [
+  { key: 'all', label: 'All' },
+  { key: 'A', label: 'A: Aircraft' },
+  { key: 'B', label: 'B: Engine' },
+  { key: 'C', label: 'C: Component' },
+  { key: 'D', label: 'D: Non-Destructive Testing' },
+] as const
+
 export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [approvalType, setApprovalType] = useState<string>('part145')
+  const [ratingClassFilter, setRatingClassFilter] = useState<string>('all')
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -199,7 +217,20 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
   }
 
   const sorted = useMemo(() => {
-    const list = [...approvals]
+    let list = [...approvals]
+
+    // Filter by rating class if set
+    if (approvalType === 'part145' && ratingClassFilter !== 'all') {
+      list = list.filter(org =>
+        (org.part145_ratings || []).some(r => r.rating_class === ratingClassFilter)
+      )
+    }
+
+    // Non-Part 145 types have no data yet
+    if (approvalType !== 'part145') {
+      list = []
+    }
+
     const dir = sortDir === 'asc' ? 1 : -1
     list.sort((a, b) => {
       let av: string, bv: string
@@ -213,10 +244,63 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
       return av.localeCompare(bv) * dir
     })
     return list
-  }, [approvals, sortKey, sortDir])
+  }, [approvals, sortKey, sortDir, approvalType, ratingClassFilter])
 
   return (
     <>
+      {/* Level 1: Approval type */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {APPROVAL_TYPES.map(type => (
+          <button
+            key={type.key}
+            onClick={() => {
+              setApprovalType(type.key)
+              setRatingClassFilter('all')
+              setExpandedId(null)
+            }}
+            className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+              approvalType === type.key
+                ? 'bg-foreground text-background border-foreground'
+                : type.hasData
+                  ? 'bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground'
+                  : 'bg-transparent text-muted-foreground/40 border-border/50 cursor-default'
+            }`}
+            disabled={!type.hasData}
+          >
+            {type.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Level 2: Sub-filter (only for Part 145) */}
+      {approvalType === 'part145' && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {PART145_CLASSES.map(cls => (
+            <button
+              key={cls.key}
+              onClick={() => {
+                setRatingClassFilter(cls.key)
+                setExpandedId(null)
+              }}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                ratingClassFilter === cls.key
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground'
+              }`}
+            >
+              {cls.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Coming soon message for other types */}
+      {approvalType !== 'part145' && (
+        <div className="mb-6 py-8 text-center text-sm text-muted-foreground bg-muted/30 rounded-xl border border-dashed">
+          Coming soon
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
