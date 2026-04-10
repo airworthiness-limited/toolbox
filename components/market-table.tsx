@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useState, useMemo, useRef, useEffect } from 'react'
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: 'United Arab Emirates', AT: 'Austria', AU: 'Australia', BE: 'Belgium', BG: 'Bulgaria',
@@ -19,6 +18,22 @@ const COUNTRY_NAMES: Record<string, string> = {
   TR: 'Turkey', TW: 'Taiwan', UA: 'Ukraine', US: 'United States', ZA: 'South Africa',
 }
 
+const RATING_CLASS_LABELS: Record<string, string> = {
+  A: 'Aircraft',
+  B: 'Engines',
+  C: 'Components',
+  D: 'Specialised Services',
+}
+
+type Rating = {
+  id: number
+  rating_class: string
+  category: string
+  detail: string | null
+  base_maintenance: boolean | null
+  line_maintenance: boolean | null
+}
+
 type Approval = {
   id: number
   reference_number: string
@@ -28,19 +43,21 @@ type Approval = {
   state: string | null
   country_code: string
   website: string | null
+  issued_date: string | null
+  part145_ratings: Rating[]
 }
 
 function titleCase(s: string): string {
   return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
 
-function formatLocation(org: Approval): string {
-  const parts = [
-    org.city || null,
-    org.state ? titleCase(org.state) : null,
-    COUNTRY_NAMES[org.country_code] || org.country_code || null,
-  ].filter(Boolean)
-  return parts.join(', ') || '—'
+function formatLongDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr + 'T00:00:00')
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
 }
 
 type SortKey = 'organisation_name' | 'reference_number' | 'city' | 'state' | 'country'
@@ -57,9 +74,120 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   )
 }
 
+function ExpandedRow({ org }: { org: Approval }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    if (ref.current) setHeight(ref.current.scrollHeight)
+  }, [])
+
+  const ratingsByClass: Record<string, Rating[]> = {}
+  for (const r of org.part145_ratings || []) {
+    if (!ratingsByClass[r.rating_class]) ratingsByClass[r.rating_class] = []
+    ratingsByClass[r.rating_class].push(r)
+  }
+
+  return (
+    <tr>
+      <td colSpan={6} className="p-0">
+        <div
+          ref={ref}
+          className="overflow-hidden transition-all duration-300 ease-in-out"
+          style={{ maxHeight: height ? `${height}px` : '0px', opacity: height ? 1 : 0 }}
+        >
+          <div className="px-6 py-5 bg-muted/30 border-t">
+            {/* Details row */}
+            <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm mb-5">
+              <div>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Approval</span>
+                <p className="text-foreground">{org.reference_number}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
+                <p className="text-foreground">{org.status}</p>
+              </div>
+              {org.issued_date && (
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Issued</span>
+                  <p className="text-foreground">{formatLongDate(org.issued_date)}</p>
+                </div>
+              )}
+              {org.website && (
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Website</span>
+                  <p>
+                    <a
+                      href={org.website.startsWith('http') ? org.website : `https://${org.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {org.website}
+                    </a>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Ratings */}
+            {(org.part145_ratings || []).length > 0 && (
+              <div className="space-y-4">
+                {(['A', 'B', 'C', 'D'] as const).map(cls => {
+                  const classRatings = ratingsByClass[cls]
+                  if (!classRatings || classRatings.length === 0) return null
+                  return (
+                    <div key={cls}>
+                      <h4 className="text-xs font-semibold text-foreground mb-2">
+                        Class {cls} — {RATING_CLASS_LABELS[cls]}
+                        <span className="ml-1 font-normal text-muted-foreground">({classRatings.length})</span>
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left font-medium text-muted-foreground py-1.5 pr-4">Category</th>
+                              <th className="text-left font-medium text-muted-foreground py-1.5 pr-4">Rating(s)</th>
+                              {cls === 'A' && (
+                                <>
+                                  <th className="text-left font-medium text-muted-foreground py-1.5 pr-4">Base</th>
+                                  <th className="text-left font-medium text-muted-foreground py-1.5">Line</th>
+                                </>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {classRatings.map(r => (
+                              <tr key={r.id} className="border-b last:border-0">
+                                <td className="py-1.5 pr-4 text-foreground">{r.category}</td>
+                                <td className="py-1.5 pr-4 text-muted-foreground">{r.detail || '—'}</td>
+                                {cls === 'A' && (
+                                  <>
+                                    <td className="py-1.5 pr-4">{r.base_maintenance ? 'Yes' : '—'}</td>
+                                    <td className="py-1.5">{r.line_maintenance ? 'Yes' : '—'}</td>
+                                  </>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [expandedId, setExpandedId] = useState<number | null>(null)
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -73,34 +201,17 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
   const sorted = useMemo(() => {
     const list = [...approvals]
     const dir = sortDir === 'asc' ? 1 : -1
-
     list.sort((a, b) => {
       let av: string, bv: string
       switch (sortKey) {
-        case 'organisation_name':
-          av = a.organisation_name
-          bv = b.organisation_name
-          break
-        case 'reference_number':
-          av = a.reference_number
-          bv = b.reference_number
-          break
-        case 'city':
-          av = a.city || ''
-          bv = b.city || ''
-          break
-        case 'state':
-          av = a.state ? titleCase(a.state) : ''
-          bv = b.state ? titleCase(b.state) : ''
-          break
-        case 'country':
-          av = COUNTRY_NAMES[a.country_code] || a.country_code || ''
-          bv = COUNTRY_NAMES[b.country_code] || b.country_code || ''
-          break
+        case 'organisation_name': av = a.organisation_name; bv = b.organisation_name; break
+        case 'reference_number': av = a.reference_number; bv = b.reference_number; break
+        case 'city': av = a.city || ''; bv = b.city || ''; break
+        case 'state': av = a.state ? titleCase(a.state) : ''; bv = b.state ? titleCase(b.state) : ''; break
+        case 'country': av = COUNTRY_NAMES[a.country_code] || ''; bv = COUNTRY_NAMES[b.country_code] || ''; break
       }
       return av.localeCompare(bv) * dir
     })
-
     return list
   }, [approvals, sortKey, sortDir])
 
@@ -111,70 +222,54 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th
-                  className="text-left font-medium text-muted-foreground px-4 py-3 cursor-pointer select-none hover:text-foreground transition-colors"
-                  onClick={() => toggleSort('organisation_name')}
-                >
-                  Organisation
-                  <SortIcon active={sortKey === 'organisation_name'} dir={sortDir} />
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('organisation_name')}>
+                  Organisation<SortIcon active={sortKey === 'organisation_name'} dir={sortDir} />
                 </th>
-                <th
-                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
-                  onClick={() => toggleSort('reference_number')}
-                >
-                  Approval(s)
-                  <SortIcon active={sortKey === 'reference_number'} dir={sortDir} />
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('reference_number')}>
+                  Approval(s)<SortIcon active={sortKey === 'reference_number'} dir={sortDir} />
                 </th>
-                <th
-                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
-                  onClick={() => toggleSort('city')}
-                >
-                  City
-                  <SortIcon active={sortKey === 'city'} dir={sortDir} />
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('city')}>
+                  City<SortIcon active={sortKey === 'city'} dir={sortDir} />
                 </th>
-                <th
-                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
-                  onClick={() => toggleSort('state')}
-                >
-                  State
-                  <SortIcon active={sortKey === 'state'} dir={sortDir} />
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('state')}>
+                  State<SortIcon active={sortKey === 'state'} dir={sortDir} />
                 </th>
-                <th
-                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
-                  onClick={() => toggleSort('country')}
-                >
-                  Country
-                  <SortIcon active={sortKey === 'country'} dir={sortDir} />
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort('country')}>
+                  Country<SortIcon active={sortKey === 'country'} dir={sortDir} />
                 </th>
               </tr>
             </thead>
             <tbody>
               {sorted.map(org => (
-                <tr key={org.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/market/${encodeURIComponent(org.reference_number)}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {org.organisation_name}
-                    </Link>
-                    <span className="sm:hidden block text-xs text-muted-foreground mt-0.5">
+                <>
+                  <tr
+                    key={org.id}
+                    className={`border-b last:border-0 cursor-pointer transition-colors ${expandedId === org.id ? 'bg-muted/40' : 'hover:bg-muted/30'}`}
+                    onClick={() => setExpandedId(expandedId === org.id ? null : org.id)}
+                  >
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-foreground">
+                        {org.organisation_name}
+                      </span>
+                      <span className="sm:hidden block text-xs text-muted-foreground mt-0.5">
+                        {org.reference_number}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                       {org.reference_number}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                    {org.reference_number}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {org.city || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                    {org.state ? titleCase(org.state) : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                    {COUNTRY_NAMES[org.country_code] || org.country_code || '—'}
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      {org.city || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                      {org.state ? titleCase(org.state) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                      {COUNTRY_NAMES[org.country_code] || org.country_code || '—'}
+                    </td>
+                  </tr>
+                  {expandedId === org.id && <ExpandedRow key={`exp-${org.id}`} org={org} />}
+                </>
               ))}
               {sorted.length === 0 && (
                 <tr>
