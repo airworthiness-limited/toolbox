@@ -25,8 +25,6 @@ const COUNTRY_NAMES: Record<string, string> = {
   TR: 'Turkey', TW: 'Taiwan', UA: 'Ukraine', US: 'United States', ZA: 'South Africa',
 }
 
-const PAGE_SIZE = 25
-
 export default async function MarketPage({
   searchParams,
 }: {
@@ -35,13 +33,12 @@ export default async function MarketPage({
   const params = await searchParams
   const q = (params.q as string) || ''
   const country = (params.country as string) || ''
-  const page = Math.max(1, parseInt((params.page as string) || '1', 10))
 
   const supabase = await createClient()
 
   let query = supabase
     .from('part145_approvals')
-    .select('id, reference_number, organisation_name, status, city, country_code, website, part145_ratings(rating_class)', { count: 'exact' })
+    .select('id, reference_number, organisation_name, status, city, country_code, website')
 
   if (q) {
     query = query.or(`organisation_name.ilike.%${q}%,reference_number.ilike.%${q}%`)
@@ -51,24 +48,7 @@ export default async function MarketPage({
     query = query.eq('country_code', country)
   }
 
-  query = query
-    .order('organisation_name')
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
-
-  const { data: approvals, count, error } = await query
-
-  // Compute rating summary for each approval
-  const approvalsWithRatings = (approvals || []).map(org => {
-    const ratings = (org as any).part145_ratings || []
-    const classes = new Set(ratings.map((r: any) => r.rating_class))
-    return {
-      ...org,
-      ratingClasses: Array.from(classes).sort() as string[],
-    }
-  })
-
-  const totalCount = count || 0
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const { data: approvals } = await query.order('organisation_name')
 
   // Get unique countries for filter
   const { data: countries } = await supabase
@@ -118,7 +98,7 @@ export default async function MarketPage({
           {(q || country) && (
             <div className="mt-3 flex items-center gap-2">
               {q && <Badge variant="secondary">Search: {q}</Badge>}
-              {country && <Badge variant="secondary">Country: {country}</Badge>}
+              {country && <Badge variant="secondary">Country: {COUNTRY_NAMES[country] || country}</Badge>}
               <Link href="/market" className="text-xs text-muted-foreground hover:underline">
                 Clear filters
               </Link>
@@ -137,7 +117,7 @@ export default async function MarketPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {approvalsWithRatings.map(org => (
+                  {(approvals || []).map(org => (
                     <tr key={org.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <Link
@@ -160,7 +140,7 @@ export default async function MarketPage({
                   ))}
                   {(!approvals || approvals.length === 0) && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
                         No organisations found matching your search.
                       </td>
                     </tr>
@@ -170,29 +150,13 @@ export default async function MarketPage({
             </div>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </p>
-              <div className="flex gap-2">
-                {page > 1 && (
-                  <Link href={`/market?${new URLSearchParams({ ...(q ? { q } : {}), ...(country ? { country } : {}), page: String(page - 1) })}`}>
-                    <Button variant="outline" size="sm">Previous</Button>
-                  </Link>
-                )}
-                {page < totalPages && (
-                  <Link href={`/market?${new URLSearchParams({ ...(q ? { q } : {}), ...(country ? { country } : {}), page: String(page + 1) })}`}>
-                    <Button variant="outline" size="sm">Next</Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Result count */}
+          <p className="mt-4 text-xs text-muted-foreground">
+            {(approvals || []).length.toLocaleString()} organisation{(approvals || []).length !== 1 ? 's' : ''}
+          </p>
 
           {/* Source attribution */}
-          <p className="mt-8 text-xs text-muted-foreground">
+          <p className="mt-6 text-xs text-muted-foreground">
             Data sourced from the UK Civil Aviation Authority Part 145 approved organisation register.
           </p>
         </div>
