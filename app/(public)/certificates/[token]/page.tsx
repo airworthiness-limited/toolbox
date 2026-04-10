@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import { queryOne } from '@/lib/db'
 import { PrintButton } from './print-button'
