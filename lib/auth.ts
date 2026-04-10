@@ -11,14 +11,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PostgresAdapter(pool),
   providers: [
     Nodemailer({
-      server: process.env.EMAIL_SERVER,
+      server: process.env.EMAIL_SERVER || '',
       from: process.env.EMAIL_FROM || 'Airworthiness <noreply@airworthiness.limited>',
     }),
   ],
   pages: {
     signIn: '/',
     verifyRequest: '/auth/verify',
-    error: '/auth/error',
   },
   callbacks: {
     session({ session, user }) {
