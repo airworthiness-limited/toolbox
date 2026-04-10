@@ -43,7 +43,7 @@ function formatLocation(org: Approval): string {
   return parts.join(', ') || '—'
 }
 
-type SortKey = 'organisation_name' | 'reference_number' | 'country'
+type SortKey = 'organisation_name' | 'reference_number' | 'city' | 'state' | 'country'
 type SortDir = 'asc' | 'desc'
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -85,9 +85,17 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
           av = a.reference_number
           bv = b.reference_number
           break
+        case 'city':
+          av = a.city || ''
+          bv = b.city || ''
+          break
+        case 'state':
+          av = a.state ? titleCase(a.state) : ''
+          bv = b.state ? titleCase(b.state) : ''
+          break
         case 'country':
-          av = formatLocation(a)
-          bv = formatLocation(b)
+          av = COUNTRY_NAMES[a.country_code] || a.country_code || ''
+          bv = COUNTRY_NAMES[b.country_code] || b.country_code || ''
           break
       }
       return av.localeCompare(bv) * dir
@@ -119,9 +127,23 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
                 </th>
                 <th
                   className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort('city')}
+                >
+                  City
+                  <SortIcon active={sortKey === 'city'} dir={sortDir} />
+                </th>
+                <th
+                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort('state')}
+                >
+                  State
+                  <SortIcon active={sortKey === 'state'} dir={sortDir} />
+                </th>
+                <th
+                  className="text-left font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
                   onClick={() => toggleSort('country')}
                 >
-                  Location
+                  Country
                   <SortIcon active={sortKey === 'country'} dir={sortDir} />
                 </th>
               </tr>
@@ -144,13 +166,19 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
                     {org.reference_number}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {formatLocation(org)}
+                    {org.city || '—'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                    {org.state ? titleCase(org.state) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                    {COUNTRY_NAMES[org.country_code] || org.country_code || '—'}
                   </td>
                 </tr>
               ))}
               {sorted.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     No organisations found.
                   </td>
                 </tr>
