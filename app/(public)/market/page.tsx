@@ -86,8 +86,8 @@ export default async function MarketPage({
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             The Market
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {totalCount.toLocaleString()} approved maintenance organisations from the UK CAA register.
+          <p className="text-sm text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+            The Market by Airworthiness brings together those with something to sell and those looking to buy. We have developed the largest platform of airworthiness organisations approved to trade in the aviation market. Whether you need new floor panels, a hydraulic pump overhaul, a type training course, or support managing a maintenance programme, we can connect you with the right provider.
           </p>
 
           {/* Search + Filters */}
