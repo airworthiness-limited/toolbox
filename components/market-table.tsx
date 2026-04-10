@@ -257,9 +257,9 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
             setRatingClassFilter('all')
             setExpandedId(null)
           }}
-          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className={`flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${!approvalType ? 'text-muted-foreground' : ''}`}
         >
-          <option value="">Organisation Approval</option>
+          <option value="" disabled hidden>Organisation Approval</option>
           {APPROVAL_TYPES.map(type => (
             <option key={type.key} value={type.key} disabled={!type.hasData}>
               {type.label}
