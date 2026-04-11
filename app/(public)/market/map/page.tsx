@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { getDb } from '@/lib/postgres/server'
-import dynamic_import from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 
-const MarketMap = dynamic_import(() => import('@/components/market-map').then(m => m.MarketMap), {
+const MarketMap = nextDynamic(() => import('@/components/market-map').then(m => m.MarketMap), {
   ssr: false,
   loading: () => <div className="h-[600px] rounded-xl border bg-muted/30 flex items-center justify-center text-muted-foreground">Loading map...</div>,
 })
