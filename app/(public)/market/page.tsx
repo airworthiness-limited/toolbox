@@ -41,6 +41,36 @@ export default async function MarketPage() {
     ORDER BY a.organisation_name
   `)
 
+  const { rows: part147Approvals } = await db.query(`
+    SELECT
+      a.id,
+      a.reference_number,
+      a.organisation_name,
+      'ACTIVE' as status,
+      a.city,
+      NULL as state,
+      a.country_code,
+      a.website,
+      a.issued_date,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', r.id,
+            'category', r.category,
+            'licence', r.licence,
+            'training_code', r.training_code,
+            'type_name', r.type_name,
+            'basic_scope', r.basic_scope
+          )
+        ) FILTER (WHERE r.id IS NOT NULL),
+        '[]'
+      ) AS part147_ratings
+    FROM part147_approvals a
+    LEFT JOIN part147_ratings r ON r.approval_id = a.id
+    GROUP BY a.id
+    ORDER BY a.organisation_name
+  `)
+
   return (
     <div className="min-h-screen">
       <section className="py-12 lg:py-16">
@@ -62,11 +92,11 @@ export default async function MarketPage() {
           </div>
 
           <div>
-            <MarketTable approvals={approvals} />
+            <MarketTable approvals={approvals} part147Approvals={part147Approvals} />
           </div>
 
           <p className="mt-6 text-xs text-muted-foreground">
-            Data sourced from the UK Civil Aviation Authority Part 145 approved organisation register.
+            Data sourced from the UK Civil Aviation Authority approved organisation register.
           </p>
         </div>
       </section>

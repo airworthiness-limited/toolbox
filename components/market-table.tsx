@@ -196,6 +196,68 @@ function ExpandedRow({ org }: { org: Approval }) {
                 })}
               </div>
             )}
+
+            {/* Part 147 Ratings */}
+            {((org as any)._part147 || []).length > 0 && (() => {
+              const p147 = (org as any)._part147 as Part147Approval['part147_ratings']
+              const typeRatings = p147.filter(r => r.category === 'TYPE_TASK')
+              const basicRatings = p147.filter(r => r.category === 'BASIC')
+
+              return (
+                <div className="space-y-4">
+                  {typeRatings.length > 0 && (
+                    <div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4">
+                                Type Training ({typeRatings.length})
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {typeRatings.map(r => (
+                              <tr key={r.id} className="border-b last:border-0">
+                                <td className="py-1.5 pr-4 text-foreground">
+                                  {r.type_name}
+                                  <span className="text-muted-foreground ml-1">({r.licence}/{r.training_code})</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  {basicRatings.length > 0 && (
+                    <div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4">
+                                Basic Training ({basicRatings.length})
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {basicRatings.map(r => (
+                              <tr key={r.id} className="border-b last:border-0">
+                                <td className="py-1.5 pr-4 text-foreground">
+                                  {r.basic_scope}
+                                  <span className="text-muted-foreground ml-1">({r.licence})</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         </div>
       </td>
@@ -206,7 +268,7 @@ function ExpandedRow({ org }: { org: Approval }) {
 const APPROVAL_TYPES = [
   { key: 'part145', label: 'Maintenance (Part 145)', hasData: true },
   { key: 'camo', label: 'Management (Part CAMO)', hasData: false },
-  { key: 'part147', label: 'Aircraft Maintenance Training (Part 147)', hasData: false },
+  { key: 'part147', label: 'Aircraft Maintenance Training (Part 147)', hasData: true },
   { key: 'part21g', label: 'Production (Part 21G)', hasData: false },
   { key: 'part21j', label: 'Design (Part 21J)', hasData: false },
 ] as const
@@ -266,7 +328,27 @@ const SUBCATEGORIES: Record<string, { key: string; label: string }[]> = {
   ],
 }
 
-export function MarketTable({ approvals }: { approvals: Approval[] }) {
+type Part147Approval = {
+  id: number
+  reference_number: string
+  organisation_name: string
+  status: string
+  city: string | null
+  state: string | null
+  country_code: string
+  website: string | null
+  issued_date: string | null
+  part147_ratings: {
+    id: number
+    category: string
+    licence: string
+    training_code: string | null
+    type_name: string | null
+    basic_scope: string | null
+  }[]
+}
+
+export function MarketTable({ approvals, part147Approvals = [] }: { approvals: Approval[]; part147Approvals?: Part147Approval[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -285,7 +367,17 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
   }
 
   const sorted = useMemo(() => {
-    let list = [...approvals]
+    // Select data source based on approval type
+    let list: any[]
+    if (approvalType === 'part147') {
+      list = part147Approvals.map(a => ({
+        ...a,
+        part145_ratings: [],
+        _part147: a.part147_ratings,
+      }))
+    } else {
+      list = [...approvals]
+    }
 
     // Free-text search across all fields
     if (searchQuery.trim()) {
@@ -337,8 +429,8 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
       }
     }
 
-    // Non-Part 145 types (except blank/all) have no data yet
-    if (approvalType && approvalType !== 'part145') {
+    // Non-Part 145/147 types have no data yet
+    if (approvalType && approvalType !== 'part145' && approvalType !== 'part147') {
       list = []
     }
 
@@ -353,7 +445,7 @@ export function MarketTable({ approvals }: { approvals: Approval[] }) {
       return av.localeCompare(bv) * dir
     })
     return list
-  }, [approvals, sortKey, sortDir, approvalType, ratingClassFilter, subcategoryFilter, searchQuery])
+  }, [approvals, part147Approvals, sortKey, sortDir, approvalType, ratingClassFilter, subcategoryFilter, searchQuery])
 
   return (
     <>
