@@ -1,12 +1,7 @@
 export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { getDb } from '@/lib/postgres/server'
-import nextDynamic from 'next/dynamic'
-
-const MarketMap = nextDynamic(() => import('@/components/market-map').then(m => m.MarketMap), {
-  ssr: false,
-  loading: () => <div className="h-[600px] rounded-xl border bg-muted/30 flex items-center justify-center text-muted-foreground">Loading map...</div>,
-})
+import { MarketMapWrapper } from '@/components/market-map-wrapper'
 
 export const metadata: Metadata = {
   title: 'Organisation Map | Airworthiness',
@@ -32,7 +27,7 @@ export default async function MarketMapPage() {
             Explore {organisations.length.toLocaleString()} Part 145 approved maintenance organisations worldwide.
           </p>
 
-          <MarketMap organisations={organisations} />
+          <MarketMapWrapper organisations={organisations} />
 
           <div className="mt-6 text-center">
             <a href="/market" className="text-sm text-primary hover:underline">
