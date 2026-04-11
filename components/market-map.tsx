@@ -48,12 +48,15 @@ const APPROVAL_LABELS: Record<string, string> = {
 }
 
 // Pixel offsets via iconAnchor — spreads dots into a 2×2 grid
-// Higher anchor value = icon shifts left/up, lower = right/down
+// iconAnchor [14,14] = anchor at bottom-right, icon appears top-left of coordinate
+// iconAnchor [0,14]  = anchor at bottom-left, icon appears top-right
+// iconAnchor [14,0]  = anchor at top-right, icon appears bottom-left
+// iconAnchor [0,0]   = anchor at top-left, icon appears bottom-right
 const APPROVAL_OFFSETS: Record<string, [number, number]> = {
-  part145: [10, 10],
-  part147: [4, 10],
-  part21g: [10, 4],
-  part21j: [4, 4],
+  part145: [15, 15],
+  part147: [-1, 15],
+  part21g: [15, -1],
+  part21j: [-1, -1],
 }
 
 function createMarkerIcon(color: string, anchor: [number, number]): L.DivIcon {
