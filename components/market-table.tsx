@@ -83,6 +83,55 @@ function parseOrgName(name: string): { legalName: string; tradingAs: string | nu
   }
 }
 
+function CollapsibleSection({ title, count, children, defaultOpen = true }: {
+  title: string; count?: number; children: React.ReactNode; defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4 hover:text-foreground transition-colors"
+      >
+        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+        {title}{count !== undefined ? ` (${count})` : ''}
+      </button>
+      {open && children}
+    </div>
+  )
+}
+
+function CollapsibleGroup({ title, badge, children, defaultOpen = true }: {
+  title: string; badge?: string; children: React.ReactNode; defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 text-left text-sm font-semibold text-foreground mb-2 hover:text-foreground/80 transition-colors"
+      >
+        <svg className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+        {title}
+        {badge && (
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md bg-muted text-xs font-medium">{badge}</span>
+        )}
+      </button>
+      {open && (
+        <div className="pl-3 border-l-2 border-muted space-y-4">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ExpandedRow({ org }: { org: Approval }) {
   const ref = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(0)
@@ -115,7 +164,7 @@ function ExpandedRow({ org }: { org: Approval }) {
           style={{ maxHeight: height ? `${height}px` : '0px', opacity: height ? 1 : 0 }}
         >
           <div className="px-6 py-5 bg-muted/30 border-t">
-            {/* Details row */}
+            {/* Organisation details */}
             <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm mb-5">
               <div>
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Organisation</span>
@@ -127,41 +176,17 @@ function ExpandedRow({ org }: { org: Approval }) {
                   <p className="text-foreground">{parseOrgName(org.organisation_name).tradingAs}</p>
                 </div>
               )}
-              <div>
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Approval(s)</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-muted text-foreground text-sm font-medium">
-                    {org.reference_number}
-                  </span>
-                  {(org as any).part147_ref && (
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-muted text-foreground text-sm font-medium">
-                      {(org as any).part147_ref}
-                    </span>
-                  )}
-                </div>
-              </div>
               {org.city && (
                 <div>
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">City</span>
                   <p className="text-foreground">{org.city}</p>
                 </div>
               )}
-              {org.state && (
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">State</span>
-                  <p className="text-foreground">{titleCase(org.state)}</p>
-                </div>
-              )}
               {org.website && (
                 <div>
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">Website</span>
                   <p>
-                    <a
-                      href={org.website.startsWith('http') ? org.website : `https://${org.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
+                    <a href={org.website.startsWith('http') ? org.website : `https://${org.website}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                       {org.website}
                     </a>
                   </p>
@@ -169,102 +194,162 @@ function ExpandedRow({ org }: { org: Approval }) {
               )}
             </div>
 
-            {/* Ratings */}
+            {/* Part 145: Maintenance */}
             {(org.part145_ratings || []).length > 0 && (
-              <div className="space-y-4">
+              <CollapsibleGroup title="Maintenance" badge={org.reference_number}>
                 {(['A', 'B', 'C', 'D'] as const).map(cls => {
                   const classRatings = ratingsByClass[cls]
                   if (!classRatings || classRatings.length === 0) return null
                   return (
-                    <div key={cls}>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4">
-                                {RATING_SECTION_LABELS[cls]} ({classRatings.length})
-                              </th>
+                    <CollapsibleSection key={cls} title={RATING_SECTION_LABELS[cls]} count={classRatings.length}>
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {classRatings.map(r => (
+                            <tr key={r.id} className="border-b last:border-0">
+                              <td className="py-1.5 pr-4 text-foreground">
+                                {r.detail ? (() => {
+                                  const { text, code } = splitRatingCode(r.detail)
+                                  return <>{text}{code && <span className="text-muted-foreground ml-1">({code})</span>}</>
+                                })() : '—'}
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {classRatings.map(r => (
-                              <tr key={r.id} className="border-b last:border-0">
-                                <td className="py-1.5 pr-4 text-foreground">
-                                  {r.detail ? (() => {
-                                    const { text, code } = splitRatingCode(r.detail)
-                                    return <>{text}{code && <span className="text-muted-foreground ml-1">({code})</span>}</>
-                                  })() : '—'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CollapsibleSection>
                   )
                 })}
-              </div>
+              </CollapsibleGroup>
             )}
 
-            {/* Part 147 Ratings */}
+            {/* Part 147: Aircraft Maintenance Training Organisation Approval */}
             {(((org as any)._part147 || (org as any).part147_ratings || []).length > 0) && (() => {
               const p147 = ((org as any)._part147 || (org as any).part147_ratings || []) as Part147Approval['part147_ratings']
               const typeRatings = p147.filter(r => r.category === 'TYPE_TASK')
               const basicRatings = p147.filter(r => r.category === 'BASIC')
 
               return (
-                <div className="space-y-4">
-                  {typeRatings.length > 0 && (
-                    <div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4">
-                                Type Training ({typeRatings.length})
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {typeRatings.map(r => (
-                              <tr key={r.id} className="border-b last:border-0">
-                                <td className="py-1.5 pr-4 text-foreground">
-                                  {r.type_name}
-                                  <span className="text-muted-foreground ml-1">({r.licence}/{r.training_code})</span>
-                                </td>
+                <CollapsibleGroup title="Training" badge={(org as any).part147_ref}>
+                    {/* Basic Training first */}
+                    {basicRatings.length > 0 && (() => {
+                      const scopeMap = new Map<string, Set<string>>()
+                      const scopeOrder = ['Aeroplane Turbine', 'Aeroplane Piston', 'Helicopter Turbine', 'Helicopter Piston', 'Avionics']
+                      for (const r of basicRatings) {
+                        if (!r.basic_scope) continue
+                        if (!scopeMap.has(r.basic_scope)) scopeMap.set(r.basic_scope, new Set())
+                        scopeMap.get(r.basic_scope)!.add(r.licence)
+                      }
+                      const scopes = Array.from(scopeMap.entries()).sort((a, b) => {
+                        const ai = scopeOrder.indexOf(a[0])
+                        const bi = scopeOrder.indexOf(b[0])
+                        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+                      })
+                      return (
+                        <CollapsibleSection title="Basic Training" count={scopes.length}>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left text-xs text-muted-foreground font-normal py-1.5 pr-4"></th>
+                                <th className="text-center text-xs text-muted-foreground font-normal py-1.5 w-12">A</th>
+                                <th className="text-center text-xs text-muted-foreground font-normal py-1.5 w-12">B</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {basicRatings.length > 0 && (
-                    <div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left text-xs text-muted-foreground uppercase tracking-wide font-normal py-1.5 pr-4">
-                                Basic Training ({basicRatings.length})
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {basicRatings.map(r => (
-                              <tr key={r.id} className="border-b last:border-0">
-                                <td className="py-1.5 pr-4 text-foreground">
-                                  {r.basic_scope}
-                                  <span className="text-muted-foreground ml-1">({r.licence})</span>
-                                </td>
+                            </thead>
+                            <tbody>
+                              {scopes.map(([scope, licences]) => (
+                                <tr key={scope} className="border-b last:border-0">
+                                  <td className="py-1.5 pr-4 text-foreground">{scope}</td>
+                                  <td className="py-1.5 text-center">{licences.has('A') ? 'Yes' : '—'}</td>
+                                  <td className="py-1.5 text-center">{licences.has('B1') || licences.has('B2') || licences.has('B3') ? 'Yes' : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </CollapsibleSection>
+                      )
+                    })()}
+
+                    {/* Type Training */}
+                    {typeRatings.length > 0 && (() => {
+                      const typeMap = new Map<string, Set<string>>()
+                      for (const r of typeRatings) {
+                        if (!r.type_name) continue
+                        if (!typeMap.has(r.type_name)) typeMap.set(r.type_name, new Set())
+                        typeMap.get(r.type_name)!.add(r.licence)
+                      }
+                      const types = Array.from(typeMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+                      return (
+                        <CollapsibleSection title="Type Training" count={types.length}>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left text-xs text-muted-foreground font-normal py-1.5 pr-4"></th>
+                                <th className="text-center text-xs text-muted-foreground font-normal py-1.5 w-12">B1</th>
+                                <th className="text-center text-xs text-muted-foreground font-normal py-1.5 w-12">B2</th>
+                                <th className="text-center text-xs text-muted-foreground font-normal py-1.5 w-12">C</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                            </thead>
+                            <tbody>
+                              {types.map(([name, licences]) => (
+                                <tr key={name} className="border-b last:border-0">
+                                  <td className="py-1.5 pr-4 text-foreground">{name}</td>
+                                  <td className="py-1.5 text-center">{licences.has('B1') ? 'Yes' : '—'}</td>
+                                  <td className="py-1.5 text-center">{licences.has('B2') ? 'Yes' : '—'}</td>
+                                  <td className="py-1.5 text-center">{licences.has('C') ? 'Yes' : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </CollapsibleSection>
+                      )
+                    })()}
+                </CollapsibleGroup>
+              )
+            })()}
+
+            {/* Part 21G: Production */}
+            {(org as any).part21g_ref && (
+              <CollapsibleGroup title={(org as any).part21g_ref} defaultOpen={false}>
+                <p className="text-sm text-muted-foreground py-2">Production Organisation Approval — expand row on profile page for full scope of work</p>
+              </CollapsibleGroup>
+            )}
+
+            {/* Part 21J: Design */}
+            {((org as any).part21j_ref || ((org as any).part21j_ratings || []).length > 0) && (() => {
+              const p21j = ((org as any).part21j_ratings || []) as { id: number; rating_type: string; rating_value: string }[]
+              const productClasses = p21j.filter(r => r.rating_type === 'product_class')
+              const activities = p21j.filter(r => r.rating_type === 'activity')
+              return (
+                <CollapsibleGroup title={(org as any).part21j_ref || 'Design'} defaultOpen={false}>
+                  {productClasses.length > 0 && (
+                    <CollapsibleSection title="Product Classes" count={productClasses.length}>
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {productClasses.map(r => (
+                            <tr key={r.id} className="border-b last:border-0">
+                              <td className="py-1.5 pr-4 text-foreground">{r.rating_value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CollapsibleSection>
                   )}
-                </div>
+                  {activities.length > 0 && (
+                    <CollapsibleSection title="Activities" count={activities.length}>
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {activities.map(r => (
+                            <tr key={r.id} className="border-b last:border-0">
+                              <td className="py-1.5 pr-4 text-foreground">{r.rating_value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CollapsibleSection>
+                  )}
+                  {p21j.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-2">Design Organisation Approval — view profile for full details</p>
+                  )}
+                </CollapsibleGroup>
               )
             })()}
           </div>
@@ -278,8 +363,8 @@ const APPROVAL_TYPES = [
   { key: 'part145', label: 'Maintenance (Part 145)', hasData: true },
   { key: 'camo', label: 'Management (Part CAMO)', hasData: false },
   { key: 'part147', label: 'Aircraft Maintenance Training (Part 147)', hasData: true },
-  { key: 'part21g', label: 'Production (Part 21G)', hasData: false },
-  { key: 'part21j', label: 'Design (Part 21J)', hasData: false },
+  { key: 'part21g', label: 'Production (Part 21G)', hasData: true },
+  { key: 'part21j', label: 'Design (Part 21J)', hasData: true },
 ] as const
 
 const PART145_CLASSES = [
@@ -337,6 +422,45 @@ const SUBCATEGORIES: Record<string, { key: string; label: string }[]> = {
   ],
 }
 
+const PART21G_CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'A1', label: 'Large Aeroplanes (A1)' },
+  { key: 'A2', label: 'Small Aeroplanes (A2)' },
+  { key: 'A3', label: 'Large Helicopters (A3)' },
+  { key: 'A4', label: 'Small Helicopters (A4)' },
+  { key: 'A5', label: 'Gyroplanes (A5)' },
+  { key: 'A6', label: 'Sailplanes (A6)' },
+  { key: 'A7', label: 'Motor Gliders (A7)' },
+  { key: 'A8', label: 'Manned Balloons (A8)' },
+  { key: 'A9', label: 'Airships (A9)' },
+  { key: 'A10', label: 'Light Sport Aeroplanes (A10)' },
+  { key: 'A11', label: 'Very Light Aeroplanes (A11)' },
+  { key: 'A12', label: 'Other (A12)' },
+  { key: 'B1', label: 'Turbine Engines (B1)' },
+  { key: 'B2', label: 'Piston Engines (B2)' },
+  { key: 'B3', label: 'APUs (B3)' },
+  { key: 'B4', label: 'Propellers (B4)' },
+  { key: 'C1', label: 'Appliances (C1)' },
+  { key: 'C2', label: 'Parts (C2)' },
+  { key: 'D1', label: 'Maintenance (D1)' },
+  { key: 'D2', label: 'Issue of Permit to Fly (D2)' },
+] as const
+
+const PART21J_CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'CS-23', label: 'Small Aeroplanes (CS-23)' },
+  { key: 'CS-25', label: 'Large Aeroplanes (CS-25)' },
+  { key: 'Balloons', label: 'Balloons' },
+  { key: 'Major Changes', label: 'Major Changes' },
+  { key: 'Minor Changes', label: 'Minor Changes' },
+  { key: 'Major Repairs', label: 'Major Repairs' },
+  { key: 'Minor Repairs', label: 'Minor Repairs' },
+  { key: 'STC', label: 'Supplemental Type Certificates (STC)' },
+  { key: 'TC', label: 'Type Certificates (TC)' },
+  { key: 'Permit to Fly', label: 'Permit to Fly' },
+  { key: 'Flight Conditions', label: 'Flight Conditions' },
+] as const
+
 type Part147Approval = {
   id: number
   reference_number: string
@@ -357,7 +481,7 @@ type Part147Approval = {
   }[]
 }
 
-export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approvals: Approval[]; part147OnlyApprovals?: Part147Approval[] }) {
+export function MarketTable({ approvals, part147OnlyApprovals = [], part21gOnlyApprovals = [], part21jOnlyApprovals = [], onOrgExpand }: { approvals: Approval[]; part147OnlyApprovals?: Part147Approval[]; part21gOnlyApprovals?: any[]; part21jOnlyApprovals?: any[]; onOrgExpand?: (orgId: number | null) => void }) {
   const [sortKey, setSortKey] = useState<SortKey>('organisation_name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -365,6 +489,8 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
   const [ratingClassFilter, setRatingClassFilter] = useState<string>('all')
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [part21gCategoryFilter, setPart21gCategoryFilter] = useState('all')
+  const [part21jCategoryFilter, setPart21jCategoryFilter] = useState('all')
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -378,12 +504,60 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
   const sorted = useMemo(() => {
     // Select data source based on approval type
     let list: any[]
-    if (approvalType === 'part147') {
-      // Show Part 147-only orgs + Part 145 orgs that also have Part 147
-      const linked = approvals.filter((a: any) => a.part147_ref).map((a: any) => ({
+    if (approvalType === 'part21g') {
+      // Show Part 145 orgs that have Part 21G + Part 21G-only orgs
+      const seen21g = new Set<string>()
+      const linked = approvals.filter((a: any) => {
+        if (!a.part21g_ref || seen21g.has(a.part21g_ref)) return false
+        seen21g.add(a.part21g_ref)
+        return true
+      })
+      const p21gonly = part21gOnlyApprovals.map(a => ({
+        ...a,
+        part145_ratings: [],
+      }))
+      list = [...linked, ...p21gonly]
+
+      // Filter by Part 21G category if selected
+      if (part21gCategoryFilter !== 'all') {
+        list = list.filter(org => {
+          const ratings = (org as any).part21g_ratings || []
+          return ratings.some((r: any) => r.category === part21gCategoryFilter)
+        })
+      }
+    } else if (approvalType === 'part21j') {
+      // Show Part 145 orgs that have Part 21J + Part 21J-only orgs
+      const seen21j = new Set<string>()
+      const linked = approvals.filter((a: any) => {
+        if (!a.part21j_ref || seen21j.has(a.part21j_ref)) return false
+        seen21j.add(a.part21j_ref)
+        return true
+      })
+      const p21jonly = part21jOnlyApprovals.map(a => ({
+        ...a,
+        part145_ratings: [],
+      }))
+      list = [...linked, ...p21jonly]
+
+      // Filter by Part 21J category if selected
+      if (part21jCategoryFilter !== 'all') {
+        list = list.filter(org => {
+          const ratings = (org as any).part21j_ratings || []
+          return ratings.some((r: any) => r.rating_value === part21jCategoryFilter)
+        })
+      }
+    } else if (approvalType === 'part147') {
+      // Show Part 145 orgs that also have Part 147 (dedup by part147_ref)
+      const seen147 = new Set<string>()
+      const linked = approvals.filter((a: any) => {
+        if (!a.part147_ref || seen147.has(a.part147_ref)) return false
+        seen147.add(a.part147_ref)
+        return true
+      }).map((a: any) => ({
         ...a,
         _part147: a.part147_ratings || [],
       }))
+      // Add Part 147-only orgs (not linked to any Part 145)
       const p147only = part147OnlyApprovals.map(a => ({
         ...a,
         part145_ratings: [],
@@ -401,10 +575,14 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
         const fields = [
           org.organisation_name,
           org.reference_number,
+          (org as any).part147_ref || '',
+          (org as any).part21g_ref || '',
+          (org as any).part21j_ref || '',
           org.city,
-          org.state,
           COUNTRY_NAMES[org.country_code] || org.country_code,
           ...(org.part145_ratings || []).map((r: any) => r.detail || ''),
+          ...((org as any).part147_ratings || (org as any)._part147 || []).map((r: any) => r.type_name || r.basic_scope || ''),
+          ...((org as any).part21j_ratings || []).map((r: any) => r.rating_value || ''),
         ]
         return fields.some(f => f && f.toLowerCase().includes(q))
       })
@@ -444,8 +622,8 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
       }
     }
 
-    // Non-Part 145/147 types have no data yet
-    if (approvalType && approvalType !== 'part145' && approvalType !== 'part147') {
+    // Non-Part 145/147/21G/21J types have no data yet
+    if (approvalType && approvalType !== 'part145' && approvalType !== 'part147' && approvalType !== 'part21g' && approvalType !== 'part21j') {
       list = []
     }
 
@@ -460,7 +638,7 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
       return av.localeCompare(bv) * dir
     })
     return list
-  }, [approvals, part147OnlyApprovals, sortKey, sortDir, approvalType, ratingClassFilter, subcategoryFilter, searchQuery])
+  }, [approvals, part147OnlyApprovals, part21gOnlyApprovals, part21jOnlyApprovals, sortKey, sortDir, approvalType, ratingClassFilter, subcategoryFilter, part21gCategoryFilter, part21jCategoryFilter, searchQuery])
 
   return (
     <>
@@ -482,6 +660,8 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
           onChange={e => {
             setApprovalType(e.target.value)
             setRatingClassFilter('all')
+            setPart21gCategoryFilter('all')
+            setPart21jCategoryFilter('all')
             setExpandedId(null)
           }}
           className={`flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${!approvalType ? 'text-muted-foreground' : ''}`}
@@ -525,6 +705,36 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
             ))}
           </select>
         )}
+
+        {approvalType === 'part21g' && (
+          <select
+            value={part21gCategoryFilter}
+            onChange={e => {
+              setPart21gCategoryFilter(e.target.value)
+              setExpandedId(null)
+            }}
+            className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            {PART21G_CATEGORIES.map(cat => (
+              <option key={cat.key} value={cat.key}>{cat.label}</option>
+            ))}
+          </select>
+        )}
+
+        {approvalType === 'part21j' && (
+          <select
+            value={part21jCategoryFilter}
+            onChange={e => {
+              setPart21jCategoryFilter(e.target.value)
+              setExpandedId(null)
+            }}
+            className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            {PART21J_CATEGORIES.map(cat => (
+              <option key={cat.key} value={cat.key}>{cat.label}</option>
+            ))}
+          </select>
+        )}
       </div>
 
 
@@ -549,18 +759,41 @@ export function MarketTable({ approvals, part147OnlyApprovals = [] }: { approval
                 <Fragment key={org.id}>
                   <tr
                     className={`border-b last:border-0 cursor-pointer transition-colors ${expandedId === org.id ? 'bg-muted/40' : 'hover:bg-muted/30'}`}
-                    onClick={() => setExpandedId(expandedId === org.id ? null : org.id)}
+                    onClick={() => {
+                      const newId = expandedId === org.id ? null : org.id
+                      setExpandedId(newId)
+                      onOrgExpand?.(newId)
+                    }}
                   >
                     <td className="px-4 py-3 overflow-hidden">
                       <span className="font-medium text-foreground block truncate">
                         {parseOrgName(org.organisation_name).legalName}
                       </span>
                       <span className="sm:hidden block text-xs text-muted-foreground mt-0.5 truncate">
-                        {org.reference_number}
+                        {org.reference_number}{(org as any).part147_ref ? ` / ${(org as any).part147_ref}` : ''}{(org as any).part21g_ref ? ` / ${(org as any).part21g_ref}` : ''}{(org as any).part21j_ref ? ` / ${(org as any).part21j_ref}` : ''}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell overflow-hidden truncate">
-                      {org.reference_number}
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <div className="grid grid-cols-2 gap-1 justify-items-center">
+                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-muted text-foreground text-[11px] font-medium">
+                          {org.reference_number}
+                        </span>
+                        {(org as any).part147_ref && (
+                          <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-muted text-foreground text-[11px] font-medium">
+                            {(org as any).part147_ref}
+                          </span>
+                        )}
+                        {(org as any).part21g_ref && (
+                          <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-muted text-foreground text-[11px] font-medium">
+                            {(org as any).part21g_ref}
+                          </span>
+                        )}
+                        {(org as any).part21j_ref && (
+                          <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-muted text-foreground text-[11px] font-medium">
+                            {(org as any).part21j_ref}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell overflow-hidden truncate">
                       {COUNTRY_NAMES[org.country_code] || org.country_code || '—'}

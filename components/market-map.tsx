@@ -12,6 +12,10 @@ type MapOrg = {
   country_code: string
   latitude: number
   longitude: number
+  slug: string | null
+  part147_ref?: string | null
+  part21g_ref?: string | null
+  part21j_ref?: string | null
 }
 
 const COUNTRY_NAMES: Record<string, string> = {
@@ -28,20 +32,10 @@ const COUNTRY_NAMES: Record<string, string> = {
   US: 'United States', ZA: 'South Africa',
 }
 
-export function MarketMap({ organisations }: { organisations: MapOrg[] }) {
+export function MarketMap({ organisations, flyTo }: { organisations: MapOrg[]; flyTo?: { lat: number; lng: number; name: string } | null }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
-  const [search, setSearch] = useState('')
-
-  const filtered = search.trim()
-    ? organisations.filter(o => {
-        const q = search.toLowerCase()
-        return o.organisation_name.toLowerCase().includes(q) ||
-          o.reference_number.toLowerCase().includes(q) ||
-          (o.city || '').toLowerCase().includes(q) ||
-          (COUNTRY_NAMES[o.country_code] || '').toLowerCase().includes(q)
-      })
-    : organisations
+  const filtered = organisations
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
@@ -90,12 +84,14 @@ export function MarketMap({ organisations }: { organisations: MapOrg[] }) {
       if (!org.latitude || !org.longitude) continue
 
       const marker = L.marker([org.latitude, org.longitude], { icon })
+      const refs = [org.reference_number, org.part147_ref, org.part21g_ref, org.part21j_ref].filter(Boolean).sort() as string[]
+      const refBadges = refs.map(r => `<span style="display:inline-block;padding:2px 8px;margin:2px 2px;border-radius:6px;background:#f4f4f5;font-size:11px;font-weight:500">${r}</span>`).join('')
       marker.bindPopup(`
-        <div style="min-width:200px">
+        <div style="min-width:220px">
           <strong>${org.organisation_name}</strong><br/>
-          <span style="color:#666;font-size:12px">${org.reference_number}</span><br/>
+          <div style="margin:4px 0">${refBadges}</div>
           ${org.city ? `<span style="font-size:12px">${org.city}, ${COUNTRY_NAMES[org.country_code] || org.country_code}</span><br/>` : ''}
-          <a href="/market/${org.reference_number}" style="color:#6366f1;font-size:12px;text-decoration:underline">View profile →</a>
+          <a href="/market/${org.slug || org.reference_number}" style="color:#6366f1;font-size:12px;text-decoration:underline">View profile →</a>
         </div>
       `)
       marker.addTo(map)
@@ -109,23 +105,31 @@ export function MarketMap({ organisations }: { organisations: MapOrg[] }) {
     }
   }, [filtered])
 
+  // Fly to selected org
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    if (!map || !flyTo) return
+
+    map.flyTo([flyTo.lat, flyTo.lng], 10, {
+      duration: 1.5,
+    })
+
+    // Open the popup for the matching marker
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker) {
+        const latlng = layer.getLatLng()
+        if (Math.abs(latlng.lat - flyTo.lat) < 0.001 && Math.abs(latlng.lng - flyTo.lng) < 0.001) {
+          layer.openPopup()
+        }
+      }
+    })
+  }, [flyTo])
+
   return (
     <div>
-      <div className="mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Filter map by organisation, location..."
-          className="w-full h-10 rounded-lg border border-input bg-transparent px-4 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-      </div>
       <div className="rounded-xl border overflow-hidden bg-card">
-        <div ref={mapRef} style={{ height: '600px', width: '100%' }} />
+        <div ref={mapRef} style={{ height: '400px', width: '100%' }} />
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        {filtered.length.toLocaleString()} organisations plotted
-      </p>
     </div>
   )
 }

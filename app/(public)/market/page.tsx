@@ -1,11 +1,11 @@
 export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { getDb } from '@/lib/postgres/server'
-import { MarketTable } from '@/components/market-table'
+import { MarketPageClient } from '@/components/market-page-client'
 
 export const metadata: Metadata = {
   title: 'The Market | Airworthiness',
-  description: 'Search 1,500+ UK CAA Part 145 approved maintenance organisations. Filter by country, rating class, and capabilities.',
+  description: 'Search UK CAA Part 145 and Part 147 approved maintenance and training organisations.',
 }
 
 export default async function MarketPage() {
@@ -23,6 +23,10 @@ export default async function MarketPage() {
       a.website,
       a.issued_date,
       a.part147_ref,
+      a.part21g_ref,
+      a.part21j_ref,
+      a.latitude,
+      a.longitude,
       COALESCE(
         json_agg(
           json_build_object(
@@ -49,8 +53,24 @@ export default async function MarketPage() {
         ) FROM part147_ratings r2
         JOIN part147_approvals p ON p.id = r2.approval_id
         WHERE p.reference_number = a.part147_ref),
-        '[]'
-      ) AS part147_ratings
+        '[]'::json
+      ) AS part147_ratings,
+      COALESCE(
+        (SELECT json_agg(
+          json_build_object('id', r3.id, 'category', r3.category, 'scope_description', r3.scope_description)
+        ) FROM part21g_ratings r3
+        JOIN part21g_approvals g ON g.id = r3.approval_id
+        WHERE g.reference_number = a.part21g_ref),
+        '[]'::json
+      ) AS part21g_ratings,
+      COALESCE(
+        (SELECT json_agg(
+          json_build_object('id', r4.id, 'rating_type', r4.rating_type, 'rating_value', r4.rating_value)
+        ) FROM part21j_ratings r4
+        JOIN part21j_approvals j ON j.id = r4.approval_id
+        WHERE j.reference_number = a.part21j_ref),
+        '[]'::json
+      ) AS part21j_ratings
     FROM part145_approvals a
     LEFT JOIN part145_ratings r ON r.approval_id = a.id
     GROUP BY a.id
@@ -91,6 +111,83 @@ export default async function MarketPage() {
     ORDER BY a.organisation_name
   `)
 
+  // Part 21G-only orgs
+  const { rows: part21gOnlyApprovals } = await db.query(`
+    SELECT
+      a.id,
+      a.reference_number,
+      a.organisation_name,
+      'ACTIVE' as status,
+      a.city,
+      NULL as state,
+      a.country_code,
+      NULL as website,
+      NULL as issued_date,
+      COALESCE(
+        json_agg(
+          json_build_object('id', r.id, 'category', r.category, 'scope_description', r.scope_description)
+        ) FILTER (WHERE r.id IS NOT NULL),
+        '[]'
+      ) AS part21g_ratings
+    FROM part21g_approvals a
+    LEFT JOIN part21g_ratings r ON r.approval_id = a.id
+    WHERE lower(trim(a.organisation_name)) NOT IN (
+      SELECT lower(trim(organisation_name)) FROM part145_approvals
+    )
+    GROUP BY a.id
+    ORDER BY a.organisation_name
+  `)
+
+  // Part 21J-only orgs
+  const { rows: part21jOnlyApprovals } = await db.query(`
+    SELECT
+      a.id,
+      a.reference_number,
+      a.organisation_name,
+      'ACTIVE' as status,
+      a.city,
+      NULL as state,
+      a.country_code,
+      NULL as website,
+      NULL as issued_date,
+      COALESCE(
+        json_agg(
+          json_build_object('id', r.id, 'rating_type', r.rating_type, 'rating_value', r.rating_value)
+        ) FILTER (WHERE r.id IS NOT NULL),
+        '[]'
+      ) AS part21j_ratings
+    FROM part21j_approvals a
+    LEFT JOIN part21j_ratings r ON r.approval_id = a.id
+    WHERE lower(trim(a.organisation_name)) NOT IN (
+      SELECT lower(trim(organisation_name)) FROM part145_approvals
+    )
+    GROUP BY a.id
+    ORDER BY a.organisation_name
+  `)
+
+  // Map data
+  const { rows: mapOrgs } = await db.query(`
+    SELECT id, reference_number, organisation_name, city, country_code, latitude, longitude, slug, part147_ref, part21g_ref, part21j_ref
+    FROM part145_approvals
+    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    UNION ALL
+    SELECT id + 100000 as id, reference_number, organisation_name, city, country_code, latitude, longitude, slug, NULL as part147_ref, NULL as part21g_ref, NULL as part21j_ref
+    FROM part147_approvals
+    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    AND reference_number NOT IN (SELECT part147_ref FROM part145_approvals WHERE part147_ref IS NOT NULL)
+    UNION ALL
+    SELECT id + 200000 as id, reference_number, organisation_name, city, country_code, latitude, longitude, slug, NULL as part147_ref, NULL as part21g_ref, NULL as part21j_ref
+    FROM part21g_approvals
+    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    AND lower(trim(organisation_name)) NOT IN (SELECT lower(trim(organisation_name)) FROM part145_approvals)
+    UNION ALL
+    SELECT id + 300000 as id, reference_number, organisation_name, city, country_code, latitude, longitude, slug, NULL as part147_ref, NULL as part21g_ref, NULL as part21j_ref
+    FROM part21j_approvals
+    WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    AND lower(trim(organisation_name)) NOT IN (SELECT lower(trim(organisation_name)) FROM part145_approvals)
+    ORDER BY organisation_name
+  `)
+
   return (
     <div className="min-h-screen">
       <section className="py-12 lg:py-16">
@@ -99,25 +196,16 @@ export default async function MarketPage() {
             The Market
           </h1>
           <p className="text-sm text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-            The Market by Airworthiness brings together those with something to sell and those looking to buy. We have developed the largest platform of airworthiness organisations approved to trade in the aviation market. Whether you need new floor panels, a hydraulic pump overhaul, a type training course, or support managing a maintenance programme, we can connect you with the right provider.
+            We have developed the largest platform of airworthiness organisations approved to trade in the aviation market. Whether you need new floor panels, a hydraulic pump overhaul, a type training course, or support managing a maintenance programme, we can connect you with the right provider.
           </p>
 
-          <div className="flex justify-end mb-4 mt-8">
-            <a href="/market/map" className="text-sm text-primary hover:underline flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              View on map
-            </a>
-          </div>
-
-          <div>
-            <MarketTable approvals={approvals} part147OnlyApprovals={part147OnlyApprovals} />
-          </div>
-
-          <p className="mt-6 text-xs text-muted-foreground">
-            Data sourced from the UK Civil Aviation Authority approved organisation register.
-          </p>
+          <MarketPageClient
+            approvals={approvals}
+            part147OnlyApprovals={part147OnlyApprovals}
+            part21gOnlyApprovals={part21gOnlyApprovals}
+            part21jOnlyApprovals={part21jOnlyApprovals}
+            mapOrgs={mapOrgs}
+          />
         </div>
       </section>
     </div>

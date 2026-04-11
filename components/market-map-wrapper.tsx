@@ -19,6 +19,10 @@ type MapOrg = {
   country_code: string
   latitude: number
   longitude: number
+  slug: string | null
+  part147_ref?: string | null
+  part21g_ref?: string | null
+  part21j_ref?: string | null
 }
 
 export function MarketMapWrapper({ organisations }: { organisations: MapOrg[] }) {
