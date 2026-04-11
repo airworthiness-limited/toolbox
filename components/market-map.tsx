@@ -53,10 +53,10 @@ const APPROVAL_LABELS: Record<string, string> = {
 // iconAnchor [14,0]  = anchor at top-right, icon appears bottom-left
 // iconAnchor [0,0]   = anchor at top-left, icon appears bottom-right
 const APPROVAL_OFFSETS: Record<string, [number, number]> = {
-  part145: [15, 15],
-  part147: [-1, 15],
-  part21g: [15, -1],
-  part21j: [-1, -1],
+  part145: [12, 12],
+  part147: [2, 12],
+  part21g: [12, 2],
+  part21j: [2, 2],
 }
 
 function createMarkerIcon(color: string, anchor: [number, number]): L.DivIcon {
