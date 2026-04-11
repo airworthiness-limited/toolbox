@@ -389,7 +389,7 @@ export function MarketTable({ approvals, part147Approvals = [] }: { approvals: A
           org.city,
           org.state,
           COUNTRY_NAMES[org.country_code] || org.country_code,
-          ...(org.part145_ratings || []).map(r => r.detail || ''),
+          ...(org.part145_ratings || []).map((r: any) => r.detail || ''),
         ]
         return fields.some(f => f && f.toLowerCase().includes(q))
       })
@@ -412,19 +412,19 @@ export function MarketTable({ approvals, part147Approvals = [] }: { approvals: A
           }
           const keywords = METHOD_KEYWORDS[subcategoryFilter] || []
           list = list.filter(org =>
-            (org.part145_ratings || []).some(r =>
-              r.rating_class === 'D' && r.detail && keywords.some(kw => r.detail!.toUpperCase().includes(kw))
+            (org.part145_ratings || []).some((r: any) =>
+              r.rating_class === 'D' && r.detail && keywords.some((kw: string) => r.detail!.toUpperCase().includes(kw))
             )
           )
         } else {
           // A/B/C: filter by category code
           list = list.filter(org =>
-            (org.part145_ratings || []).some(r => r.category === subcategoryFilter)
+            (org.part145_ratings || []).some((r: any) => r.category === subcategoryFilter)
           )
         }
       } else {
         list = list.filter(org =>
-          (org.part145_ratings || []).some(r => r.rating_class === ratingClassFilter)
+          (org.part145_ratings || []).some((r: any) => r.rating_class === ratingClassFilter)
         )
       }
     }
